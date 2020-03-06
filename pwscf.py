@@ -18,7 +18,7 @@ def read_atomic_positions(lines, nat, only_pos=False):
     '''
     pos, ion, if_pos = [], [], []
     for _ in range(nat):
-        nl = next(lines).split()
+        nl = next(lines).split('!')[0].split()
         pos.append(np.array(nl[1:4], dtype=np.float64))
         if not only_pos:
             ion.append(nl[0])
@@ -191,7 +191,7 @@ class qegeo:
                 line = line.split('!')[0]   # trim away comments
                 if 'CELL_PARAMETERS' in line:
                     par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-                    par = np.array( [np.fromstring(next(lines), sep=' ') for _ in range(3)] , dtype=np.float64 )
+                    par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
                     par = convert_par(par, in_units=par_units, alat=alat)
                 elif 'ATOMIC_POSITIONS' in line:
                     pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
@@ -277,10 +277,10 @@ class qeinp(qegeo):
                 except:
                     tjs.die("Invalid CELL_PARAMETERS line: \n{}".format(line))
                 # read cell parameters
-                par = np.array( [np.fromstring(next(lines), sep=' ') for _ in range(3)] , dtype=np.float64 )
+                par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
 
             elif 'ATOMIC_SPECIES' in line:
-                qedict['ATOMIC_SPECIES'] = [next(lines).split() for _ in range(int(qedict['nml']['system']['ntyp']))]
+                qedict['ATOMIC_SPECIES'] = [next(lines).split('!')[0].split() for _ in range(int(qedict['nml']['system']['ntyp']))]
 
             elif 'ATOMIC_POSITIONS' in line:
                 try:
@@ -290,7 +290,7 @@ class qeinp(qegeo):
                 # read ion, pos, if_pos
                 ion, pos, if_pos = [], [], []
                 for _ in range(int(qedict['nml']['system']['nat'])):
-                    spl = next(lines).split()
+                    spl = next(lines).split('!')[0].split()
                     ion.append(spl[0])
                     pos.append(np.array(spl[1:4], dtype=np.float64))
                     try:
@@ -308,7 +308,7 @@ class qeinp(qegeo):
                     tjs.die("Invalid K_POINTS line: \n{}".format(line))
                 # read k-points
                 if qedict['K_POINTS'] == 'automatic':
-                    kpt = np.fromstring(next(lines), sep=' ', dtype=int).reshape((2,3))
+                    kpt = np.fromstring(next(lines).split('!')[0], sep=' ', dtype=int).reshape((2,3))
                 elif qedict['K_POINTS'] not in [ 'automatic', 'gamma']:
                     tjs.die("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
         
@@ -405,7 +405,7 @@ class qeout():
             elif "EXX-fraction" in line:
                 is_exx = True
             elif "crystal axes:" in line:
-                par = np.array([ next(lines).split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
+                par = np.array([ next(lines)[0].split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
             elif "total cpu time spent up to now is" in line:
                 conv['time'].append(np.float64(line.split()[-2]))
             elif "total energy              =" in line:
