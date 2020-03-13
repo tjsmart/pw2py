@@ -41,7 +41,6 @@ def ibrav_to_par(system_nml, units="angstrom"):
     # check value of ibrav
     if int(system_nml['ibrav']) == 0:
         return None
-    
     elif int(system_nml['ibrav']) == 1:
         # v1 = a(1,0,0),  v2 = a(0,1,0),  v3 = a(0,0,1)
         par = np.array( [[1,0,0],[0,1,0],[0,0,1]] , dtype=np.float64)
@@ -93,38 +92,57 @@ def convert_par(par, in_units, out_units="angstrom", alat=None, alat_units="angs
     if alat_units == "bohr":
         alat *= alat * bohr_to_angstrom
     elif alat_units != "angstrom":
-        die("Invalid value of alat_units: '{}".format(alat_units))
+        tjs.die("Invalid value of alat_units: '{}".format(alat_units))
     # define unit dictionary for unit conversion
     conversion = {'alat' : alat, 'angstrom' : 1, 'bohr' : bohr_to_angstrom}
     # check input
     if in_units == out_units:
         return par
     elif not in_units in conversion:
-        die("Invalid value of in_units: '{}'".format(in_units))
+        tjs.die("Invalid value of in_units: '{}'".format(in_units))
     elif not out_units in conversion:
-        die("Invalid value of out_units: '{}'".format(out_units))
+        tjs.die("Invalid value of out_units: '{}'".format(out_units))
     elif (in_units == "alat" or out_units == "alat") and alat == None:
-        die("Requested alat conversion but value for alat was not provided.")
+        tjs.die("Requested alat conversion but value for alat was not provided.")
     # calculate prefactor
-    return par / np.float64( conversion[out_units.lower()] ) / np.float64( conversion[in_units.lower()] )
+    return par / np.float64( conversion[out_units.lower()] ) * np.float64( conversion[in_units.lower()] )
 
 
-def convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="angstrom", par=None):
+def convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="angstrom", par=None, par_units=None):
     '''
     Convert atomic positions from 'in_units' to 'out_units'
         ['alat', 'bohr', 'angstrom', 'crystal']
     '''
-    # calculate prefactor
     if in_units == out_units:
         return pos
     elif in_units != 'crystal' and out_units != 'crystal':
         return convert_par(pos, in_units=in_units, out_units=out_units, alat=alat, alat_units=alat_units)
-    elif par is None:
-        die("Requested crystal conversion but cell parameters (par) were not provided.")
-    elif in_units == 'crystal':
-        return pos.dot(par)
+    elif par is None or par_units is None:
+        tjs.die("Requested crystal conversion but cell parameters (par) were not provided.")
+
+    # cases with crystal conversion
+    prefactor = 1.0
+    if (par_units == 'angstrom' and out_units == 'bohr') or (par_units == 'bohr' and in_units == 'angstrom'):
+        prefactor /= bohr_to_angstrom
+    elif (par_units == 'bohr' and out_units == 'angstrom') or (par_units == 'angstrom' and in_units == 'bohr'):
+        prefactor *= bohr_to_angstrom
+    
+    if in_units == 'crystal':
+        return pos.dot(par) * prefactor
     elif out_units == 'crystal':
-        return pos.dot(np.linalg.inv(par))
+        return pos.dot(np.linalg.inv(par)) * prefactor
+
+
+def _readEigs(lines, nbnd):
+    '''
+    (private) parse lines for eigenvalues
+    '''
+    next(lines)
+    eigs = []
+    for _ in range(nbnd // 8 + 1):
+        eigs.append( np.fromstring(next(lines), sep=' ', dtype=np.float64) )
+
+    return np.hstack(eigs), lines
 
 
 class qegeo:
@@ -143,20 +161,81 @@ class qegeo:
                 self.nat = None
 
 
-    # def __init__(self, par=None, ion=None, pos=None, if_pos=None, par_units=None, pos_units=None):
-    def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None):
+    def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None, par_units=None, pos_units=None):
+    # def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None):
         self.par        = np.array(par, dtype=np.float) if par is not None else None
         self.ion        = list(ion) if ion is not None else None
         self.pos        = np.array(pos, dtype=np.float) if pos is not None else None
         self.if_pos     = np.array(if_pos, dtype=np.int) if if_pos is not None else None
-        # self.par        = par
-        # self.ion        = ion
-        # self.pos        = pos
-        # self.if_pos     = if_pos
+        self.par_units  = par_units
+        self.pos_units  = pos_units
         if nat is None:
             self.calcNat()
+        else:
+            self.nat = int(nat)
+
+
+    def __str__(self, par_units="angstrom", pos_units="crystal"):
+        '''
+        convert qegeo to str (QE format)
+        '''
+        out = "&control\n/\n&system\n    nat = {}\n/\n&electrons\n/\n".format(str(self.nat))
+        # TODO need to be able to handle cases with ibrav != 0
+        out += "CELL_PARAMETERS {}\n".format(par_units)
+        for par in self.par:
+            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+        out += "ATOMIC_POSITIONS {}\n".format(pos_units)
+        for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
+            out += "    {}    {:16.9f}  {:16.9f}  {:16.9f}".format(ion, pos[0], pos[1], pos[2])
+            if all(if_pos == np.array([1,1,1], dtype=int)):
+                out += "\n"
+            else:
+                out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
+
+        return out
 
     
+    # def replace_atom(self, a, b):
+    #     '''
+    #     replace atom a with atom b
+    #     '''
+    #     pass
+        
+    
+    # def add_atom(self, a):
+    #     '''
+    #     add atom a
+    #     '''
+    #     replace(self, a, None)
+    #     pass
+        
+    
+    # def remove_atom(self, a):
+    #     '''
+    #     remove atom a
+    #     '''
+    #     replace(self, None, a)
+    #     pass
+
+
+    def change_units_par(self, out_units="angstrom"):
+        '''
+        change units of par
+        '''
+        self.par = convert_par(self.par, self.par_units, out_units=out_units)
+        self.par_units = out_units
+        self.qedict["CELL_PARAMETERS"] = out_units
+
+
+    def change_units_pos(self, out_units="angstrom"):
+        '''
+        change units of pos
+        '''
+        self.pos = convert_pos(self.pos, self.pos_units, out_units=out_units, par=self.par, par_units=self.par_units)
+        self.pos_units = out_units
+        self.qedict["ATOMIC_POSITIONS"] = out_units
+
+
     def from_file(filename):
         '''
         generate qegeo from file (automatically detects if file is input or output)
@@ -165,45 +244,131 @@ class qegeo:
         with open(filename) as f:
             lines = iter(f.readlines())
 
-        nml = f90nml.read(filename)
-        if len(nml) == 0:
-            # then file is output
-            for line in lines:
-                if "lattice parameter (alat)" in line:
-                    alat = np.float64(line.split()[-2]) * bohr_to_angstrom
-                elif "number of atoms/cell" in line:
-                    nat = int(line.split()[-1])
-                elif "crystal axes:" in line:
-                    # cell parameters in angstrom
-                    par = np.array([ next(lines).split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
-                elif "ATOMIC_POSITIONS" in line:
-                    pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-                    lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
+        if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]):
+            # then file is vasp
+            next(lines) # skip first line
+            # read cell par
+            alat = np.float64(next(lines))
+            par = np.array([ next(lines).split()[0:3] for _ in range(3) ], dtype=np.float64) * alat
+            # read ions
+            _ion = next(lines).split()
+            _count = np.fromstring(next(lines), sep=' ', dtype=int)
+            ion = []
+            for i, c in zip(_ion, _count):
+                ion += [i] * c
+            nat = len(ion)
+            # read pos type
+            pos_units == "crystal" if next(lines).lower() == "direct" else "angstrom"
+            pos = np.array([ next(lines).split()[0:3] for _ in range(nat) ], dtype=np.float64)
+            if_pos = np.array([ [1,1,1] for _ in range(nat) ], dtype=int)
+
+            # TODO based on pos_units convert to angstrom or crystal?
+
+        elif filename.lower().endswith("xyz"):
+            # then file is xyz format
+            tjs.die("xyz format not implemented")
+
+        elif filename.lower().endswith("xsf"):
+            # then file is xsf format
+            tjs.die("xsf format not implemented")
+
+        elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos"):
+            # then file is jdftx format
+            tjs.die("jdftx format not implemented")
+
         else:
-            # then file is input
-            alat = None
-            for line in lines:
-                if 'a' in nml['system']:
-                    alat = nml['system']['a']
-                elif 'celldm' in nml['system']:
-                    alat = nml['system']['celldm'][0] * bohr_to_angstrom
-                nat = int(nml['system']['nat'])
-                line = line.split('!')[0]   # trim away comments
-                if 'CELL_PARAMETERS' in line:
-                    par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-                    par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
-                    par = convert_par(par, in_units=par_units, alat=alat)
-                elif 'ATOMIC_POSITIONS' in line:
-                    pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-                    lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
+            # then file is QE
+            nml = f90nml.read(filename)
+            if len(nml) == 0:
+                # then file is output
+                for line in lines:
+                    if "lattice parameter (alat)" in line:
+                        alat = np.float64(line.split()[-2]) * bohr_to_angstrom
+                    elif "number of atoms/cell" in line:
+                        nat = int(line.split()[-1])
+                    elif "crystal axes:" in line:
+                        # cell parameters in angstrom
+                        par_units = "angstrom"
+                        par = np.array([ next(lines).split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
+                    elif "ATOMIC_POSITIONS" in line:
+                        pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+                        lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
+            else:
+                # then file is input
+                alat = None
+                for line in lines:
+                    if 'a' in nml['system']:
+                        alat = nml['system']['a']
+                    elif 'celldm' in nml['system']:
+                        alat = nml['system']['celldm'][0] * bohr_to_angstrom
+                    nat = int(nml['system']['nat'])
+                    line = line.split('!')[0]   # trim away comments
+                    if 'CELL_PARAMETERS' in line:
+                        par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
+                        par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
+                        par = convert_par(par, in_units=par_units, alat=alat)
+                    elif 'ATOMIC_POSITIONS' in line:
+                        pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+                        lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
 
-            if int(nml['system']['ibrav']) != 0:
-                par = ibrav_to_par(nml)
+                if int(nml['system']['ibrav']) != 0:
+                    par = ibrav_to_par(nml['system'])
+            
+            # # convert atomic positions to angstrom
+            # convert_pos(pos, pos_units, alat=alat, par=par)
+
+        return qegeo(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat, pos_units=pos_units, par_units=par_units)
+
+
+    def write_poscar(self, filename, pos_type="direct", alat=1.0):
+        '''
+        write qegeo to poscar
+        '''
+        with open(filename, 'w') as f:
+            # header
+            f.write("Generated from PWSCF python module\n")
+            # alat
+            f.write("{}\n".format(float(alat)))
+            # par
+            for par in self.par:
+                f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2]) )
+            # ions and count (convert to dict then write)
+            ionAndCount = {}
+            for i in self.ion:
+                if i not in ionAndCount:
+                    ionAndCount[i] = 1
+                else:
+                    ionAndCount[i] += 1
+            f.write( "     {}\n".format("     ".join(ionAndCount.keys())) )             # ions
+            f.write( "     {}\n".format("     ".join(map(str, ionAndCount.values()))) ) # count
+            # pos type
+            f.write("{}\n".format(pos_type))
+            # pos
+            for pos in self.pos:
+                f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2]) )
         
-        # convert atomic positions to angstrom
-        convert_pos(pos, pos_units, alat=alat, par=par)
+        return None
 
-        return qegeo(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat)
+
+    # def write_jdftx():
+    #     '''
+    #     write qegeo to jdftx
+    #     '''
+    #     pass
+
+
+    # def write_xyz():
+    #     '''
+    #     write qegeo to xyz
+    #     '''
+    #     pass
+
+
+    # def write_xsf():
+    #     '''
+    #     write qegeo to xsf
+    #     '''
+    #     pass
 
 
 
@@ -218,16 +383,42 @@ class qeinp(qegeo):
         kpt = K_POINTS data
     '''
 
-    def __init__(self, qedict, par, ion, pos, if_pos, kpt):
+    def __init__(self, qedict, par, ion, pos, if_pos, kpt, nat=None, par_units=None, pos_units=None):
         '''
         initialize qeinp object
         '''
         # if any(None in locals().values()):
         #     tjs.die("Cannot initialize qeinp with 'None'\n{}".format(locals))
 
-        super().__init__(par=par, ion=ion, pos=pos, if_pos=if_pos)
+        if par_units is None:
+            # TODO what to do here when ibrav != 0!!! -- should 
+            try:
+                par_units = qedict['CELL_PARAMETERS']
+            except:
+                par_units = None
+        else:
+            par_units = par_units
+        
+        if pos_units is None:
+            # TODO what to do here when ibrav != 0!!! -- should 
+            try:
+                pos_units = qedict['ATOMIC_POSITIONS']
+            except:
+                pos_units = None
+        else:
+            pos_units = pos_units
+        
+
+        super().__init__(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat, par_units=par_units, pos_units=pos_units)
         self.qedict = qedict
         self.kpt = kpt
+    
+    
+    # def convert_ibrav(self, newBrav):
+    #     '''
+    #     convert ibrav of self to newBrav (intended for ibrav != 0 to 0 or back)
+    #     '''
+    #     pass
     
 
     def __str__(self):
@@ -238,9 +429,12 @@ class qeinp(qegeo):
         out += "ATOMIC_SPECIES\n"
         for spec in self.qedict['ATOMIC_SPECIES']:
             out += "    {}  {}  {}\n".format(spec[0], spec[1], spec[2])
-        out += "CELL_PARAMETERS {}\n".format(self.qedict['CELL_PARAMETERS'])
-        for par in self.par:
-            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+        # TO-DO need to be able to handle cases with ibrav != 0
+        # if "CELL_PARAMETERS" in self.qedict.keys():
+        if self.qedict['nml']['system']['ibrav'] == 0:
+            out += "CELL_PARAMETERS {}\n".format(self.qedict['CELL_PARAMETERS'])
+            for par in self.par:
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
         out += "ATOMIC_POSITIONS {}\n".format(self.qedict['ATOMIC_POSITIONS'])
         for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
             out += "    {}    {:16.9f}  {:16.9f}  {:16.9f}".format(ion, pos[0], pos[1], pos[2])
@@ -313,9 +507,10 @@ class qeinp(qegeo):
                     tjs.die("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
         
         if int(qedict['nml']['system']['ibrav']) != 0:
-            par = ibrav_to_par(qedict['nml'])
+            par = ibrav_to_par(qedict['nml']['system'])
+            qedict['CELL_PARAMETERS'] = "angstrom"
 
-        return qeinp(qedict, par, ion, pos, if_pos, kpt)
+        return qeinp(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt)
 
     def write_file(self, filename):
         '''
@@ -363,7 +558,7 @@ class qeout():
             # TODO occ         = occupation data
     '''
 
-    def __init__(self, nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units):
+    def __init__(self, nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs):
         '''
         initialize qeout object
         '''
@@ -377,6 +572,7 @@ class qeout():
         self.list_pos = list_pos
         self.if_pos = if_pos
         self.pos_units = pos_units
+        self.list_eigs = list_eigs
 
 
     def from_file(filename):
@@ -390,9 +586,9 @@ class qeout():
         is_exx = False
         conv = {}
         for key in ['E', '!', '!!', 'dE', 'nsteps', 'nsteps_exx', 'tot_forc', 'max_forc', 
-                    'mag_tot', 'mag_abs', 'time', 'time_exx', 'tot_mag', 'abs_mag']:
+                    'mag_tot', 'mag_abs', 'time', 'time_exx', 'tot_mag', 'abs_mag', 'Fermi']:
             conv[key] = []
-        list_pos, if_pos, ion = [], [], []
+        list_pos, if_pos, ion, list_eigs = [], [], [], []
 
         is_first = True
         for line in lines:
@@ -400,6 +596,10 @@ class qeout():
                 alat = np.float64(line.split()[-2]) * bohr_to_angstrom
             elif "number of atoms/cell" in line:
                 nat = int(line.split()[-1])
+            elif "number of electrons" in line:
+                nelec = int(float(line.split()[-1]))
+            elif "number of Kohn-Sham states" in line:
+                nbnd = int(line.split()[-1])
             elif "number of atomic types" in line:
                 ntyp = int(line.split()[-1])
             elif "EXX-fraction" in line:
@@ -417,7 +617,7 @@ class qeout():
                     conv['!'].append(np.float64(line.split()[-2]))
                     next(lines)
                     conv['dE'].append(np.float64(next(lines).split()[-2]))
-                    next(lines)
+                    [ next(lines) for _ in range(10) ]
                     conv['tot_mag'].append(np.float64(next(lines).split()[-3]))
                     conv['abs_mag'].append(np.float64(next(lines).split()[-3]))
 
@@ -425,6 +625,26 @@ class qeout():
                     conv['E'].append(np.float64(line.split()[-2]))
             elif "has" in line:
                 conv['nsteps'].append(int(line.split()[-2]))
+            elif "SPIN UP" in line:
+                [ next(lines) for _ in range(2) ]
+                if  "k = 0.0000 0.0000 0.0000" in line:
+                    #TODO need to other kpoints
+                    eigs, lines = _readEigs(lines, nbnd)
+                    list_eigs.append(eigs)
+                    
+
+            elif "SPIN DOWN" in line:
+                [ next(lines) for _ in range(2) ]
+                if  "k = 0.0000 0.0000 0.0000" in line:
+                    eigs, lines = _readEigs(lines, nbnd)
+                    list_eigs.append(eigs)
+    
+            elif "k = 0.0000 0.0000 0.0000" in line:
+                eigs, lines = _readEigs(lines, nbnd)
+                list_eigs.append(eigs)
+
+            elif "Fermi" in line:
+                conv['Fermi'].append(np.float64(line.split()[-2]))
             elif "Forces acting on atoms" in line:
                 max_forc = -1.0
                 next(lines)
@@ -452,4 +672,21 @@ class qeout():
                     is_first = False
                 list_pos.append(np.array(pos))
 
-        return qeout(nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units)
+        return qeout(nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs)
+    
+
+    def calcEigs(self):
+        '''
+        calculate VBM, CBM, and gap (only works with smearing)
+        '''
+        try:
+            fermi = self.conv['Fermi'][-1]
+        except:
+            # TODO -- implement no smearing case
+            tjs.warn("In calcEigs: Cannot calculate eigs for systems w/o smearing")
+
+        eigs = self.list_eigs[-1]
+        vbm = max(np.where(eigs < fermi, eigs, -1E10))
+        cbm = min(np.where(eigs > fermi, eigs, 1E10))
+
+        return vbm, cbm, cbm - vbm

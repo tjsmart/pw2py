@@ -1,4 +1,4 @@
-pwscf python module
+pw2py python module
 ====================
 
 
