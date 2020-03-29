@@ -3,6 +3,7 @@
 import numpy as np
 import re
 import f90nml
+import pandas as pd
 
 import tjs_resource as tjs
 
@@ -186,11 +187,14 @@ class qegeo:
             out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
         out += "ATOMIC_POSITIONS {}\n".format(pos_units)
         for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
-            out += "    {}    {:16.9f}  {:16.9f}  {:16.9f}".format(ion, pos[0], pos[1], pos[2])
-            if all(if_pos == np.array([1,1,1], dtype=int)):
+            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
                 out += "\n"
             else:
-                out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
+                try:
+                    out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
+                except IndexError:
+                    None
 
         return out
 
@@ -224,7 +228,10 @@ class qegeo:
         '''
         self.par = convert_par(self.par, self.par_units, out_units=out_units)
         self.par_units = out_units
-        self.qedict["CELL_PARAMETERS"] = out_units
+        try:
+            self.qedict["CELL_PARAMETERS"] = out_units
+        except:
+            None
 
 
     def change_units_pos(self, out_units="angstrom"):
@@ -233,7 +240,10 @@ class qegeo:
         '''
         self.pos = convert_pos(self.pos, self.pos_units, out_units=out_units, par=self.par, par_units=self.par_units)
         self.pos_units = out_units
-        self.qedict["ATOMIC_POSITIONS"] = out_units
+        try:
+            self.qedict["ATOMIC_POSITIONS"] = out_units
+        except:
+            None
 
 
     def from_file(filename):
@@ -318,23 +328,51 @@ class qegeo:
             # convert_pos(pos, pos_units, alat=alat, par=par)
 
         return qegeo(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat, pos_units=pos_units, par_units=par_units)
+    
+
+    def sort_ions(self):
+        '''
+        sort ions into categories and reorder corresponding positions
+        '''
+        # save ion and pos to dataframe
+        columns = ['ion'] + ['pos{}'.format(i) for i in range(3)] + ['if_pos{}'.format(i) for i in range(3)]
+    
+        df = pd.DataFrame(columns=columns)
+        df.ion = self.ion
+        for i in range(3):
+            df['pos{}'.format(i)] = self.pos[:,i]
+        
+        for i in range(3):
+            df['if_pos{}'.format(i)] = self.if_pos[:,i]
+
+        df.sort_values(by=['ion'], inplace=True)
+
+        self.ion = list(df['ion'])
+        self.pos = np.array(df.loc[:,'pos0':'pos2'])
+        self.if_pos = np.array(df.loc[:,'if_pos0':'if_pos2'], dtype=int)
 
 
-    def write_poscar(self, filename, pos_type="direct", alat=1.0):
+    def write_poscar(self, filename, alat=1.0, save_sorted=False):
         '''
         write qegeo to poscar
         '''
+        if not save_sorted:
+            out = self
+            out.sort_ions()
+        else:
+            out = self.sort_ions()
+
         with open(filename, 'w') as f:
             # header
-            f.write("Generated from PWSCF python module\n")
+            f.write("Generated from PW2PY python module\n")
             # alat
             f.write("{}\n".format(float(alat)))
             # par
-            for par in self.par:
+            for par in out.par:
                 f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2]) )
             # ions and count (convert to dict then write)
             ionAndCount = {}
-            for i in self.ion:
+            for i in out.ion:
                 if i not in ionAndCount:
                     ionAndCount[i] = 1
                 else:
@@ -342,9 +380,12 @@ class qegeo:
             f.write( "     {}\n".format("     ".join(ionAndCount.keys())) )             # ions
             f.write( "     {}\n".format("     ".join(map(str, ionAndCount.values()))) ) # count
             # pos type
-            f.write("{}\n".format(pos_type))
+            if out.pos_units == "angstrom":
+                f.write("{}\n".format("cartesian"))
+            elif out.pos_units == "crystal":
+                f.write("{}\n".format("direct"))
             # pos
-            for pos in self.pos:
+            for pos in out.pos:
                 f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2]) )
         
         return None
@@ -357,11 +398,20 @@ class qegeo:
     #     pass
 
 
-    # def write_xyz():
-    #     '''
-    #     write qegeo to xyz
-    #     '''
-    #     pass
+    def write_xyz(self, filename):
+        '''
+        write qegeo to xyz
+        '''
+        with open(filename, 'w') as f:
+            # nat
+            f.write("{}\n".format(self.nat))
+            # description
+            f.write("Generated from PW2PY python module\n")
+            for ion, pos in zip(self.ion, self.pos):
+                f.write("    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2]))
+
+        
+        pass
 
 
     # def write_xsf():
@@ -438,7 +488,7 @@ class qeinp(qegeo):
         out += "ATOMIC_POSITIONS {}\n".format(self.qedict['ATOMIC_POSITIONS'])
         for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
             out += "    {}    {:16.9f}  {:16.9f}  {:16.9f}".format(ion, pos[0], pos[1], pos[2])
-            if all(if_pos == np.array([1,1,1], dtype=int)):
+            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
                 out += "\n"
             else:
                 out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
@@ -503,7 +553,9 @@ class qeinp(qegeo):
                 # read k-points
                 if qedict['K_POINTS'] == 'automatic':
                     kpt = np.fromstring(next(lines).split('!')[0], sep=' ', dtype=int).reshape((2,3))
-                elif qedict['K_POINTS'] not in [ 'automatic', 'gamma']:
+                elif qedict['K_POINTS'] == 'gamma':
+                    kpt = None
+                else:
                     tjs.die("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
         
         if int(qedict['nml']['system']['ibrav']) != 0:
