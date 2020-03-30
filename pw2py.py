@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import re
+import copy
 import f90nml
+import numpy as np
 import pandas as pd
+import re
 
 import tjs_resource as tjs
 
@@ -13,27 +14,41 @@ bohr_to_angstrom = 0.529177210903
 nonalpha = re.compile('[^a-zA-Z]')
 
 
-def read_atomic_positions(lines, nat, only_pos=False):
+def _resolve_continuation_lines(filename):
     '''
-    iterate through lines of atomic positons returning ion, pos, if_pos
+    return lines of file without continuation lines (used for jdftx)
+    '''
+    lines = []
+    with open(filename) as f:
+        for line in f:
+            line = line.rstrip('\n')
+            while line.endswith('\\'):
+                line = line[:-1] + next(f).rstrip('\n')
+            lines.append(line)
+    return lines
+
+
+def _read_atomic_positions(lines, nat, no_if_pos=True):
+    '''
+    iterate through lines of atomic positons returning ion, pos, if_pos (QE format)
     '''
     pos, ion, if_pos = [], [], []
     for _ in range(nat):
         nl = next(lines).split('!')[0].split()
+        ion.append(nl[0])
         pos.append(np.array(nl[1:4], dtype=np.float64))
-        if not only_pos:
-            ion.append(nl[0])
+        if not no_if_pos:
             try:
                 if_pos.append(np.array([nl[4], nl[5], nl[6]], dtype=int)) # explicit so indexError will be thrown
             except IndexError:
                 if_pos.append(np.array([1,1,1], dtype=int))
-    if only_pos:
-        return lines, np.array(pos)
+    if no_if_pos:
+        return lines, np.array(pos), ion
     else:
         return lines, np.array(pos), ion, np.array(if_pos)
 
 
-def ibrav_to_par(system_nml, units="angstrom"):
+def _ibrav_to_par(system_nml, units="angstrom"):
     '''
     calculate cell parameters from bravais lattice using qe system namelist as input
 
@@ -146,56 +161,61 @@ def _readEigs(lines, nbnd):
     return np.hstack(eigs), lines
 
 
-class qegeo:
+class atomgeo:
     '''
-    class for atomic geometry included cell parameters, atomic positions, species names, and if_pos
+    class for atomic geometry
+
+    Suggested to make object from file:
+    -----
+    geo = atomgeo.from_file(filename, ftype="auto")
+    
+    Attributes:
+    -----
+
+    par (np.array, float, shape = (3,3))
+        - cell parameters
+    
+    par_units (str)
+        - units of par, acceptable values include "angstrom", "bohr", "alat"
+
+    nat (int)
+        - number of atoms
+    
+    ion (list, str)
+        - list of atom/ion names (QE format)
+    
+    pos (np.array, float, shape = (nat, 3))
+        - atomic positions
+    
+    pos_units (str)
+        - units of pos, acceptable values include "angstrom", "bohr", "crystal", "alat"
     '''
 
-    def calcNat(self):
-        lengths = [ len(t) for t in [self.ion, self.pos, self.if_pos] if t is not None]
-        if len(lengths) == 0:
-            self.nat = None
-        else:
-            if all( [ lengths[0] == l for l in lengths ] ):
-                self.nat = int(lengths[0])
-            else:
-                self.nat = None
 
-
-    def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None, par_units=None, pos_units=None):
+    def __init__(self, par=None, ion=None, pos=None, nat=None, par_units=None, pos_units=None):
     # def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None):
         self.par        = np.array(par, dtype=np.float) if par is not None else None
         self.ion        = list(ion) if ion is not None else None
         self.pos        = np.array(pos, dtype=np.float) if pos is not None else None
-        self.if_pos     = np.array(if_pos, dtype=np.int) if if_pos is not None else None
         self.par_units  = par_units
         self.pos_units  = pos_units
-        if nat is None:
-            self.calcNat()
-        else:
-            self.nat = int(nat)
+        self.nat        = int(nat)
 
 
-    def __str__(self, par_units="angstrom", pos_units="crystal"):
+    def __str__(self):
         '''
-        convert qegeo to str (QE format)
+        convert atomgeo to str (QE format)
         '''
-        out = "&control\n/\n&system\n    nat = {}\n/\n&electrons\n/\n".format(str(self.nat))
         # TODO need to be able to handle cases with ibrav != 0
-        out += "CELL_PARAMETERS {}\n".format(par_units)
+        ntyp = len(set(self.ion))
+        out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
+            .format(ntyp, str(self.nat))
+        out += "CELL_PARAMETERS {}\n".format(self.par_units)
         for par in self.par:
             out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
-        out += "ATOMIC_POSITIONS {}\n".format(pos_units)
-        for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
+        out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
+        for ion, pos in zip(self.ion, self.pos):
             out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
-            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
-                out += "\n"
-            else:
-                try:
-                    out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
-                except IndexError:
-                    None
-
         return out
 
     
@@ -222,44 +242,79 @@ class qegeo:
     #     pass
 
 
-    def change_units_par(self, out_units="angstrom"):
+    def change_units_par(self, units="angstrom", inplace=True):
         '''
-        change units of par
+        Convert cell parameters to 'units'
+
+        units (str)
+            - acceptable values: ['alat', 'angstrom', 'bohr']
+        
+        updates values of: par, par_units, (qedict['CELL_PARAMETERS'])
         '''
-        self.par = convert_par(self.par, self.par_units, out_units=out_units)
-        self.par_units = out_units
+        out = self if inplace else copy.deepcopy(self)
+
+        out.par = convert_par(out.par, out.par_units, out_units=units)
+        out.par_units = units
+        # TODO bottom part should only belong to qeinp
         try:
-            self.qedict["CELL_PARAMETERS"] = out_units
+            out.qedict["CELL_PARAMETERS"] = units
         except:
             None
 
 
-    def change_units_pos(self, out_units="angstrom"):
+    def change_units_pos(self, units="angstrom", inplace=True):
         '''
-        change units of pos
+        Convert atomic positions to 'units'
+
+        units (str)
+            - acceptable values: ['alat', 'bohr', 'angstrom', 'crystal']
+        
+        updates values of: pos, pos_units, (qedict['ATOMIC_POSITIONS'])
         '''
-        self.pos = convert_pos(self.pos, self.pos_units, out_units=out_units, par=self.par, par_units=self.par_units)
-        self.pos_units = out_units
+        out = self if inplace else copy.deepcopy(self)
+
+        out.pos = convert_pos(out.pos, out.pos_units, out_units=units, par=out.par, par_units=out.par_units)
+        out.pos_units = units
+        # TODO bottom part should only belong to qeinp
         try:
-            self.qedict["ATOMIC_POSITIONS"] = out_units
+            out.qedict["ATOMIC_POSITIONS"] = units
         except:
             None
+        return out
 
 
-    def from_file(filename):
+    def from_file(filename, ftype='auto'):
         '''
-        generate qegeo from file (automatically detects if file is input or output)
+        generate atomgeo object from file
+
+        input
+        ----
+        filename (str)
+            - name/path to file to be read
+        
+        ftype (str)
+            - specify filetype otherwise ftype='auto' will use filename to detect file type
+            - acceptable values: ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']
+        
+        output
+        ----
+        atomgeo (atomgeo object)
         '''
+        if ftype.lower() not in ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']:
+            tjs.warn("ftype value not recognized '{}'".format(ftype))
+
         # store lines of file to iterator
         with open(filename) as f:
             lines = iter(f.readlines())
 
-        if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]):
+        if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]) \
+            or ftype.lower() == "vasp":
             # then file is vasp
             next(lines) # skip first line
             # read cell par
             alat = np.float64(next(lines))
             par = np.array([ next(lines).split()[0:3] for _ in range(3) ], dtype=np.float64) * alat
+            par_units = "angstrom"
             # read ions
             _ion = next(lines).split()
             _count = np.fromstring(next(lines), sep=' ', dtype=int)
@@ -268,28 +323,41 @@ class qegeo:
                 ion += [i] * c
             nat = len(ion)
             # read pos type
-            pos_units == "crystal" if next(lines).lower() == "direct" else "angstrom"
+            pos_units = "crystal" if next(lines).strip().lower() == "direct" else "angstrom"
             pos = np.array([ next(lines).split()[0:3] for _ in range(nat) ], dtype=np.float64)
-            if_pos = np.array([ [1,1,1] for _ in range(nat) ], dtype=int)
 
-            # TODO based on pos_units convert to angstrom or crystal?
-
-        elif filename.lower().endswith("xyz"):
+        elif filename.lower().endswith("xyz") or ftype.lower() == "xyz":
             # then file is xyz format
             tjs.die("xyz format not implemented")
 
-        elif filename.lower().endswith("xsf"):
+        elif filename.lower().endswith("xsf") or ftype.lower() == "xsf":
             # then file is xsf format
             tjs.die("xsf format not implemented")
 
-        elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos"):
-            # then file is jdftx format
-            tjs.die("jdftx format not implemented")
+        elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos") \
+            or ftype.lower() == "jdftx":
+            # reread lines where all continuation lines have been resolved (i.e. lines that end in '\')
+            lines = iter(_resolve_continuation_lines(filename))
+            ion = []
+            pos = []
+            for line in lines:
+                line = line.split('#')[0].strip()
+                if line.startswith('lattice '):
+                    par = np.fromstring(line.strip('lattice'), dtype=float, sep=' ').reshape((3,3)).T
+                elif line.startswith('ion '):
+                    ion.append(line.split()[1])
+                    pos.append(np.array(line.split()[2:5], dtype=float))
+
+            pos = np.array(pos)
+            nat = len(ion)
+            par_units = "bohr"
+            tjs.warn("pos_units not set, defaulting to crystal")
+            pos_units = "crystal"
 
         else:
             # then file is QE
             nml = f90nml.read(filename)
-            if len(nml) == 0:
+            if len(nml) == 0 or ftype.lower() == "qeout":
                 # then file is output
                 for line in lines:
                     if "lattice parameter (alat)" in line:
@@ -302,8 +370,9 @@ class qegeo:
                         par = np.array([ next(lines).split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
                     elif "ATOMIC_POSITIONS" in line:
                         pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-                        lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
+                        lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
             else:
+                # ftype.lower() == "qeinp", no need to actually check
                 # then file is input
                 alat = None
                 for line in lines:
@@ -319,48 +388,55 @@ class qegeo:
                         par = convert_par(par, in_units=par_units, alat=alat)
                     elif 'ATOMIC_POSITIONS' in line:
                         pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-                        lines, pos, ion, if_pos = read_atomic_positions(lines, nat)
+                        lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
 
                 if int(nml['system']['ibrav']) != 0:
-                    par = ibrav_to_par(nml['system'])
+                    # if lattice is specified by ibrav then build par from ibrav
+                    par = _ibrav_to_par(nml['system'])
+                    par_units = "angstrom"
             
             # # convert atomic positions to angstrom
             # convert_pos(pos, pos_units, alat=alat, par=par)
-
-        return qegeo(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat, pos_units=pos_units, par_units=par_units)
+        return atomgeo(par=par, ion=ion, pos=pos, nat=nat, pos_units=pos_units, par_units=par_units)
     
 
-    def sort_ions(self):
+    def sort_ions(self, inplace=False):
         '''
         sort ions into categories and reorder corresponding positions
         '''
+        out = self if inplace else copy.deepcopy(self)
+
         # save ion and pos to dataframe
-        columns = ['ion'] + ['pos{}'.format(i) for i in range(3)] + ['if_pos{}'.format(i) for i in range(3)]
-    
+        columns = ['ion'] + ['pos{}'.format(i) for i in range(3)]
         df = pd.DataFrame(columns=columns)
         df.ion = self.ion
         for i in range(3):
             df['pos{}'.format(i)] = self.pos[:,i]
-        
-        for i in range(3):
-            df['if_pos{}'.format(i)] = self.if_pos[:,i]
 
+        # sort dataframe by ion column
         df.sort_values(by=['ion'], inplace=True)
 
-        self.ion = list(df['ion'])
-        self.pos = np.array(df.loc[:,'pos0':'pos2'])
-        self.if_pos = np.array(df.loc[:,'if_pos0':'if_pos2'], dtype=int)
+        # update ion and pos
+        out.ion = list(df['ion'])
+        out.pos = np.array(df.loc[:,'pos0':'pos2'])
+        return out
 
 
-    def write_poscar(self, filename, alat=1.0, save_sorted=False):
+    def write_file(self, filename):
         '''
-        write qegeo to poscar
+        write atomgeo to file (QE format)
         '''
-        if not save_sorted:
-            out = self
-            out.sort_ions()
-        else:
-            out = self.sort_ions()
+        with open(filename, 'w') as f:
+            f.write(str(self))
+
+        return None
+
+
+    def write_vasp(self, filename, alat=1.0, inplace=False):
+        '''
+        write atomgeo to poscar/vasp file type
+        '''
+        out = self.sort_ions(inplace=inplace)
 
         with open(filename, 'w') as f:
             # header
@@ -391,27 +467,44 @@ class qegeo:
         return None
 
 
-    # def write_jdftx():
-    #     '''
-    #     write qegeo to jdftx
-    #     '''
-    #     pass
+    def write_jdftx(self, filename, inplace=False, if_pos=0, write_latt=True):
+        '''
+        write qegeo to jdftx
+        '''
+        out = self if inplace else copy.deepcopy(self)
+
+        # change par and pos to bohr
+        out.change_units_par(units="bohr", inplace=True)
+
+        with open(filename, 'w') as f:
+            f.write("# Generated from PW2PY python module\n")
+            if write_latt:
+                # write lattice
+                f.write("lattice \\\n")
+                for i, par in enumerate(out.par.T):
+                    if i == 0 or i == 1:
+                        f.write( "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2]) )
+                    elif i == 2:
+                        f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2]) )
+            # write ion and pos
+            for ion, pos in zip(out.ion, out.pos):
+                f.write("ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(ion, pos[0], pos[1], pos[2], if_pos))
 
 
-    def write_xyz(self, filename):
+    def write_xyz(self, filename, inplace=False):
         '''
         write qegeo to xyz
         '''
+        out = self.change_units_pos(units="angstrom", inplace=inplace)
+
         with open(filename, 'w') as f:
             # nat
-            f.write("{}\n".format(self.nat))
+            f.write("{}\n".format(out.nat))
             # description
             f.write("Generated from PW2PY python module\n")
-            for ion, pos in zip(self.ion, self.pos):
+            for ion, pos in zip(out.ion, out.pos):
                 f.write("    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2]))
 
-        
-        pass
 
 
     # def write_xsf():
@@ -419,6 +512,89 @@ class qegeo:
     #     write qegeo to xsf
     #     '''
     #     pass
+
+
+class qegeo(atomgeo):
+    '''
+    same as atomgeo with if_pos
+    '''
+
+
+    def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None, par_units=None, pos_units=None):
+        super().__init__(par=par, ion=ion, pos=pos, nat=nat, par_units=par_units, pos_units=pos_units)
+        self.if_pos     = np.array(if_pos, dtype=np.int) if if_pos is not None else None
+
+
+    def __str__(self, par_units="angstrom", pos_units="crystal"):
+        '''
+        convert qegeo to str (QE format)
+        '''
+        # TODO need to be able to handle cases with ibrav != 0
+        ntyp = len(set(self.ion))
+        out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
+            .format(ntyp, str(self.nat))
+        out += "CELL_PARAMETERS {}\n".format(self.par_units)
+        for par in self.par:
+            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+        out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
+        for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
+            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
+                out += "\n"
+            else:
+                try:
+                    out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
+                except IndexError:
+                    None
+
+        return out
+
+
+    def load_if_pos(self, filename, if_pos_all=[1,1,1]):
+        '''
+        load if_pos data from filename, default to if_pos_all in many cases
+        '''
+
+        if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]):
+            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+
+        elif filename.lower().endswith("xyz"):
+            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+
+        elif filename.lower().endswith("xsf"):
+            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+
+        elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos"):
+            #TODO read if_pos from jdftx file
+            tjs.die("jdftx format not implemented")
+
+        else:
+            # store lines of file to iterator
+            with open(filename) as f:
+                lines = iter(f.readlines())
+            # then file is QE
+            nml = f90nml.read(filename)
+            if len(nml) == 0:
+                # then file is output
+                for line in lines:
+                    if "ATOMIC_POSITIONS" in line:
+                        _, _, _, self.if_pos = _read_atomic_positions(lines, nat, no_if_pos=False)
+            else:
+                for line in lines:
+                    line = line.split('!')[0]   # trim away comments
+                    if 'ATOMIC_POSITIONS' in line:
+                        _, _, _, self.if_pos = _read_atomic_positions(lines, nat, no_if_pos=False)
+
+        return self.if_pos
+    
+
+    # TODO implement sort_ions with if_pos
+    # def sort_ions(self, inplace=False):
+    #     '''
+    #     sort ions into categories and reorder corresponding positions
+    #     '''
+    #     super().sort_ions(self)
+    #     self.if_pos = np.array(df.loc[:,'if_pos0':'if_pos2'], dtype=int)
 
 
 
@@ -464,6 +640,7 @@ class qeinp(qegeo):
         self.kpt = kpt
     
     
+    # TODO
     # def convert_ibrav(self, newBrav):
     #     '''
     #     convert ibrav of self to newBrav (intended for ibrav != 0 to 0 or back)
@@ -559,10 +736,13 @@ class qeinp(qegeo):
                     tjs.die("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
         
         if int(qedict['nml']['system']['ibrav']) != 0:
-            par = ibrav_to_par(qedict['nml']['system'])
+            par = _ibrav_to_par(qedict['nml']['system'])
             qedict['CELL_PARAMETERS'] = "angstrom"
 
-        return qeinp(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt)
+        nat = qedict['nml']['system']['nat']
+
+        return qeinp(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt, nat=nat)
+
 
     def write_file(self, filename):
         '''
