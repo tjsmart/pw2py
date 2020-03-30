@@ -1,8 +1,17 @@
 pw2py python module
 ====================
 
+Description
+------------------------------------
+This code creates an interface between plane-wave based codes (particularly QE) and python. 
+It define several classes and methods which are commonly useful.
 
-Install this module
+Prerequisites:
+------------------------------------
+* [Python3](https://www.python.org/downloads)
+* Python Packages: [f90nml](https://pypi.org/project/f90nml/), [numpy](https://pypi.org/project/numpy/), [pandas](https://pypi.org/project/numpy/)
+
+Install this module:
 ------------------
 
 ```bash
@@ -17,4 +26,14 @@ done
 # OR copy files (suggested for permanent copy)
 cp *.py $(python -m site --user-site)
 ```
+
+Examples:
+------------------------------------
+Try out the examples under the directory [Examples](Examples/)
+
+
+Author(s)
+------------------------------------
+Tyler J. Smart
+
 
