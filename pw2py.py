@@ -815,6 +815,7 @@ class qeout():
         with open(filename) as f:
             lines = iter(f.readlines())
 
+        is_mag = False
         is_exx = False
         conv = {}
         for key in ['E', '!', '!!', 'dE', 'nsteps', 'nsteps_exx', 'tot_forc', 'max_forc', 
@@ -836,6 +837,8 @@ class qeout():
                 ntyp = int(line.split()[-1])
             elif "EXX-fraction" in line:
                 is_exx = True
+            elif "Starting magnetic structure" in line:
+                is_mag = True
             elif "crystal axes:" in line:
                 par = np.array([ next(lines)[0].split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
             elif "total cpu time spent up to now is" in line:
@@ -849,12 +852,17 @@ class qeout():
                     conv['!'].append(np.float64(line.split()[-2]))
                     next(lines)
                     conv['dE'].append(np.float64(next(lines).split()[-2]))
-                    [ next(lines) for _ in range(10) ]
-                    conv['tot_mag'].append(np.float64(next(lines).split()[-3]))
-                    conv['abs_mag'].append(np.float64(next(lines).split()[-3]))
+                    if is_mag:
+                        # skip throught till total magnetization
+                        while not "total magnetization" in line:
+                            print(line)
+                            line = next(lines)
+                        conv['tot_mag'].append(np.float64(line.split()[-3]))
+                        conv['abs_mag'].append(np.float64(next(lines).split()[-3]))
 
                 else:
                     conv['E'].append(np.float64(line.split()[-2]))
+
             elif "has" in line:
                 conv['nsteps'].append(int(line.split()[-2]))
             elif "SPIN UP" in line:
