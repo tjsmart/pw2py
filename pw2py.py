@@ -10,6 +10,8 @@ import tjs_resource as tjs
 
 # bohr to angstrom
 bohr_to_angstrom = 0.529177210903
+# ry to eV
+ry_to_ev = 13.6056980659
 # filter for stripping non-alphabetic characters from string
 nonalpha = re.compile('[^a-zA-Z]')
 
@@ -260,6 +262,9 @@ class atomgeo:
             out.qedict["CELL_PARAMETERS"] = units
         except:
             None
+        
+        # TODO need to update pos if they are crystal
+        tjs.warn("Positions not updated!!!")
 
 
     def change_units_pos(self, units="angstrom", inplace=True):
@@ -281,9 +286,40 @@ class atomgeo:
         except:
             None
         return out
+    
+
+    def shift_pos_to_unit(self, inplace=True):
+        '''
+        Shift all atoms to be within the unit cell dimensions (i.e. between 0<1 in crystal)
+        '''
+        out = self if inplace else copy.deepcopy(self)
+        # store original units, then change to crystal
+        save_units = copy.deepcopy(self.pos_units)
+        out.change_units_pos(units='crystal')
+        # loop through positions (px,py,pz), shift to all be in range of 0 <= p < 1
+        for pos in out.pos:
+            for p in pos:
+                p - (p // 1)
+        
+        # restore units
+        out.change_units_pos(units=save_units)
+        return out
+    
+
+    # def build_supercell(self, P: np.array, inplace=True):
+    #     '''
+    #     Build supercell by applying transformation matrix P
+
+    #     P (np.array, float, size = (3,3))
+        
+    #     new_par = P.dot(par)
+
+    #     '''
+    #     out = self if inplace else copy.deepcopy(self)
 
 
-    def from_file(filename, ftype='auto'):
+    @classmethod
+    def from_file(cls, filename, ftype='auto'):
         '''
         generate atomgeo object from file
 
@@ -397,7 +433,7 @@ class atomgeo:
             
             # # convert atomic positions to angstrom
             # convert_pos(pos, pos_units, alat=alat, par=par)
-        return atomgeo(par=par, ion=ion, pos=pos, nat=nat, pos_units=pos_units, par_units=par_units)
+        return cls(par=par, ion=ion, pos=pos, nat=nat, pos_units=pos_units, par_units=par_units)
     
 
     def sort_ions(self, inplace=False):
@@ -504,7 +540,6 @@ class atomgeo:
             f.write("Generated from PW2PY python module\n")
             for ion, pos in zip(out.ion, out.pos):
                 f.write("    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2]))
-
 
 
     # def write_xsf():
@@ -677,8 +712,9 @@ class qeinp(qegeo):
 
         return out
 
-
-    def from_file(filename):
+    
+    @classmethod
+    def from_file(cls, filename):
         '''
         create qeinp object from file
         '''
@@ -741,7 +777,7 @@ class qeinp(qegeo):
 
         nat = qedict['nml']['system']['nat']
 
-        return qeinp(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt, nat=nat)
+        return cls(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt, nat=nat)
 
 
     def write_file(self, filename):
@@ -807,7 +843,81 @@ class qeout():
         self.list_eigs = list_eigs
 
 
-    def from_file(filename):
+    @staticmethod
+    def final_energy(filename, conv_level='automatic', units='ev'):
+        '''
+        grab the final energy from filename and return convergence level
+
+        filename (str):
+            - quantum espresso output file
+
+        conv_level (str):
+            - 'total energy'    : return last instance of total energy (could be from inner SCF loop)
+            - '!'               : return last instance of total energy with SCF loop convergence
+            - '!!'              : return last instance of total energy from EXX loop convergence
+            - 'Final'           : return final energy (from relax/vc-relax)
+            - 'automatic'       : return highest convergence level achieved
+
+        returns
+        ---
+            tuple(energy, conv_level)
+                - energy(float) = energy in Ry
+                - conv_level(str) = level of convergence achieved
+        '''
+        # build dictionary of energy instances
+        energy_instances = {}
+        instances = ['Final', '!!', '!', 'total energy']
+        conv_level = conv_level.lower()
+        # check given conv_level is a valid option
+        if conv_level not in instances + ['automatic']:
+            return None, "invalid conv_level: '{}'".format(conv_level)
+        # load file to memory, storing in lines
+        with open(filename) as f:
+            lines = f.readlines()
+        # iterate backwards through file
+        for line in reversed(lines):
+            # skip lines without 'energy' in them
+            if 'energy' not in line: 
+                continue
+            # otherwise iterate through possible instances and extract energy when found
+            for instance in instances:
+                if instance in line and instance not in energy_instances:
+                    try:
+                        energy_instances[instance] = float(line.split('=')[1].split('R')[0])
+                    except IndexError:
+                        # false line, i.e. no total energy was given
+                        pass
+            # if all instances have been found then break loop
+            if instances == list(energy_instances.keys()):
+                break
+        
+        # now return the appropriate energy, based on user conv_level
+        if conv_level == 'automatic':
+            # for automatic iterate through instances and return first available instance
+            for instance in instances:
+                if instance in energy_instances:
+                    if units == 'eV':
+                        return energy_instances[instance] * ry_to_ev, instance
+                    else:
+                        return energy_instances[instance] * ry_to_ev, instance
+
+        elif conv_level not in energy_instances:
+            # user specified conv_level was not found in the file
+            return None, "conv_level '{}' not achieved".format(conv_level)
+        
+        else:
+            # return user specified conv_level
+            if units == 'eV':
+                return energy_instance[conv_level] * ry_to_ev, conv_level
+            else:
+                return energy_instance[conv_level], conv_level
+        
+        # this should not happen
+        return None, 'Unexpected error in final_energy'
+
+
+    @classmethod
+    def from_file(cls, filename):
         '''
         create qeout object from file
         '''
@@ -855,7 +965,6 @@ class qeout():
                     if is_mag:
                         # skip throught till total magnetization
                         while not "total magnetization" in line:
-                            print(line)
                             line = next(lines)
                         conv['tot_mag'].append(np.float64(line.split()[-3]))
                         conv['abs_mag'].append(np.float64(next(lines).split()[-3]))
@@ -912,7 +1021,7 @@ class qeout():
                     is_first = False
                 list_pos.append(np.array(pos))
 
-        return qeout(nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs)
+        return cls(nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs)
     
 
     def calcEigs(self):
