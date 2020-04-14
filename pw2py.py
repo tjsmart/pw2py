@@ -193,22 +193,140 @@ class atomgeo:
         - units of pos, acceptable values include "angstrom", "bohr", "crystal", "alat"
     '''
 
-
-    def __init__(self, par=None, ion=None, pos=None, nat=None, par_units=None, pos_units=None):
-    # def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None):
-        self.par        = np.array(par, dtype=np.float) if par is not None else None
-        self.ion        = list(ion) if ion is not None else None
-        self.pos        = np.array(pos, dtype=np.float) if pos is not None else None
-        self.par_units  = par_units
-        self.pos_units  = pos_units
-        self.nat        = int(nat)
+    _valid_par_units = ['angstrom', 'bohr', 'alat']
+    _valid_pos_units = ['angstrom', 'bohr', 'crystal', 'alat']
 
 
-    def __str__(self):
+    def __init__(self, ion=None, par=None, pos=None, par_units=None, pos_units=None):
+        self._ion       = np.array(ion, dtype=str)
+        self._par       = np.array(par, dtype=float)
+        self._pos       = np.array(pos, dtype=float)
+        self._par_units  = str(par_units).lower()
+        self._pos_units  = str(pos_units).lower()
+
+
+    # define ion property
+    @property
+    def ion(self):
+        ''' return value of atomgeo._ion '''
+        return self._ion
+    @ion.setter
+    def ion(self, ion, ion_units=None):
+        ''' set value of atomgeo._ion '''
+        if np.array(ion).shape != self.ion.shape:
+            raise ValueError("Passed array is not of the same shape as the original array")
+        self._ion = np.array(ion, dtype=str)
+
+
+    # define par property
+    @property
+    def par(self):
+        ''' return value of atomgeo._par '''
+        return self._par
+    @par.setter
+    def par(self, par):
+        ''' set value of atomgeo._par '''
+        if np.array(par).shape != self.par.shape:
+            raise ValueError("Cell parameters must be an array of shape (3,3)")
+        self._par = np.array(par, dtype=float)
+
+
+    # define pos property
+    @property
+    def pos(self):
+        ''' return value of atomgeo._pos '''
+        return self._pos
+    @pos.setter
+    def pos(self, pos, pos_units=None):
+        ''' set value of atomgeo._pos '''
+        if np.array(pos).shape != self.pos.shape:
+            raise ValueError("Passed array is not of the same shape as the original array")
+        self._pos = np.array(pos, dtype=float)
+
+
+    # define par_units property
+    @property
+    def par_units(self):
+        ''' return value of atomgeo._par_units '''
+        return self._par_units
+    @par_units.setter
+    def par_units(self, units, inplace=True):
+        '''
+        Convert cell parameters to 'units'
+        updates values of: par, par_units, (qedict['CELL_PARAMETERS'])
+        '''
+        units = str(units).lower()
+        if units not in atomgeo._valid_par_units:
+            raise ValueError("Invalid value for units: {}".format(units))
+
+        out = self if inplace else copy.deepcopy(self)
+        if self.pos_units == 'crystal':
+            # TODO need to update pos if they are crystal
+            tjs.warn("Positions not updated!!!")
+            return None
+        out.par = convert_par(out.par, out.par_units, out_units=units)
+        out._par_units = units
+        # TODO bottom part should only belong to qeinp
+        try:
+            out.qedict["CELL_PARAMETERS"] = units
+        except:
+            None
+        return out
+
+
+    # define pos_units property
+    @property
+    def pos_units(self):
+        ''' return value of atomgeo._pos_units '''
+        return self._pos_units
+    @pos_units.setter
+    def pos_units(self, units, inplace=True):
+        '''
+        Convert atomic positions to 'units'
+        updates values of: pos, pos_units, (qedict['ATOMIC_POSITIONS'])
+        '''
+        units = str(units).lower()
+        if units not in atomgeo._valid_pos_units:
+            raise ValueError("Invalid value for units: {}".format(units))
+
+        out = self if inplace else copy.deepcopy(self)
+        out.pos = convert_pos(out.pos, out.pos_units, out_units=units, par=out.par, par_units=out.par_units)
+        out._pos_units = units
+        # TODO bottom part should only belong to qeinp
+        try:
+            out.qedict["ATOMIC_POSITIONS"] = units
+        except:
+            None
+        return out
+    
+
+    # define nat property
+    @property
+    def nat(self):
+        ''' return number of atoms '''
+        return len(self._ion)
+
+
+    def __repr__(self):
+        '''
+        define atomgeo representation (str)
+        '''
+        out = "atomgeo("
+        out += "ion = " + repr(self.ion) + ","
+        out += "par = " + repr(self.par) + ","
+        out += "pos = " + repr(self.pos) + ","
+        out += "nat = " + repr(self.nat) + ","
+        out += "par_units = " + repr(self.par_units) + ","
+        out += "pos_units = " + repr(self.pos_units) + ")"
+        return out
+
+
+    def __str__(self, ftype='qe'):
         '''
         convert atomgeo to str (QE format)
         '''
-        # TODO need to be able to handle cases with ibrav != 0
+        # print('-->', ftype)
+        # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific) 
         ntyp = len(set(self.ion))
         out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
             .format(ntyp, str(self.nat))
@@ -242,50 +360,6 @@ class atomgeo:
     #     '''
     #     replace(self, None, a)
     #     pass
-
-
-    def change_units_par(self, units="angstrom", inplace=True):
-        '''
-        Convert cell parameters to 'units'
-
-        units (str)
-            - acceptable values: ['alat', 'angstrom', 'bohr']
-        
-        updates values of: par, par_units, (qedict['CELL_PARAMETERS'])
-        '''
-        out = self if inplace else copy.deepcopy(self)
-
-        out.par = convert_par(out.par, out.par_units, out_units=units)
-        out.par_units = units
-        # TODO bottom part should only belong to qeinp
-        try:
-            out.qedict["CELL_PARAMETERS"] = units
-        except:
-            None
-        
-        # TODO need to update pos if they are crystal
-        tjs.warn("Positions not updated!!!")
-
-
-    def change_units_pos(self, units="angstrom", inplace=True):
-        '''
-        Convert atomic positions to 'units'
-
-        units (str)
-            - acceptable values: ['alat', 'bohr', 'angstrom', 'crystal']
-        
-        updates values of: pos, pos_units, (qedict['ATOMIC_POSITIONS'])
-        '''
-        out = self if inplace else copy.deepcopy(self)
-
-        out.pos = convert_pos(out.pos, out.pos_units, out_units=units, par=out.par, par_units=out.par_units)
-        out.pos_units = units
-        # TODO bottom part should only belong to qeinp
-        try:
-            out.qedict["ATOMIC_POSITIONS"] = units
-        except:
-            None
-        return out
     
 
     def shift_pos_to_unit(self, inplace=True):
@@ -420,7 +494,8 @@ class atomgeo:
                     line = line.split('!')[0]   # trim away comments
                     if 'CELL_PARAMETERS' in line:
                         par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-                        par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
+                        par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] \
+                            , dtype=np.float64 )
                         par = convert_par(par, in_units=par_units, alat=alat)
                     elif 'ATOMIC_POSITIONS' in line:
                         pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
@@ -433,7 +508,7 @@ class atomgeo:
             
             # # convert atomic positions to angstrom
             # convert_pos(pos, pos_units, alat=alat, par=par)
-        return cls(par=par, ion=ion, pos=pos, nat=nat, pos_units=pos_units, par_units=par_units)
+        return cls(ion=ion, par=par, pos=pos, pos_units=pos_units, par_units=par_units)
     
 
     def sort_ions(self, inplace=False):
