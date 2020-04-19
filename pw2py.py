@@ -43,9 +43,9 @@ def _read_atomic_positions(lines, nat, no_if_pos=True):
         pos.append(np.array(nl[1:4], dtype=np.float64))
         if not no_if_pos:
             try:
-                if_pos.append(np.array([nl[4], nl[5], nl[6]], dtype=int)) # explicit so indexError will be thrown
+                if_pos.append(np.array([nl[4], nl[5], nl[6]], dtype=int))  # explicit so indexError will be thrown
             except IndexError:
-                if_pos.append(np.array([1,1,1], dtype=int))
+                if_pos.append(np.array([1, 1, 1], dtype=int))
     if no_if_pos:
         return lines, np.array(pos), ion
     else:
@@ -63,43 +63,43 @@ def _ibrav_to_par(system_nml, units="angstrom"):
         return None
     elif int(system_nml['ibrav']) == 1:
         # v1 = a(1,0,0),  v2 = a(0,1,0),  v3 = a(0,0,1)
-        par = np.array( [[1,0,0],[0,1,0],[0,0,1]] , dtype=np.float64)
+        par = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float64)
     elif int(system_nml['ibrav']) == 2:
         # v1 = (a/2)(-1,0,1),  v2 = (a/2)(0,1,1), v3 = (a/2)(-1,1,0)
-        par = np.array( [[-1,0,1],[0,1,1],[-1,1,0]] , dtype=np.float64) * 0.5
+        par = np.array([[-1, 0, 1], [0, 1, 1], [-1, 1, 0]], dtype=np.float64) * 0.5
     elif int(system_nml['ibrav']) == 3:
         # v1 = (a/2)(1,1,1),  v2 = (a/2)(-1,1,1),  v3 = (a/2)(-1,-1,1)
-        par = np.array( [[1,1,1],[-1,1,1],[-1,-1,1]] , dtype=np.float64) * 0.5
+        par = np.array([[1, 1, 1], [-1, 1, 1], [-1, -1, 1]], dtype=np.float64) * 0.5
     elif int(system_nml['ibrav']) == 4:
         # v1 = a(1,0,0),  v2 = a(-1/2,sqrt(3)/2,0),  v3 = a(0,0,c/a)
-        par = np.array( [[1,0,0],[-1/2,np.sqrt(3)/2,0],[0,0,1]] , dtype=np.float64)
+        par = np.array([[1, 0, 0], [-1/2, np.sqrt(3)/2, 0], [0, 0, 1]], dtype=np.float64)
     elif int(system_nml['ibrav']) == 6:
         # v1 = a(1,0,0),  v2 = a(0,1,0),  v3 = a(0,0,c/a)
-        par = np.array( [[1,0,0],[0,1,0],[0,0,1]] , dtype=np.float64)
+        par = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float64)
     elif int(system_nml['ibrav']) == 8:
         # v1 = (a,0,0),  v2 = (0,b,0), v3 = (0,0,c)
-        par = np.array( [[1,0,0],[0,1,0],[0,0,1]] , dtype=np.float64)
+        par = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float64)
     else:
-        tjs.die("Unsupported value for ibrav '{}'".format(system_nml['ibrav']))
+        raise ValueError("Unsupported value for ibrav '{}'".format(system_nml['ibrav']))
 
     # rescale lattice parameters
     if 'a' in system_nml.keys():
         par *= np.float64(system_nml['a'])
         if int(system_nml['ibrav']) in [8]:
-            par[1,1] = np.float64(system_nml['b'])
+            par[1, 1] = np.float64(system_nml['b'])
         if int(system_nml['ibrav']) in [4, 6, 8]:
-            par[2,2] = np.float64(system_nml['c'])
+            par[2, 2] = np.float64(system_nml['c'])
     elif 'celldm' in system_nml.keys():
         par *= np.float64(system_nml['celldm'][0]) * bohr_to_angstrom
         if int(system_nml['ibrav']) in [8]:
-            par[1,1] *= np.float64(system_nml['celldm'][1])
+            par[1, 1] *= np.float64(system_nml['celldm'][1])
         if int(system_nml['ibrav']) in [4, 6, 8]:
-            par[2,2] *= np.float64(system_nml['celldm'][2])
-    
+            par[2, 2] *= np.float64(system_nml['celldm'][2])
+
     # check units
     if units == "bohr":
         par /= bohr_to_angstrom
-    
+
     return par
 
 
@@ -112,20 +112,20 @@ def convert_par(par, in_units, out_units="angstrom", alat=None, alat_units="angs
     if alat_units == "bohr":
         alat *= alat * bohr_to_angstrom
     elif alat_units != "angstrom":
-        tjs.die("Invalid value of alat_units: '{}".format(alat_units))
+        raise ValueError("Invalid value of alat_units: '{}".format(alat_units))
     # define unit dictionary for unit conversion
-    conversion = {'alat' : alat, 'angstrom' : 1, 'bohr' : bohr_to_angstrom}
+    conversion = {'alat': alat, 'angstrom': 1, 'bohr': bohr_to_angstrom}
     # check input
     if in_units == out_units:
         return par
-    elif not in_units in conversion:
-        tjs.die("Invalid value of in_units: '{}'".format(in_units))
-    elif not out_units in conversion:
-        tjs.die("Invalid value of out_units: '{}'".format(out_units))
-    elif (in_units == "alat" or out_units == "alat") and alat == None:
-        tjs.die("Requested alat conversion but value for alat was not provided.")
+    elif in_units not in conversion:
+        raise ValueError("Invalid value of in_units: '{}'".format(in_units))
+    elif out_units not in conversion:
+        raise ValueError("Invalid value of out_units: '{}'".format(out_units))
+    elif (in_units == "alat" or out_units == "alat") and alat is None:
+        raise ValueError("Requested alat conversion but value for alat was not provided.")
     # calculate prefactor
-    return par / np.float64( conversion[out_units.lower()] ) * np.float64( conversion[in_units.lower()] )
+    return par / np.float64(conversion[out_units.lower()]) * np.float64(conversion[in_units.lower()])
 
 
 def convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="angstrom", par=None, par_units=None):
@@ -138,7 +138,7 @@ def convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="angs
     elif in_units != 'crystal' and out_units != 'crystal':
         return convert_par(pos, in_units=in_units, out_units=out_units, alat=alat, alat_units=alat_units)
     elif par is None or par_units is None:
-        tjs.die("Requested crystal conversion but cell parameters (par) were not provided.")
+        raise ValueError("Requested crystal conversion but cell parameters (par) were not provided.")
 
     # cases with crystal conversion
     prefactor = 1.0
@@ -146,7 +146,7 @@ def convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="angs
         prefactor /= bohr_to_angstrom
     elif (par_units == 'bohr' and out_units == 'angstrom') or (par_units == 'angstrom' and in_units == 'bohr'):
         prefactor *= bohr_to_angstrom
-    
+
     if in_units == 'crystal':
         return pos.dot(par) * prefactor
     elif out_units == 'crystal':
@@ -160,7 +160,7 @@ def _readEigs(lines, nbnd):
     next(lines)
     eigs = []
     for _ in range(nbnd // 8 + 1):
-        eigs.append( np.fromstring(next(lines), sep=' ', dtype=np.float64) )
+        eigs.append(np.fromstring(next(lines), sep=' ', dtype=np.float64))
 
     return np.hstack(eigs), lines
 
@@ -172,25 +172,25 @@ class atomgeo:
     Suggested to make object from file:
     -----
     geo = atomgeo.from_file(filename, ftype="auto")
-    
+
     Attributes:
     -----
 
     par (np.array, float, shape = (3,3))
         - cell parameters
-    
+
     par_units (str)
         - units of par, acceptable values include "angstrom", "bohr", "alat"
 
     nat (int)
         - number of atoms
-    
+
     ion (list, str)
         - list of atom/ion names (QE format)
-    
+
     pos (np.array, float, shape = (nat, 3))
         - atomic positions
-    
+
     pos_units (str)
         - units of pos, acceptable values include "angstrom", "bohr", "crystal", "alat"
     '''
@@ -201,34 +201,33 @@ class atomgeo:
     # Warning reading from xyz not supported!
     _valid_ftypes = ['qe', 'jdftx', 'xyz', 'xsf', 'vasp']
 
-
     def __init__(self, ion=None, par=None, pos=None, par_units=None, pos_units=None):
         ''' initialize atomgeo instance '''
-        self._ion       = np.array(ion, dtype=str)
-        self._par       = np.array(par, dtype=float)
-        self._pos       = np.array(pos, dtype=float)
-        self._par_units  = str(par_units).lower()
-        self._pos_units  = str(pos_units).lower()
-
+        self._ion = np.array(ion, dtype=str)
+        self._par = np.array(par, dtype=float)
+        self._pos = np.array(pos, dtype=float)
+        self._par_units = str(par_units).lower()
+        self._pos_units = str(pos_units).lower()
 
     # define ion property
     @property
     def ion(self):
         ''' return value of atomgeo._ion '''
         return self._ion
+
     @ion.setter
     def ion(self, ion, ion_units=None):
         ''' set value of atomgeo._ion '''
-        if np.array(ion).shape != self.ion.shape:
+        if np.array(ion).shape != self._ion.shape:
             raise ValueError("Passed array is not of the same shape as the original array")
         self._ion = np.array(ion, dtype=str)
-
 
     # define par property
     @property
     def par(self):
         ''' return value of atomgeo._par '''
         return self._par
+
     @par.setter
     def par(self, par):
         ''' set value of atomgeo._par '''
@@ -236,12 +235,12 @@ class atomgeo:
             raise ValueError("Cell parameters must be an array of shape (3,3)")
         self._par = np.array(par, dtype=float)
 
-
     # define pos property
     @property
     def pos(self):
         ''' return value of atomgeo._pos '''
         return self._pos
+
     @pos.setter
     def pos(self, pos, pos_units=None):
         ''' set value of atomgeo._pos '''
@@ -249,12 +248,12 @@ class atomgeo:
             raise ValueError("Passed array is not of the same shape as the original array")
         self._pos = np.array(pos, dtype=float)
 
-
     # define par_units property
     @property
     def par_units(self):
         ''' return value of atomgeo._par_units '''
         return self._par_units
+
     @par_units.setter
     def par_units(self, units, inplace=True):
         '''
@@ -271,16 +270,16 @@ class atomgeo:
         # TODO bottom part should only belong to qeinp
         try:
             out.qedict["CELL_PARAMETERS"] = units
-        except:
-            None
+        except AttributeError:
+            pass
         return out
-
 
     # define pos_units property
     @property
     def pos_units(self):
         ''' return value of atomgeo._pos_units '''
         return self._pos_units
+
     @pos_units.setter
     def pos_units(self, units, inplace=True):
         '''
@@ -297,17 +296,15 @@ class atomgeo:
         # TODO bottom part should only belong to qeinp
         try:
             out.qedict["ATOMIC_POSITIONS"] = units
-        except:
-            None
+        except AttributeError:
+            pass
         return out
-    
 
     # define nat property
     @property
     def nat(self):
         ''' return number of atoms '''
         return self._ion.size
-
 
     def __repr__(self):
         '''
@@ -321,15 +318,14 @@ class atomgeo:
         out += "pos_units = " + repr(self.pos_units) + ")"
         return out
 
-
     def __str__(self, ftype='qe'):
         '''
         convert atomgeo to str (default is qe format)
         '''
         ftype = ftype.lower()
-        
+
         if ftype == 'qe':
-            # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific) 
+            # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific)
             _ntyp = len(set(self.ion))
             out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
                 .format(_ntyp, str(self.nat))
@@ -359,13 +355,13 @@ class atomgeo:
             out += "     {}\n".format("     ".join(map(str, ionAndCount.values())))
             # pos type
             if geo.pos_units == "angstrom":
-                out +="{}\n".format("cartesian")
+                out += "{}\n".format("cartesian")
             elif geo.pos_units == "crystal":
-                out +="{}\n".format("direct")
+                out += "{}\n".format("direct")
             # pos
             for pos in geo.pos:
                 out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2])
-        
+
         elif ftype == 'jdftx':
             _if_pos = 1
             geo = copy.deepcopy(self)
@@ -380,13 +376,13 @@ class atomgeo:
             out += "lattice \\\n"
             for i, par in enumerate(geo.par.T):
                 if i == 0 or i == 1:
-                    out +=  "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2])
+                    out += "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2])
                 elif i == 2:
-                    out +=  "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+                    out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
             # write ion and pos
             for ion, pos in zip(geo.ion, geo.pos):
                 out += "ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(ion, pos[0], pos[1], pos[2], _if_pos)
-        
+
         elif ftype == 'xyz':
             geo = copy.deepcopy(self)
             geo.pos_units = 'angstrom'
@@ -396,12 +392,12 @@ class atomgeo:
             out += "Generated from the PW2PY python module\n"
             for ion, pos in zip(geo.ion, geo.pos):
                 out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
-        
+
         elif ftype == 'xsf':
             geo = copy.deepcopy(self)
             out = "# Generated from the PW2PY python module\n"
             out += "DIM-GROUP\n"
-            out += "    {:5d}    {:3d}\n".format(3,1)
+            out += "    {:5d}    {:3d}\n".format(3, 1)
             # par
             geo.par_units = 'angstrom'
             for _section in ["PRIMVEC\n", "CONVVEC\n"]:
@@ -412,17 +408,16 @@ class atomgeo:
             geo.pos_units = 'angstrom'
             for _section in ["PRIMCOORD\n", "CONVCOORD\n"]:
                 out += _section
-                out += "    {:5d}    {:3d}\n".format(geo.nat,1)
+                out += "    {:5d}    {:3d}\n".format(geo.nat, 1)
                 for ion, pos in zip(geo.ion, geo.pos):
                     _an = element(ion).atomic_number
                     out += "    {:5d}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(_an, pos[0], pos[1], pos[2])
-        
+
         else:
             raise ValueError('Value of ftype not recognized')
 
         return out
 
-    
     def replace_ion(self, old_ion, new_ion):
         '''
         replace ion species 'old_ion' with 'new_ion'
@@ -430,8 +425,7 @@ class atomgeo:
         np.place(self.ion, self.ion == old_ion, new_ion)
 
         # TODO for qeinp need to edit ATOMIC_SPECIES
-        
-    
+
     def add_atom(self, atoms):
         '''
         append atoms to self.ion and self.pos
@@ -446,8 +440,6 @@ class atomgeo:
 
         # TODO for qeinp need to increment nat, ntyp (potentially), ATOMIC_SPECIES
 
-        
-    
     def remove_indices(self, indices):
         '''
         remove list of indices from self.ion and self.pos
@@ -457,7 +449,6 @@ class atomgeo:
         self._pos = self._pos[filt]
 
         # TODO for qeinp need to update nat, ntyp, ATOMIC_SPECIES
-    
 
     def shift_pos_to_unit(self, inplace=True):
         '''
@@ -471,12 +462,11 @@ class atomgeo:
         for pos in out.pos:
             for p in pos:
                 p - (p // 1)
-        
+
         # restore units
         out.pos_units = _save_units
         if not inplace:
             return out
-    
 
     def build_supercell(self, P: np.array, inplace=True):
         '''
@@ -487,7 +477,7 @@ class atomgeo:
         P (np.array, int, size = (3,1))
         '''
         # format input transformation vector
-        P = np.array(P, dtype=int).reshape((3,1))
+        P = np.array(P, dtype=int).reshape((3, 1))
         # deepcopy if not inplace
         out = self if inplace else copy.deepcopy(self)
         # store pos units
@@ -504,15 +494,16 @@ class atomgeo:
         out._pos = np.divide(out._pos, P.reshape(1, -1))
 
         # generate images of ion and positions
-        inv_P = 1 / P.reshape(1,-1)
+        inv_P = 1 / P.reshape(1, -1)
         ion_images, pos_images = [], []
         for i in range(int(P[0])):
             for j in range(int(P[1])):
                 for k in range(int(P[2])):
-                    if i == j == k == 0: continue
+                    if i == j == k == 0:
+                        continue
                     ion_images.append(out._ion)
-                    pos_images.append(out._pos + inv_P * [i,j,k])
-        
+                    pos_images.append(out._pos + inv_P * [i, j, k])
+
         # append images
         out._ion = np.append(out._ion, ion_images)
         out._pos = np.append(out._pos, pos_images).reshape((out.nat, 3))
@@ -522,8 +513,6 @@ class atomgeo:
 
         if not inplace:
             return out
-        
-
 
     @classmethod
     def from_file(cls, filename, ftype='auto'):
@@ -534,11 +523,11 @@ class atomgeo:
         ----
         filename (str)
             - name/path to file to be read
-        
+
         ftype (str)
             - specify filetype otherwise ftype='auto' will use filename to detect file type
             - acceptable values: ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']
-        
+
         output
         ----
         atomgeo (atomgeo object)
@@ -551,12 +540,12 @@ class atomgeo:
             lines = iter(f.readlines())
 
         if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]) \
-            or ftype.lower() == "vasp":
+                or ftype.lower() == "vasp":
             # then file is vasp
-            next(lines) # skip first line
+            next(lines)  # skip first line
             # read cell par
             alat = np.float64(next(lines))
-            par = np.array([ next(lines).split()[0:3] for _ in range(3) ], dtype=np.float64) * alat
+            par = np.array([next(lines).split()[0:3] for _ in range(3)], dtype=np.float64) * alat
             par_units = "angstrom"
             # read ions
             _ion = next(lines).split()
@@ -567,18 +556,18 @@ class atomgeo:
             nat = len(ion)
             # read pos type
             pos_units = "crystal" if next(lines).strip().lower() == "direct" else "angstrom"
-            pos = np.array([ next(lines).split()[0:3] for _ in range(nat) ], dtype=np.float64)
+            pos = np.array([next(lines).split()[0:3] for _ in range(nat)], dtype=np.float64)
 
         elif filename.lower().endswith("xyz") or ftype.lower() == "xyz":
             # then file is xyz format
-            tjs.die("xyz format not implemented")
+            raise ValueError("xyz format not implemented")
 
         elif filename.lower().endswith("xsf") or ftype.lower() == "xsf":
             for line in lines:
                 if 'PRIMVEC' in line:
                     # read cell parameters
                     par_units = 'angstrom'
-                    par = np.array([ next(lines).split()[0:3] for _ in range(3) ], dtype=np.float64)
+                    par = np.array([next(lines).split()[0:3] for _ in range(3)], dtype=np.float64)
                 elif 'PRIMCOORD' in line:
                     # read ions and pos
                     pos_units = 'angstrom'
@@ -590,7 +579,7 @@ class atomgeo:
                         pos.append(nl[1:4])
 
         elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos") \
-            or ftype.lower() == "jdftx":
+                or ftype.lower() == "jdftx":
             # reread lines where all continuation lines have been resolved (i.e. lines that end in '\')
             lines = iter(_resolve_continuation_lines(filename))
             ion = []
@@ -598,7 +587,7 @@ class atomgeo:
             for line in lines:
                 line = line.split('#')[0].strip()
                 if line.startswith('lattice '):
-                    par = np.fromstring(line.strip('lattice'), dtype=float, sep=' ').reshape((3,3)).T
+                    par = np.fromstring(line.strip('lattice'), dtype=float, sep=' ').reshape((3, 3)).T
                 elif line.startswith('ion '):
                     ion.append(line.split()[1])
                     pos.append(np.array(line.split()[2:5], dtype=float))
@@ -622,7 +611,7 @@ class atomgeo:
                     elif "crystal axes:" in line:
                         # cell parameters in angstrom
                         par_units = "angstrom"
-                        par = np.array([ next(lines).split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
+                        par = np.array([next(lines).split()[3:6] for _ in range(3)], dtype=np.float64) * alat
                     elif "ATOMIC_POSITIONS" in line:
                         pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
                         lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
@@ -639,8 +628,8 @@ class atomgeo:
                     line = line.split('!')[0]   # trim away comments
                     if 'CELL_PARAMETERS' in line:
                         par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-                        par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] \
-                            , dtype=np.float64 )
+                        par = np.array([np.fromstring(next(lines).split('!')[0], sep=' ')
+                                        for _ in range(3)], dtype=np.float64)
                         par = convert_par(par, in_units=par_units, alat=alat)
                     elif 'ATOMIC_POSITIONS' in line:
                         pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
@@ -650,11 +639,10 @@ class atomgeo:
                     # if lattice is specified by ibrav then build par from ibrav
                     par = _ibrav_to_par(nml['system'])
                     par_units = "angstrom"
-            
+
             # # convert atomic positions to angstrom
             # convert_pos(pos, pos_units, alat=alat, par=par)
         return cls(ion=ion, par=par, pos=pos, pos_units=pos_units, par_units=par_units)
-    
 
     def sort_ions(self, inplace=False):
         '''
@@ -667,16 +655,15 @@ class atomgeo:
         df = pd.DataFrame(columns=columns)
         df.ion = self.ion
         for i in range(3):
-            df['pos{}'.format(i)] = self.pos[:,i]
+            df['pos{}'.format(i)] = self.pos[:, i]
 
         # sort dataframe by ion column
         df.sort_values(by=['ion'], inplace=True)
 
         # update ion and pos
         out.ion = list(df['ion'])
-        out.pos = np.array(df.loc[:,'pos0':'pos2'])
+        out.pos = np.array(df.loc[:, 'pos0':'pos2'])
         return out
-
 
     def write_file(self, filename, ftype='auto'):
         '''
@@ -707,11 +694,9 @@ class qegeo(atomgeo):
     same as atomgeo with if_pos and ibrav capabilities
     '''
 
-
     def __init__(self, par=None, ion=None, pos=None, if_pos=None, nat=None, par_units=None, pos_units=None):
         super().__init__(par=par, ion=ion, pos=pos, nat=nat, par_units=par_units, pos_units=pos_units)
-        self.if_pos     = np.array(if_pos, dtype=np.int) if if_pos is not None else None
-
+        self.if_pos = np.array(if_pos, dtype=np.int) if if_pos is not None else None
 
     def __str__(self, par_units="angstrom", pos_units="crystal"):
         '''
@@ -727,7 +712,7 @@ class qegeo(atomgeo):
         out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
         for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
             out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
-            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
+            if np.array_equal(if_pos, np.array([1, 1, 1], dtype=int)):
                 out += "\n"
             else:
                 try:
@@ -737,23 +722,24 @@ class qegeo(atomgeo):
 
         return out
 
-
-    def load_if_pos(self, filename, if_pos_all=[1,1,1]):
+    def load_if_pos(self, filename, if_pos_all=[1, 1, 1]):
         '''
         load if_pos data from filename, default to if_pos_all in many cases
         '''
 
+        # TODO this likely needs to be rewritten or checked
+
         if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]):
-            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+            self.if_pos = np.array([if_pos_all for _ in range(self.nat)], dtype=int)
 
         elif filename.lower().endswith("xyz"):
-            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+            self.if_pos = np.array([if_pos_all for _ in range(self.nat)], dtype=int)
 
         elif filename.lower().endswith("xsf"):
-            self.if_pos = np.array([ if_pos_all for _ in range(nat) ], dtype=int)
+            self.if_pos = np.array([if_pos_all for _ in range(self.nat)], dtype=int)
 
         elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos"):
-            #TODO read if_pos from jdftx file
+            # TODO read if_pos from jdftx file
             tjs.die("jdftx format not implemented")
 
         else:
@@ -774,7 +760,6 @@ class qegeo(atomgeo):
                         _, _, _, self.if_pos = _read_atomic_positions(lines, nat, no_if_pos=False)
 
         return self.if_pos
-    
 
     # TODO implement sort_ions with if_pos
     # def sort_ions(self, inplace=False):
@@ -783,7 +768,6 @@ class qegeo(atomgeo):
     #     '''
     #     super().sort_ions(self)
     #     self.if_pos = np.array(df.loc[:,'if_pos0':'if_pos2'], dtype=int)
-
 
 
 class qeinp(qegeo):
@@ -804,37 +788,35 @@ class qeinp(qegeo):
         # if any(None in locals().values()):
         #     tjs.die("Cannot initialize qeinp with 'None'\n{}".format(locals))
 
+        # TODO this will be fixed when par_units/pos_units move to be an attribute
         if par_units is None:
-            # TODO what to do here when ibrav != 0!!! -- should 
+            # TODO what to do here when ibrav != 0!!! -- should
             try:
                 par_units = qedict['CELL_PARAMETERS']
             except:
                 par_units = None
         else:
             par_units = par_units
-        
+
         if pos_units is None:
-            # TODO what to do here when ibrav != 0!!! -- should 
+            # TODO what to do here when ibrav != 0!!! -- should
             try:
                 pos_units = qedict['ATOMIC_POSITIONS']
             except:
                 pos_units = None
         else:
             pos_units = pos_units
-        
 
         super().__init__(par=par, ion=ion, pos=pos, if_pos=if_pos, nat=nat, par_units=par_units, pos_units=pos_units)
         self.qedict = qedict
         self.kpt = kpt
-    
-    
+
     # TODO
     # def convert_ibrav(self, newBrav):
     #     '''
     #     convert ibrav of self to newBrav (intended for ibrav != 0 to 0 or back)
     #     '''
     #     pass
-    
 
     def __str__(self):
         '''
@@ -853,26 +835,25 @@ class qeinp(qegeo):
         out += "ATOMIC_POSITIONS {}\n".format(self.qedict['ATOMIC_POSITIONS'])
         for ion, pos, if_pos in zip(self.ion, self.pos, self.if_pos):
             out += "    {}    {:16.9f}  {:16.9f}  {:16.9f}".format(ion, pos[0], pos[1], pos[2])
-            if np.array_equal(if_pos, np.array([1,1,1], dtype=int)):
+            if np.array_equal(if_pos, np.array([1, 1, 1], dtype=int)):
                 out += "\n"
             else:
                 out += "    {}  {}  {}\n".format(if_pos[0], if_pos[1], if_pos[2])
         out += "K_POINTS {}\n".format(self.qedict['K_POINTS'])
         if self.qedict['K_POINTS'] == "automatic":
             out += "    {}  {}  {}  {}  {}  {}\n".format(
-                self.kpt[0,0], self.kpt[0,1], self.kpt[0,2], self.kpt[1,0], self.kpt[1,1], self.kpt[1,2]
+                self.kpt[0, 0], self.kpt[0, 1], self.kpt[0, 2], self.kpt[1, 0], self.kpt[1, 1], self.kpt[1, 2]
             )
 
         return out
 
-    
     @classmethod
     def from_file(cls, filename):
         '''
         create qeinp object from file
         '''
         # intialize qedict object
-        qedict = {'nml' : f90nml.read(filename)}
+        qedict = {'nml': f90nml.read(filename)}
 
         # store lines of file to iterator
         with open(filename) as f:
@@ -882,21 +863,16 @@ class qeinp(qegeo):
         for line in lines:
             line = line.split('!')[0]   # trim away comments
             if 'CELL_PARAMETERS' in line:
-                try:
-                    qedict['CELL_PARAMETERS'] = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-                except:
-                    tjs.die("Invalid CELL_PARAMETERS line: \n{}".format(line))
+                qedict['CELL_PARAMETERS'] = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
                 # read cell parameters
-                par = np.array( [np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)] , dtype=np.float64 )
+                par = np.array([np.fromstring(next(lines).split('!')[0], sep=' ') for _ in range(3)], dtype=np.float64)
 
             elif 'ATOMIC_SPECIES' in line:
-                qedict['ATOMIC_SPECIES'] = [next(lines).split('!')[0].split() for _ in range(int(qedict['nml']['system']['ntyp']))]
+                qedict['ATOMIC_SPECIES'] = [next(lines).split('!')[0].split()
+                                            for _ in range(int(qedict['nml']['system']['ntyp']))]
 
             elif 'ATOMIC_POSITIONS' in line:
-                try:
-                    qedict['ATOMIC_POSITIONS'] = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-                except:
-                    tjs.die("Invalid ATOMIC_POSITIONS line: \n{}".format(line))
+                qedict['ATOMIC_POSITIONS'] = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
                 # read ion, pos, if_pos
                 ion, pos, if_pos = [], [], []
                 for _ in range(int(qedict['nml']['system']['nat'])):
@@ -904,26 +880,25 @@ class qeinp(qegeo):
                     ion.append(spl[0])
                     pos.append(np.array(spl[1:4], dtype=np.float64))
                     try:
-                        if_pos.append(np.array([spl[4], spl[5], spl[6]], dtype=int)) # explicit so indexError will be thrown
+                        # explicit so indexError will be thrown
+                        if_pos.append(np.array([spl[4], spl[5], spl[6]], dtype=int))
                     except IndexError:
-                        if_pos.append(np.array([1,1,1], dtype=int))
-                        
+                        if_pos.append(np.array([1, 1, 1], dtype=int))
+
                 pos = np.array(pos)
                 if_pos = np.array(if_pos)
 
             elif 'K_POINTS' in line:
-                try:
-                    qedict['K_POINTS'] = nonalpha.sub('', line.split('K_POINTS')[1]).lower()
-                except:
-                    tjs.die("Invalid K_POINTS line: \n{}".format(line))
+                qedict['K_POINTS'] = nonalpha.sub('', line.split('K_POINTS')[1]).lower()
                 # read k-points
                 if qedict['K_POINTS'] == 'automatic':
-                    kpt = np.fromstring(next(lines).split('!')[0], sep=' ', dtype=int).reshape((2,3))
+                    kpt = np.fromstring(next(lines).split('!')[0], sep=' ', dtype=int).reshape((2, 3))
                 elif qedict['K_POINTS'] == 'gamma':
                     kpt = None
                 else:
-                    tjs.die("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
-        
+                    # TODO add support for crystal_b etc.
+                    raise ValueError("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
+
         if int(qedict['nml']['system']['ibrav']) != 0:
             par = _ibrav_to_par(qedict['nml']['system'])
             qedict['CELL_PARAMETERS'] = "angstrom"
@@ -931,7 +906,6 @@ class qeinp(qegeo):
         nat = qedict['nml']['system']['nat']
 
         return cls(qedict=qedict, par=par, ion=ion, pos=pos, if_pos=if_pos, kpt=kpt, nat=nat)
-
 
     def write_file(self, filename):
         '''
@@ -995,7 +969,6 @@ class qeout():
         self.pos_units = pos_units
         self.list_eigs = list_eigs
 
-
     @staticmethod
     def final_energy(filename, conv_level='automatic', units='ev'):
         '''
@@ -1030,7 +1003,7 @@ class qeout():
         # iterate backwards through file
         for line in reversed(lines):
             # skip lines without 'energy' in them
-            if 'energy' not in line: 
+            if 'energy' not in line:
                 continue
             # otherwise iterate through possible instances and extract energy when found
             for instance in instances:
@@ -1043,7 +1016,7 @@ class qeout():
             # if all instances have been found then break loop
             if instances == list(energy_instances.keys()):
                 break
-        
+
         # now return the appropriate energy, based on user conv_level
         if conv_level == 'automatic':
             # for automatic iterate through instances and return first available instance
@@ -1057,17 +1030,16 @@ class qeout():
         elif conv_level not in energy_instances:
             # user specified conv_level was not found in the file
             return None, "conv_level '{}' not achieved".format(conv_level)
-        
+
         else:
             # return user specified conv_level
             if units == 'eV':
-                return energy_instance[conv_level] * ry_to_ev, conv_level
+                return energy_instances[conv_level] * ry_to_ev, conv_level
             else:
-                return energy_instance[conv_level], conv_level
-        
+                return energy_instances[conv_level], conv_level
+
         # this should not happen
         return None, 'Unexpected error in final_energy'
-
 
     @classmethod
     def from_file(cls, filename):
@@ -1081,7 +1053,7 @@ class qeout():
         is_mag = False
         is_exx = False
         conv = {}
-        for key in ['E', '!', '!!', 'dE', 'nsteps', 'nsteps_exx', 'tot_forc', 'max_forc', 
+        for key in ['E', '!', '!!', 'dE', 'nsteps', 'nsteps_exx', 'tot_forc', 'max_forc',
                     'mag_tot', 'mag_abs', 'time', 'time_exx', 'tot_mag', 'abs_mag', 'Fermi']:
             conv[key] = []
         list_pos, if_pos, ion, list_eigs = [], [], [], []
@@ -1103,21 +1075,21 @@ class qeout():
             elif "Starting magnetic structure" in line:
                 is_mag = True
             elif "crystal axes:" in line:
-                par = np.array([ next(lines)[0].split()[3:6] for _ in range(3) ], dtype=np.float64) * alat
+                par = np.array([next(lines)[0].split()[3:6] for _ in range(3)], dtype=np.float64) * alat
             elif "total cpu time spent up to now is" in line:
                 conv['time'].append(np.float64(line.split()[-2]))
             elif "total energy              =" in line:
                 if "!!" in line:
                     conv['!!'].append(np.float64(line.split()[-2]))
-                    conv['nsteps_exx'].append( sum(conv['nsteps']) - sum(conv['nsteps_exx']) )
-                    conv['time_exx'].append( conv['time'][-1] )
+                    conv['nsteps_exx'].append(sum(conv['nsteps']) - sum(conv['nsteps_exx']))
+                    conv['time_exx'].append(conv['time'][-1])
                 elif "!" in line:
                     conv['!'].append(np.float64(line.split()[-2]))
                     next(lines)
                     conv['dE'].append(np.float64(next(lines).split()[-2]))
                     if is_mag:
                         # skip throught till total magnetization
-                        while not "total magnetization" in line:
+                        while "total magnetization" not in line:
                             line = next(lines)
                         conv['tot_mag'].append(np.float64(line.split()[-3]))
                         conv['abs_mag'].append(np.float64(next(lines).split()[-3]))
@@ -1128,19 +1100,18 @@ class qeout():
             elif "has" in line:
                 conv['nsteps'].append(int(line.split()[-2]))
             elif "SPIN UP" in line:
-                [ next(lines) for _ in range(2) ]
-                if  "k = 0.0000 0.0000 0.0000" in line:
-                    #TODO need to other kpoints
+                [next(lines) for _ in range(2)]
+                if "k = 0.0000 0.0000 0.0000" in line:
+                    # TODO need to other kpoints
                     eigs, lines = _readEigs(lines, nbnd)
                     list_eigs.append(eigs)
-                    
 
             elif "SPIN DOWN" in line:
-                [ next(lines) for _ in range(2) ]
-                if  "k = 0.0000 0.0000 0.0000" in line:
+                [next(lines) for _ in range(2)]
+                if "k = 0.0000 0.0000 0.0000" in line:
                     eigs, lines = _readEigs(lines, nbnd)
                     list_eigs.append(eigs)
-    
+
             elif "k = 0.0000 0.0000 0.0000" in line:
                 eigs, lines = _readEigs(lines, nbnd)
                 list_eigs.append(eigs)
@@ -1151,7 +1122,8 @@ class qeout():
                 max_forc = -1.0
                 next(lines)
                 for _ in range(nat):
-                    this_forc = np.linalg.norm(np.fromstring(next(lines).split("force =")[1], sep=' ', dtype=np.float64))
+                    this_forc = np.linalg.norm(np.fromstring(
+                        next(lines).split("force =")[1], sep=' ', dtype=np.float64))
                     if this_forc > max_forc:
                         max_forc = this_forc
                 conv['max_forc'].append(max_forc)
@@ -1166,16 +1138,15 @@ class qeout():
                     if is_first:
                         ion.append(nl[0])
                         try:
-                            if_pos.append(np.array([nl[4],nl[5],nl[6]], dtype=int))
-                        except:
-                            if_pos.append(np.array([1,1,1], dtype=int))
+                            if_pos.append(np.array([nl[4], nl[5], nl[6]], dtype=int))
+                        except IndexError:
+                            if_pos.append(np.ones(3, dtype=int))
                     pos.append(np.array(nl[1:4], dtype=np.float64))
                 if is_first:
                     is_first = False
                 list_pos.append(np.array(pos))
 
         return cls(nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs)
-    
 
     def calcEigs(self):
         '''
@@ -1183,7 +1154,7 @@ class qeout():
         '''
         try:
             fermi = self.conv['Fermi'][-1]
-        except:
+        except KeyError:
             # TODO -- implement no smearing case
             tjs.warn("In calcEigs: Cannot calculate eigs for systems w/o smearing")
 
