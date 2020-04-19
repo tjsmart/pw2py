@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import copy
+from collections import Counter
 import f90nml
+from mendeleev import element
 import numpy as np
 import pandas as pd
 import re
@@ -193,11 +195,15 @@ class atomgeo:
         - units of pos, acceptable values include "angstrom", "bohr", "crystal", "alat"
     '''
 
+    # Warning alat not fully supported, use with caution!
     _valid_par_units = ['angstrom', 'bohr', 'alat']
     _valid_pos_units = ['angstrom', 'bohr', 'crystal', 'alat']
+    # Warning reading from xyz not supported!
+    _valid_ftypes = ['qe', 'jdftx', 'xyz', 'xsf', 'vasp']
 
 
     def __init__(self, ion=None, par=None, pos=None, par_units=None, pos_units=None):
+        ''' initialize atomgeo instance '''
         self._ion       = np.array(ion, dtype=str)
         self._par       = np.array(par, dtype=float)
         self._pos       = np.array(pos, dtype=float)
@@ -260,10 +266,6 @@ class atomgeo:
             raise ValueError("Invalid value for units: {}".format(units))
 
         out = self if inplace else copy.deepcopy(self)
-        if self.pos_units == 'crystal':
-            # TODO need to update pos if they are crystal
-            tjs.warn("Positions not updated!!!")
-            return None
         out.par = convert_par(out.par, out.par_units, out_units=units)
         out._par_units = units
         # TODO bottom part should only belong to qeinp
@@ -304,7 +306,7 @@ class atomgeo:
     @property
     def nat(self):
         ''' return number of atoms '''
-        return len(self._ion)
+        return self._ion.size
 
 
     def __repr__(self):
@@ -315,7 +317,6 @@ class atomgeo:
         out += "ion = " + repr(self.ion) + ","
         out += "par = " + repr(self.par) + ","
         out += "pos = " + repr(self.pos) + ","
-        out += "nat = " + repr(self.nat) + ","
         out += "par_units = " + repr(self.par_units) + ","
         out += "pos_units = " + repr(self.pos_units) + ")"
         return out
@@ -323,43 +324,139 @@ class atomgeo:
 
     def __str__(self, ftype='qe'):
         '''
-        convert atomgeo to str (QE format)
+        convert atomgeo to str (default is qe format)
         '''
-        # print('-->', ftype)
-        # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific) 
-        ntyp = len(set(self.ion))
-        out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
-            .format(ntyp, str(self.nat))
-        out += "CELL_PARAMETERS {}\n".format(self.par_units)
-        for par in self.par:
-            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
-        out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
-        for ion, pos in zip(self.ion, self.pos):
-            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+        ftype = ftype.lower()
+        
+        if ftype == 'qe':
+            # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific) 
+            _ntyp = len(set(self.ion))
+            out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
+                .format(_ntyp, str(self.nat))
+            out += "CELL_PARAMETERS {}\n".format(self.par_units)
+            for par in self.par:
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
+            for ion, pos in zip(self.ion, self.pos):
+                # print(ion, pos)
+                out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+
+        elif ftype == 'vasp':
+            geo = self.sort_ions(inplace=False)
+            # header
+            out = "Generated from the PW2PY python module\n"
+            # alat
+            # out += "{}\n".format(float(alat))
+            out += "{}\n".format('1.0')
+            # par
+            for par in geo.par:
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            # collect unique ions and count of each
+            ionAndCount = Counter(geo.ion)
+            # ions
+            out += "     {}\n".format("     ".join(ionAndCount.keys()))
+            # count
+            out += "     {}\n".format("     ".join(map(str, ionAndCount.values())))
+            # pos type
+            if geo.pos_units == "angstrom":
+                out +="{}\n".format("cartesian")
+            elif geo.pos_units == "crystal":
+                out +="{}\n".format("direct")
+            # pos
+            for pos in geo.pos:
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2])
+        
+        elif ftype == 'jdftx':
+            _if_pos = 1
+            geo = copy.deepcopy(self)
+            # change par to bohr
+            geo.par_units = 'bohr'
+            # change pos angstrom to bohr
+            if geo.pos_units == 'angstrom':
+                geo.pos_units = 'bohr'
+            # write header
+            out = "# Generated from the PW2PY python module\n"
+            # write lattice
+            out += "lattice \\\n"
+            for i, par in enumerate(geo.par.T):
+                if i == 0 or i == 1:
+                    out +=  "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2])
+                elif i == 2:
+                    out +=  "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            # write ion and pos
+            for ion, pos in zip(geo.ion, geo.pos):
+                out += "ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(ion, pos[0], pos[1], pos[2], _if_pos)
+        
+        elif ftype == 'xyz':
+            geo = copy.deepcopy(self)
+            geo.pos_units = 'angstrom'
+            # nat
+            out = "{}\n".format(geo.nat)
+            # description
+            out += "Generated from the PW2PY python module\n"
+            for ion, pos in zip(geo.ion, geo.pos):
+                out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+        
+        elif ftype == 'xsf':
+            geo = copy.deepcopy(self)
+            out = "# Generated from the PW2PY python module\n"
+            out += "DIM-GROUP\n"
+            out += "    {:5d}    {:3d}\n".format(3,1)
+            # par
+            geo.par_units = 'angstrom'
+            for _section in ["PRIMVEC\n", "CONVVEC\n"]:
+                out += _section
+                for par in geo.par:
+                    out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            # ion and pos
+            geo.pos_units = 'angstrom'
+            for _section in ["PRIMCOORD\n", "CONVCOORD\n"]:
+                out += _section
+                out += "    {:5d}    {:3d}\n".format(geo.nat,1)
+                for ion, pos in zip(geo.ion, geo.pos):
+                    _an = element(ion).atomic_number
+                    out += "    {:5d}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(_an, pos[0], pos[1], pos[2])
+        
+        else:
+            raise ValueError('Value of ftype not recognized')
+
         return out
 
     
-    # def replace_atom(self, a, b):
-    #     '''
-    #     replace atom a with atom b
-    #     '''
-    #     pass
+    def replace_ion(self, old_ion, new_ion):
+        '''
+        replace ion species 'old_ion' with 'new_ion'
+        '''
+        np.place(self.ion, self.ion == old_ion, new_ion)
+
+        # TODO for qeinp need to edit ATOMIC_SPECIES
         
     
-    # def add_atom(self, a):
-    #     '''
-    #     add atom a
-    #     '''
-    #     replace(self, a, None)
-    #     pass
+    def add_atom(self, atoms):
+        '''
+        append atoms to self.ion and self.pos
+        '''
+        ion, pos = atoms
+        ion = np.array(ion, dtype=str)
+        ion = ion.flatten()
+        pos = np.array(pos, dtype=float)
+        pos = pos.reshape((ion.size, 3))
+        self._ion = np.append(self._ion, ion)
+        self._pos = np.append(self._pos, pos).reshape((self.nat, 3))
+
+        # TODO for qeinp need to increment nat, ntyp (potentially), ATOMIC_SPECIES
+
         
     
-    # def remove_atom(self, a):
-    #     '''
-    #     remove atom a
-    #     '''
-    #     replace(self, None, a)
-    #     pass
+    def remove_indices(self, indices):
+        '''
+        remove list of indices from self.ion and self.pos
+        '''
+        filt = [index not in indices for index in range(self.nat)]
+        self._ion = self._ion[filt]
+        self._pos = self._pos[filt]
+
+        # TODO for qeinp need to update nat, ntyp, ATOMIC_SPECIES
     
 
     def shift_pos_to_unit(self, inplace=True):
@@ -368,28 +465,64 @@ class atomgeo:
         '''
         out = self if inplace else copy.deepcopy(self)
         # store original units, then change to crystal
-        save_units = copy.deepcopy(self.pos_units)
-        out.change_units_pos(units='crystal')
+        _save_units = copy.deepcopy(self.pos_units)
+        out.pos_units = 'crystal'
         # loop through positions (px,py,pz), shift to all be in range of 0 <= p < 1
         for pos in out.pos:
             for p in pos:
                 p - (p // 1)
         
         # restore units
-        out.change_units_pos(units=save_units)
-        return out
+        out.pos_units = _save_units
+        if not inplace:
+            return out
     
 
-    # def build_supercell(self, P: np.array, inplace=True):
-    #     '''
-    #     Build supercell by applying transformation matrix P
+    def build_supercell(self, P: np.array, inplace=True):
+        '''
+        Build supercell
 
-    #     P (np.array, float, size = (3,3))
+        Only simple supercells are implemented wherein the shape of the cell cannot be changed
+
+        P (np.array, int, size = (3,1))
+        '''
+        # format input transformation vector
+        P = np.array(P, dtype=int).reshape((3,1))
+        # deepcopy if not inplace
+        out = self if inplace else copy.deepcopy(self)
+        # store pos units
+        _save_units = copy.deepcopy(self.pos_units)
+        # convert to cystal and shift all to fit in unit
+        # (in principle this can be skipped but it is anticipated to necessary for complicated transfroms)
+        out.pos_units = 'crystal'
+        out.shift_pos_to_unit()
+
+        # rescale lattice parameters
+        out._par = np.multiply(out._par, P.reshape(-1, 1))
+
+        # rescale atomic positions
+        out._pos = np.divide(out._pos, P.reshape(1, -1))
+
+        # generate images of ion and positions
+        inv_P = 1 / P.reshape(1,-1)
+        ion_images, pos_images = [], []
+        for i in range(int(P[0])):
+            for j in range(int(P[1])):
+                for k in range(int(P[2])):
+                    if i == j == k == 0: continue
+                    ion_images.append(out._ion)
+                    pos_images.append(out._pos + inv_P * [i,j,k])
         
-    #     new_par = P.dot(par)
+        # append images
+        out._ion = np.append(out._ion, ion_images)
+        out._pos = np.append(out._pos, pos_images).reshape((out.nat, 3))
 
-    #     '''
-    #     out = self if inplace else copy.deepcopy(self)
+        # restore original pos_units
+        out.pos_units = _save_units
+
+        if not inplace:
+            return out
+        
 
 
     @classmethod
@@ -441,8 +574,20 @@ class atomgeo:
             tjs.die("xyz format not implemented")
 
         elif filename.lower().endswith("xsf") or ftype.lower() == "xsf":
-            # then file is xsf format
-            tjs.die("xsf format not implemented")
+            for line in lines:
+                if 'PRIMVEC' in line:
+                    # read cell parameters
+                    par_units = 'angstrom'
+                    par = np.array([ next(lines).split()[0:3] for _ in range(3) ], dtype=np.float64)
+                elif 'PRIMCOORD' in line:
+                    # read ions and pos
+                    pos_units = 'angstrom'
+                    _nat = int(next(lines).split()[0])
+                    ion, pos = [], []
+                    for _ in range(_nat):
+                        nl = next(lines).split()
+                        ion.append(element(int(nl[0])).symbol)
+                        pos.append(nl[1:4])
 
         elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos") \
             or ftype.lower() == "jdftx":
@@ -533,100 +678,33 @@ class atomgeo:
         return out
 
 
-    def write_file(self, filename):
+    def write_file(self, filename, ftype='auto'):
         '''
         write atomgeo to file (QE format)
         '''
+        if ftype == 'auto':
+            if any([filename.lower().endswith(ext.lower()) for ext in ["OUTCAR", "CONTCAR", "vasp"]]):
+                ftype = 'vasp'
+            elif filename.lower().endswith("xyz"):
+                ftype = 'xyz'
+            elif filename.lower().endswith("xsf"):
+                ftype = 'xsf'
+            elif any([filename.lower().endswith(ext.lower()) for ext in ["pos", "jdftx"]]):
+                ftype = 'jdftx'
+            else:
+                ftype = 'qe'
+        elif ftype not in ['vasp', 'xyz', 'xsf', 'jdftx', 'qe']:
+            raise ValueError('Value of ftype not recognized')
+
         with open(filename, 'w') as f:
-            f.write(str(self))
+            f.write(self.__str__(ftype=ftype))
 
         return None
-
-
-    def write_vasp(self, filename, alat=1.0, inplace=False):
-        '''
-        write atomgeo to poscar/vasp file type
-        '''
-        out = self.sort_ions(inplace=inplace)
-
-        with open(filename, 'w') as f:
-            # header
-            f.write("Generated from PW2PY python module\n")
-            # alat
-            f.write("{}\n".format(float(alat)))
-            # par
-            for par in out.par:
-                f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2]) )
-            # ions and count (convert to dict then write)
-            ionAndCount = {}
-            for i in out.ion:
-                if i not in ionAndCount:
-                    ionAndCount[i] = 1
-                else:
-                    ionAndCount[i] += 1
-            f.write( "     {}\n".format("     ".join(ionAndCount.keys())) )             # ions
-            f.write( "     {}\n".format("     ".join(map(str, ionAndCount.values()))) ) # count
-            # pos type
-            if out.pos_units == "angstrom":
-                f.write("{}\n".format("cartesian"))
-            elif out.pos_units == "crystal":
-                f.write("{}\n".format("direct"))
-            # pos
-            for pos in out.pos:
-                f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2]) )
-        
-        return None
-
-
-    def write_jdftx(self, filename, inplace=False, if_pos=0, write_latt=True):
-        '''
-        write qegeo to jdftx
-        '''
-        out = self if inplace else copy.deepcopy(self)
-
-        # change par and pos to bohr
-        out.change_units_par(units="bohr", inplace=True)
-
-        with open(filename, 'w') as f:
-            f.write("# Generated from PW2PY python module\n")
-            if write_latt:
-                # write lattice
-                f.write("lattice \\\n")
-                for i, par in enumerate(out.par.T):
-                    if i == 0 or i == 1:
-                        f.write( "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2]) )
-                    elif i == 2:
-                        f.write( "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2]) )
-            # write ion and pos
-            for ion, pos in zip(out.ion, out.pos):
-                f.write("ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(ion, pos[0], pos[1], pos[2], if_pos))
-
-
-    def write_xyz(self, filename, inplace=False):
-        '''
-        write qegeo to xyz
-        '''
-        out = self.change_units_pos(units="angstrom", inplace=inplace)
-
-        with open(filename, 'w') as f:
-            # nat
-            f.write("{}\n".format(out.nat))
-            # description
-            f.write("Generated from PW2PY python module\n")
-            for ion, pos in zip(out.ion, out.pos):
-                f.write("    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2]))
-
-
-    # def write_xsf():
-    #     '''
-    #     write qegeo to xsf
-    #     '''
-    #     pass
 
 
 class qegeo(atomgeo):
     '''
-    same as atomgeo with if_pos
+    same as atomgeo with if_pos and ibrav capabilities
     '''
 
 
