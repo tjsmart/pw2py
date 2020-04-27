@@ -10,9 +10,9 @@ class qenml():
     It is a wrapper on the f90nml namelist class
     '''
 
-    from ._init import __init__
+    from .init import __init__
 
-    from ._properties import calculation, title, verbosity, restart_mode, wf_collect, nstep, iprint, tstress, tprnfor, \
+    from .properties import calculation, title, verbosity, restart_mode, wf_collect, nstep, iprint, tstress, tprnfor, \
         dt, outdir, wfcdir, prefix, lkpoint_dir, max_seconds, etot_conv_thr, forc_conv_thr, disk_io, pseudo_dir, \
         tefield, dipfield, lelfield, nberrycyc, lorbm, lberry, gdir, nppstr, lfcpopt, monopole, \
         nbnd, tot_charge, tot_magnetization, starting_magnetization, ecutwfc, \
@@ -32,8 +32,6 @@ class qenml():
         refold_pos, upscale, bfgs_ndim, trust_radius_max, trust_radius_min, trust_radius_ini, w_1, w_2, cell_dynamics, \
         press, wmass, cell_factor, press_conv_thr, cell_dofree, ibrav, celldm, A, B, C, cosAB, cosAC, cosBC, nat, ntyp
 
-    from ._str import __repr__, __str__
+    from .str import __repr__, __str__
 
-    # from ._str import __repr__
-
-    # from ._io import from_file, write_file
+    # from .io import from_file, write_file

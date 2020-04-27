@@ -29,12 +29,12 @@ class atomgeo:
     '''
 
     # dunder methods
-    from ._init import __init__
-    from ._str import __str__, __repr__
+    from .init import __init__
+    from .str import __str__, __repr__
     # properties
-    from ._properties import ion, nat, par, par_units, pos, pos_units
+    from .properties import ion, nat, par, par_units, pos, pos_units
     # io methods
-    from ._io import from_file, write_file
+    from .io import from_file, write_file
     # other methods
-    from ._atoms import add_atom, remove_indices, replace_ion, sort_ions
-    from ._cell import build_supercell, shift_pos_to_unit
+    from .atoms import add_atom, remove_indices, replace_ion, sort_ions
+    from .cell import build_supercell, shift_pos_to_unit

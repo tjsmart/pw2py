@@ -12,13 +12,13 @@ class qeinp(qegeo):
         kpt = K_POINTS data
     '''
 
-    from ._init import __init__
+    from .init import __init__
 
-    from ._str import __repr__, __str__
+    from .str import __repr__, __str__
 
-    from ._io import from_file, write_file
+    from .io import from_file, write_file
 
-    from ._properties import kpt, par_units, pos_units, ion, par, pos, A, B, C, celldm, \
+    from .properties import kpt, par_units, pos_units, ion, par, pos, A, B, C, celldm, \
         cosAB, cosAC, cosBC, ibrav, if_pos
 
     # TODO
