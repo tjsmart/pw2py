@@ -1,5 +1,7 @@
+import f90nml
 import numpy as np
-from sys import stderr
+
+from .constants import bohr_to_angstrom
 
 
 def _resolve_continuation_lines(filename):
@@ -149,6 +151,21 @@ def _readEigs(lines, nbnd):
     return np.hstack(eigs), lines
 
 
-def _warn(message):
-    stderr.write('Warning: {}\n'.format(message))
-    return None
+def _determine_ftype(filename):
+    ''' determine ftype base on filename (defaults to qe) '''
+    if any([filename.lower().endswith(ext.lower()) for ext in ["OUTCAR", "CONTCAR", "vasp"]]):
+        ftype = 'vasp'
+    elif filename.lower().endswith("xyz"):
+        ftype = 'xyz'
+    elif filename.lower().endswith("xsf"):
+        ftype = 'xsf'
+    elif any([filename.lower().endswith(ext.lower()) for ext in ["pos", "jdftx"]]):
+        ftype = 'jdftx'
+    else:
+        nml = f90nml.read(filename)
+        if len(nml) == 0:
+            ftype = 'qeout'
+        else:
+            ftype = 'qeinp'
+
+    return ftype

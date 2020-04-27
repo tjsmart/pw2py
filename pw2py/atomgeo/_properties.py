@@ -69,15 +69,9 @@ def par_units(self, units, inplace=True):
     units = str(units).lower()
     if units not in _valid_par_units:
         raise ValueError("Invalid value for units: {}".format(units))
-
     out = self if inplace else deepcopy(self)
     out.par = _convert_par(out.par, out.par_units, out_units=units)
     out._par_units = units
-    # TODO bottom part should only belong to qeinp
-    try:
-        out.qedict["CELL_PARAMETERS"] = units
-    except AttributeError:
-        pass
     return out
 
 
@@ -97,15 +91,9 @@ def pos_units(self, units, inplace=True):
     units = str(units).lower()
     if units not in _valid_pos_units:
         raise ValueError("Invalid value for units: {}".format(units))
-
     out = self if inplace else deepcopy(self)
     out.pos = _convert_pos(out.pos, out.pos_units, out_units=units, par=out.par, par_units=out.par_units)
     out._pos_units = units
-    # TODO bottom part should only belong to qeinp
-    try:
-        out.qedict["ATOMIC_POSITIONS"] = units
-    except AttributeError:
-        pass
     return out
 
 

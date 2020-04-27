@@ -1,0 +1,14 @@
+Need to implement ability to add/remove/sub atoms
+note add and remove should make call to sub
+
+implement function to copy atomic positions from one file to qeinp
+
+
+
+Supercell implementation (some things may also be useful for scellEmbed)
+
+0. store intial pos_units
+1. convert positions to crystal
+2. make sure all pos are in within the cell i.e. 0 <= r_i < 1 for i in x,y,z
+3. apply transformation matrix to cell par, and atomic pos
+4. determine symmetric positions which are in the box

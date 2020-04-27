@@ -1,10 +1,11 @@
 import f90nml
 from mendeleev import element
 from numpy import array, fromstring, float64
+from warnings import warn
 
 from .._common.constants import bohr_to_angstrom, nonalpha
-from .._common.resource import _convert_par, _ibrav_to_par, _read_atomic_positions, \
-    _resolve_continuation_lines, _warn
+from .._common.resource import _ibrav_to_par, _read_atomic_positions, \
+    _resolve_continuation_lines
 
 
 # Warning reading from xyz not supported!
@@ -30,7 +31,7 @@ def from_file(cls, filename, ftype='auto'):
     atomgeo (atomgeo object)
     '''
     if ftype.lower() not in ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']:
-        _warn("ftype value not recognized '{}'".format(ftype))
+        raise ValueError("ftype value not recognized '{}'".format(ftype))
 
     # store lines of file to iterator
     with open(filename) as f:
@@ -92,7 +93,7 @@ def from_file(cls, filename, ftype='auto'):
         pos = array(pos)
         nat = len(ion)
         par_units = "bohr"
-        _warn("pos_units not set, defaulting to crystal")
+        warn("pos_units not set, defaulting to crystal")
         pos_units = "crystal"
 
     else:
@@ -127,18 +128,20 @@ def from_file(cls, filename, ftype='auto'):
                     par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
                     par = array([fromstring(next(lines).split('!')[0], sep=' ')
                                  for _ in range(3)], dtype=float64)
-                    par = _convert_par(par, in_units=par_units, alat=alat)
+                    # par = _convert_par(par, in_units=par_units, alat=alat)
                 elif 'ATOMIC_POSITIONS' in line:
                     pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
                     lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
 
             if int(nml['system']['ibrav']) != 0:
                 # if lattice is specified by ibrav then build par from ibrav
-                par = _ibrav_to_par(nml['system'])
+                # note this routine handles alat on its own
+                par = _ibrav_to_par(nml['system'], units="angstrom")
                 par_units = "angstrom"
 
-        # # convert atomic positions to angstrom
-        # _convert_pos(pos, pos_units, alat=alat, par=par)
+            elif alat is not None:
+                par *= alat
+
     return cls(ion=ion, par=par, pos=pos, pos_units=pos_units, par_units=par_units)  # pylint: disable=E1102
 
 
