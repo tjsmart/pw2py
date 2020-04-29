@@ -1,7 +1,9 @@
-Need to implement ability to add/remove/sub atoms
-note add and remove should make call to sub
+Several todos written in-line of the code
 
-implement function to copy atomic positions from one file to qeinp
+
+helpful scripts:
+    implement function to copy atomic positions from one file to qeinp
+    implement function to write atomic positons in a different format
 
 
 

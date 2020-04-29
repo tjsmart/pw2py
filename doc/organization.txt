@@ -1,0 +1,56 @@
+Organization of the repository
+
+PW2PY/  
+|-- Examples/  
+|  
+|-- pw2py/  
+|   |-- _common/  
+|   |   |-- __init__.py  
+|   |   |-- constants.py  
+|   |   |-- resource.py  
+|   |  
+|   |-- atomgeo/  
+|   |   |-- __init__.py  
+|   |   |-- atomgeo.py  
+|   |   |-- atoms.py  
+|   |   |-- cell.py  
+|   |   |-- init.py  
+|   |   |-- io.py  
+|   |   |-- properties.py  
+|   |   |-- str.py  
+|   |  
+|   |-- qegeo/  
+|   |   |-- __init__.py 
+|   |   |-- init.py  
+|   |   |-- io.py  
+|   |   |-- properties.py  
+|   |   |-- qegeo.py  
+|   |   |-- str.py  
+|   |  
+|   |-- qeinp/  
+|   |   |-- __init__.py  
+|   |   |-- init.py  
+|   |   |-- io.py  
+|   |   |-- properties.py  
+|   |   |-- qeinp.py  
+|   |   |-- str.py  
+|   |   |  
+|   |   |-- qecard/  
+|   |   |   |-- __init__.py  
+|   |   |   |-- init.py  
+|   |   |   |-- properties.py  
+|   |   |   |-- qecard.py  
+|   |   |  
+|   |   |-- qenml/  
+|   |   |   |-- __init__.py  
+|   |   |   |-- init.py  
+|   |   |   |-- properties.py  
+|   |   |   |-- qenml.py  
+|   |   |   |-- str.py  
+|   |   |   |-- _write_code.py  
+|   |   |  
+|   |     
+|   |-- __init__.py  
+|  
+|-- README.md  
+
