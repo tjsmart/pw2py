@@ -1,5 +1,5 @@
 import f90nml
-from numpy import fromstring
+from numpy import fromstring, zeros
 from warnings import warn
 
 from .. import qegeo
@@ -71,8 +71,23 @@ def from_file(cls, filename):
                 warn("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
 
         elif 'OCCUPATIONS' in line:
-            # TODO add parser for OCCUPATIONS
-            warn('OCCUPATIONS not implemented and could not be read.')
+            try:
+                nbnd = nml['system']['nbnd']
+            except AttributeError:
+                raise ValueError('Unable to read OCCUPATIONS when nbnd is not set.')
+            try:
+                nspin = nml['system']['nspin']
+            except AttributeError:
+                nspin = 1
+            occ = zeros((nspin, nbnd))
+            for ispin in range(nspin):
+                bands_read = 0
+                while bands_read < nml['system']['nbnd']:
+                    arr = fromstring(next(lines), sep=' ')
+                    occ[ispin, bands_read:bands_read + len(arr)] = arr
+                    bands_read += len(arr)
+
+            card['OCCUPATIONS'] = occ
 
         elif 'CONSTRAINTS' in line:
             warn('CONSTRAINTS not implemented and could not be read.')

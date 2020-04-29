@@ -139,18 +139,6 @@ def _convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="ang
         return pos.dot(np.linalg.inv(par)) * prefactor
 
 
-def _readEigs(lines, nbnd):
-    '''
-    (private) parse lines for eigenvalues
-    '''
-    next(lines)
-    eigs = []
-    for _ in range(nbnd // 8 + 1):
-        eigs.append(np.fromstring(next(lines), sep=' ', dtype=np.float64))
-
-    return np.hstack(eigs), lines
-
-
 def _determine_ftype(filename):
     ''' determine ftype base on filename (defaults to qe) '''
     if any([filename.lower().endswith(ext.lower()) for ext in ["OUTCAR", "CONTCAR", "vasp"]]):

@@ -60,16 +60,15 @@ def CELL_PARAMETERS(self, CELL_PARAMETERS):
 #     self._card['CONSTRAINTS'] = CONSTRAINTS
 
 
-# TODO
 # OCCUPATIONS not implemented
-# @property
-# def OCCUPATIONS(self):
-#     return self._card['OCCUPATIONS']
+@property
+def OCCUPATIONS(self):
+    return self._card['OCCUPATIONS']
 
 
-# @OCCUPATIONS.setter
-# def OCCUPATIONS(self, OCCUPATIONS):
-#     self._card['OCCUPATIONS'] = OCCUPATIONS
+@OCCUPATIONS.setter
+def OCCUPATIONS(self, OCCUPATIONS):
+    self._card['OCCUPATIONS'] = OCCUPATIONS
 
 
 # @property

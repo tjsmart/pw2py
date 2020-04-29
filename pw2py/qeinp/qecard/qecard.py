@@ -7,6 +7,7 @@ class qecard():
 
     from .init import __init__
 
-    from .properties import ATOMIC_SPECIES, ATOMIC_POSITIONS, K_POINTS, CELL_PARAMETERS
+    from .properties import ATOMIC_SPECIES, ATOMIC_POSITIONS, K_POINTS, CELL_PARAMETERS, \
+        OCCUPATIONS
     # TODO
     # CONSTRAINTS, OCCUPATIONS, ATOMIC_FORCES

@@ -29,6 +29,23 @@ def __repr__(self):
         if self.card.K_POINTS == "automatic":
             out += "    {}  {}  {}    {}  {}  {}\n".format(*self.kpt[0], *self.kpt[1])
         out += "\n"
+    if hasattr(self.card, 'OCCUPATIONS'):
+        out += "OCCUPATIONS\n"
+        row_length = 8
+        for ispin in range(self.card.OCCUPATIONS.shape[0]):
+            iband = 0
+            while iband < self.nml.nbnd:
+                row_count = 0
+                while row_count < row_length:
+                    if row_count == 0:
+                        out += "  "
+                    out += "  {:6.4f}".format(self.card.OCCUPATIONS[ispin, iband])
+                    iband += 1
+                    row_count += 1
+                    if iband == self.nml.nbnd:
+                        break
+                out += "\n"
+        out += "\n"
 
     return out
 

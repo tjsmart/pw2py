@@ -29,7 +29,7 @@ def par_units(self):
 def par_units(self, par_units):
     # use setter method from atomgeo
     atomgeo.par_units.fset(self, par_units)
-    self.qedict["CELL_PARAMETERS"] = self._par_units
+    self.card.CELL_PARAMETERS = self._par_units
     if self.ibrav != 0:
         # TODO how to handle this case?
         warn('Be careful changing par_units when using ibrav != 0')
@@ -46,10 +46,10 @@ def pos_units(self):
 def pos_units(self, pos_units):
     '''
     Convert atomic positions to 'units'
-    updates values of: pos, pos_units, (qedict['ATOMIC_POSITIONS'])
+    updates values of: pos, pos_units, (card.ATOMIC_POSITIONS)
     '''
     atomgeo.pos_units.fset(self, pos_units)
-    self.qedict["ATOMIC_POSITIONS"] = self._pos_units
+    self.card.ATOMIC_POSITIONS = self._pos_units
 
 
 # Place holders to extend functionality of different properties acquired from atomgeo
@@ -114,11 +114,18 @@ def ibrav(self):
     return self.nml.ibrav
 
 
-# TODO allow ibrav to be set?
-# @ibrav.setter
-# def ibrav(self, ibrav):
-#     ''' set value of atomgeo._ibrav '''
-#     self.nml.ibrav = array(ibrav, dtype=int)
+@ibrav.setter
+def ibrav(self, ibrav):
+    ''' set value of atomgeo._ibrav '''
+    if ibrav == 0:
+        self.nml.ibrav = 0
+        for attr in ['a', 'b', 'c', 'cosab', 'cosac', 'cosbc', 'celldm']:
+            try:
+                self.nml._nml['system'].pop(attr)
+            except KeyError:
+                pass
+    else:
+        raise ValueError('Changing ibrav to nonzero values is not implemented')
 
 
 # define lattice A, B, C property
