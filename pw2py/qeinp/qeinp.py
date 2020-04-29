@@ -21,6 +21,8 @@ class qeinp(qegeo):
     from .properties import kpt, par_units, pos_units, ion, par, pos, A, B, C, celldm, \
         cosAB, cosAC, cosBC, ibrav, if_pos
 
+    from .methods import load_geo
+
     # TODO
     # def convert_ibrav(self, newBrav):
     #     '''

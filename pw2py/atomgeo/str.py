@@ -4,13 +4,15 @@ from copy import deepcopy
 from mendeleev import element
 
 
-def __str__(self, ftype='qe'):
+def __str__(self, ftype='qeinp'):
     '''
-    convert atomgeo to str (default is qe format)
+    convert atomgeo to str (default is qeinp format)
     '''
     ftype = ftype.lower()
 
-    if ftype == 'qe':
+    print('ftype -->', ftype)
+
+    if ftype == 'qeinp':
         # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific)
         _ntyp = len(set(self.ion))
         out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
