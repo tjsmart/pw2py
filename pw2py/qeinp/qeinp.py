@@ -19,7 +19,7 @@ class qeinp(qegeo):
     from .io import from_file, write_file
 
     from .properties import kpt, par_units, pos_units, ion, par, pos, A, B, C, celldm, \
-        cosAB, cosAC, cosBC, ibrav, if_pos
+        cosAB, cosAC, cosBC, ibrav, if_pos, ntyp
 
     from .methods import load_geo
 

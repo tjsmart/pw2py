@@ -1,7 +1,14 @@
-from numpy import array
+from numpy import array, unique
 from warnings import warn
 
 from .. import atomgeo
+
+
+# define ntyp property
+@property
+def ntyp(self):
+    ''' return number of atoms '''
+    return unique(self.ion).size
 
 
 @property

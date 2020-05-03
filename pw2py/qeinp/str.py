@@ -9,7 +9,7 @@ def __repr__(self):
     out += "\n\n"
     out += "ATOMIC_SPECIES\n"
     for spec in self.card.ATOMIC_SPECIES:
-        out += "    {}  {}  {}\n".format(*spec)
+        out += "    {}  {}  {}\n".format(spec, *self.card.ATOMIC_SPECIES[spec])
     out += "\n"
     if self.nml.ibrav == 0:
         out += "CELL_PARAMETERS {}\n".format(self.card.CELL_PARAMETERS)

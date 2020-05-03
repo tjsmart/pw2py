@@ -1,32 +1,22 @@
 Unit tests (may help with debugging)
 
+Several todos written in-line of the code
+
+
 High priority
-    --> issue in qegeo and qeinp
-        need to add ntyp property so that (similiar to nat) ntyp is not accessed through the namelist but rather set and updated
-    --> issue when loading geo
-        for example:
-            >>> cp_geo.py tests/input_files/og.xsf tests/input_files/og.in
-        gives output where the pos_units are not properly transferred from the xsf file to the input file
+    --> gauranteed that several things will break when an ion name is indexed (as is often the case), need to find and resolve these issues where they exist
+        -- For example try running tests with a file with 'Fe1' and 'Fe2'
+    --> all methods of atomgeo need to be checked for todos when they are used within qeinp
 
 
-Mediume priority
+Medium priority
     --> clean/finish examples
     --> update documentation elsewhere e.g. README
 
 
-Several todos written in-line of the code
+Low priority
+    --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
+    --> generalized supercell implementation
+    --> is ntyp/nat an issue in qeinp?
 
 
-helpful scripts:
-    debug -- implement function to copy atomic positions from one file to qeinp
-    done -- implement function to write atomic positons in a different format
-
-
-
-Supercell implementation (some things may also be useful for scellEmbed)
-
-0. store intial pos_units
-1. convert positions to crystal
-2. make sure all pos are in within the cell i.e. 0 <= r_i < 1 for i in x,y,z
-3. apply transformation matrix to cell par, and atomic pos
-4. determine symmetric positions which are in the box

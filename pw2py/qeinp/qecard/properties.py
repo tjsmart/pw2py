@@ -8,7 +8,7 @@ def ATOMIC_SPECIES(self):
 
 @ATOMIC_SPECIES.setter
 def ATOMIC_SPECIES(self, ATOMIC_SPECIES):
-    self._card['ATOMIC_SPECIES'] = list(ATOMIC_SPECIES)
+    self._card['ATOMIC_SPECIES'] = dict(ATOMIC_SPECIES)
 
 
 @property

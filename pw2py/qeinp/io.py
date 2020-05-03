@@ -38,25 +38,17 @@ def from_file(cls, filename):
             # for _ in range(3)], dtype=float64)
 
         elif 'ATOMIC_SPECIES' in line:
-            card['ATOMIC_SPECIES'] = [next(lines).split('!')[0].split('#')[0].split()
-                                      for _ in range(int(nml['system']['ntyp']))]
+            card['ATOMIC_SPECIES'] = {}
+            for _ in range(int(nml['system']['ntyp'])):
+                nl = next(lines)
+                try:
+                    symbol, mass, pp = nl.split('!')[0].split('#')[0].split()
+                except ValueError:
+                    raise ValueError('Unable to unpack this line in ATOMIC_SPECIES: {}'.format(nl))
+                card['ATOMIC_SPECIES'][symbol] = [float(mass), str(pp)]
 
         elif 'ATOMIC_POSITIONS' in line:
             card['ATOMIC_POSITIONS'] = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
-            # # read ion, pos, if_pos
-            # ion, pos, if_pos = [], [], []
-            # for _ in range(int(nml['system']['nat'])):
-            #     spl = next(lines).split('!')[0].split('#')[0].split()
-            #     ion.append(spl[0])
-            #     pos.append(array(spl[1:4], dtype=float64))
-            #     try:
-            #         # explicit so indexError will be thrown
-            #         if_pos.append(array([spl[4], spl[5], spl[6]], dtype=int))
-            #     except IndexError:
-            #         if_pos.append(array([1, 1, 1], dtype=int))
-
-            # pos = array(pos)
-            # if_pos = array(if_pos)
 
         elif 'K_POINTS' in line:
             card['K_POINTS'] = nonalpha.sub('', line.split('K_POINTS')[1]).lower()

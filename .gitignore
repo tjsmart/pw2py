@@ -3,3 +3,4 @@ __pycache__
 .ipynb_checkpoints
 *.in.out
 demo.*
+testing.ipynb
