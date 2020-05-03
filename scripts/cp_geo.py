@@ -22,4 +22,5 @@ if __name__ == "__main__":
     import pw2py as pw
     geo = pw.atomgeo.from_file(args.inpfile)
     inp = pw.qeinp.from_file(args.qefile)
-    print(inp.load_geo(geo))
+    inp.load_geo(geo)
+    print(inp)

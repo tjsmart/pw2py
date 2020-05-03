@@ -119,6 +119,7 @@ def ibrav(self, ibrav):
     ''' set value of atomgeo._ibrav '''
     if ibrav == 0:
         self.nml.ibrav = 0
+        self.card.CELL_PARAMETERS = self._par_units
         for attr in ['a', 'b', 'c', 'cosab', 'cosac', 'cosbc', 'celldm']:
             try:
                 self.nml._nml['system'].pop(attr)

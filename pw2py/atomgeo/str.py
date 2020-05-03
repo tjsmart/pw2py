@@ -10,20 +10,20 @@ def __str__(self, ftype='qeinp'):
     '''
     ftype = ftype.lower()
 
-    print('ftype -->', ftype)
-
     if ftype == 'qeinp':
         # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific)
         _ntyp = len(set(self.ion))
-        out = "&control\n/\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n&electrons\n/\n"\
+        out = "&control\n/\n\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n\n&electrons\n/\n\n"\
             .format(_ntyp, str(self.nat))
         out += "CELL_PARAMETERS {}\n".format(self.par_units)
         for par in self.par:
             out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+        out += "\n"
         out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
         for ion, pos in zip(self.ion, self.pos):
             # print(ion, pos)
             out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+        out += "\n"
 
     elif ftype == 'vasp':
         geo = self.sort_ions(inplace=False)

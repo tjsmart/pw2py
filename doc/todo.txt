@@ -1,9 +1,25 @@
+Unit tests (may help with debugging)
+
+High priority
+    --> issue in qegeo and qeinp
+        need to add ntyp property so that (similiar to nat) ntyp is not accessed through the namelist but rather set and updated
+    --> issue when loading geo
+        for example:
+            >>> cp_geo.py tests/input_files/og.xsf tests/input_files/og.in
+        gives output where the pos_units are not properly transferred from the xsf file to the input file
+
+
+Mediume priority
+    --> clean/finish examples
+    --> update documentation elsewhere e.g. README
+
+
 Several todos written in-line of the code
 
 
 helpful scripts:
-    implement function to copy atomic positions from one file to qeinp
-    implement function to write atomic positons in a different format
+    debug -- implement function to copy atomic positions from one file to qeinp
+    done -- implement function to write atomic positons in a different format
 
 
 

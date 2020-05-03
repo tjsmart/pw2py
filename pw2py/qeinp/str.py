@@ -24,12 +24,12 @@ def __repr__(self):
         else:
             out += "    {}  {}  {}\n".format(*if_pos)
     out += "\n"
-    if hasattr(self.card, 'K_POINTS'):
+    if 'K_POINTS' in self.card._card:
         out += "K_POINTS {}\n".format(self.card.K_POINTS)
         if self.card.K_POINTS == "automatic":
             out += "    {}  {}  {}    {}  {}  {}\n".format(*self.kpt[0], *self.kpt[1])
         out += "\n"
-    if hasattr(self.card, 'OCCUPATIONS'):
+    if 'OCCUPATIONS' in self.card._card:
         out += "OCCUPATIONS\n"
         row_length = 8
         for ispin in range(self.card.OCCUPATIONS.shape[0]):

@@ -1,6 +1,6 @@
 import f90nml
 from mendeleev import element
-from numpy import array, fromstring, float64
+from numpy import array, fromstring, float64, eye
 from warnings import warn
 
 from .._common.constants import bohr_to_angstrom, nonalpha
@@ -13,7 +13,7 @@ _valid_ftypes = ['qe', 'jdftx', 'xyz', 'xsf', 'vasp']
 
 
 @classmethod
-def from_file(cls, filename, ftype='auto'):
+def from_file(cls, filename, ftype='auto', xyz_par=20):
     '''
     generate atomgeo object from file
 
@@ -25,6 +25,9 @@ def from_file(cls, filename, ftype='auto'):
     ftype (str)
         - specify filetype otherwise ftype='auto' will use filename to detect file type
         - acceptable values: ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']
+
+    xyz_par (float)
+        - optional, only used when reading from xyz, par is set to a box of with dimension xyz_par
 
     output
     ----
@@ -58,11 +61,26 @@ def from_file(cls, filename, ftype='auto'):
 
     elif filename.lower().endswith("xyz") or ftype.lower() == "xyz":
         # then file is xyz format
-        raise ValueError("xyz format not implemented")
+        par_units = 'angstrom'
+        # set par to a box with dimension of xyz_par
+        par = xyz_par * eye(3)
+        # first line is number of atoms
+        nat = int(next(lines))
+        # next line is a comment
+        next(lines)
+        pos_units = 'angstrom'
+        # next nat lines are positions
+        ion = []
+        pos = []
+        for _ in range(nat):
+            nl = next(lines).split()[0:4]
+            ion.append(nl[0])
+            pos.append(nl[1:4])
 
     elif filename.lower().endswith("xsf") or ftype.lower() == "xsf":
         for line in lines:
-            if 'PRIMVEC' in line:
+            if line.startswith('PRIMVEC') or ' PRIMVEC' in line:
+                # if statement above avoids reading 'RECIP-PRIMVEC'
                 # read cell parameters
                 par_units = 'angstrom'
                 par = array([next(lines).split()[0:3] for _ in range(3)], dtype=float64)

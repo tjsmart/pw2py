@@ -36,5 +36,4 @@ class atomgeo:
     # io methods
     from .io import from_file, write_file
     # other methods
-    from .atoms import add_atom, remove_indices, replace_ion, sort_ions
-    from .cell import build_supercell, shift_pos_to_unit
+    from .methods import add_atom, remove_indices, replace_ion, sort_ions, build_supercell, shift_pos_to_unit
