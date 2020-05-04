@@ -22,7 +22,7 @@ expected = {
 }
 
 
-class inp_tests(unittest.TestCase):
+class ag_io(unittest.TestCase):
     ''' test from_file method of atomgeo class '''
 
     # precision for asserting array equivalence
@@ -35,13 +35,13 @@ class inp_tests(unittest.TestCase):
         # test par
         if lrelaxed:
             self.assertIsNone(np.testing.assert_array_almost_equal(
-                geo.par, expected['par_final'], decimal=inp_tests.decimal
+                geo.par, expected['par_final'], decimal=ag_io.decimal
             ))
         else:
             self.assertIsNone(np.testing.assert_array_equal(geo.par, expected['par_initial']))
         # test pos
         self.assertIsNone(np.testing.assert_array_almost_equal(
-            geo.pos, expected['pos'], decimal=inp_tests.decimal
+            geo.pos, expected['pos'], decimal=ag_io.decimal
         ))
         # test par_units
         self.assertEqual(geo.par_units, expected['par_units'])
@@ -89,49 +89,53 @@ class inp_tests(unittest.TestCase):
         self.run_inp_tests(geo, True)
 
 
-class methods_tests(unittest.TestCase):
+class ag_methods(unittest.TestCase):
     ''' test various methods of atomgeo class '''
 
     starting_geo = pw.atomgeo.from_file('input_files/og.in')
 
     def test_replace_ion(self):
         ''' test atomgeo.replace_ion method '''
-        geo = deepcopy(methods_tests.starting_geo)
+        geo = deepcopy(ag_methods.starting_geo)
         geo.replace_ion('Br', 'Cl')
         self.assertIsNone(np.testing.assert_array_equal(
             geo.ion, ['Cs', 'Pb', 'Cl', 'Cl', 'Cl']
         ))
+        # check nat
+        self.assertEqual(geo.nat, 5)
 
     def test_add_atom(self):
         ''' test atomgeo.add_atom method '''
-        geo = deepcopy(methods_tests.starting_geo)
+        geo = deepcopy(ag_methods.starting_geo)
         add_ion = ['H', 'H', 'O']
         add_pos = [[0, 0, 0], [1, 1, 1], [2, 2, 2]]
         geo.add_atom([add_ion, add_pos])
         self.assertIsNone(np.testing.assert_array_equal(
-            geo.ion, list(methods_tests.starting_geo.ion) + add_ion
+            geo.ion, list(ag_methods.starting_geo.ion) + add_ion
         ))
         self.assertIsNone(np.testing.assert_array_equal(
-            geo.pos, list(methods_tests.starting_geo.pos) + add_pos
+            geo.pos, list(ag_methods.starting_geo.pos) + add_pos
         ))
+        # check nat
+        self.assertEqual(geo.nat, 8)
 
     def test_remove_indices(self):
         ''' test atomgeo.remove_indices method '''
-        geo = deepcopy(methods_tests.starting_geo)
+        geo = deepcopy(ag_methods.starting_geo)
         indices = [0, 4]
         not_indices = [i for i in range(geo.nat) if i not in indices]
         geo.remove_indices(indices)
-        self.assertEqual(geo.nat, methods_tests.starting_geo.nat - len(indices))
+        self.assertEqual(geo.nat, ag_methods.starting_geo.nat - len(indices))
         self.assertIsNone(np.testing.assert_array_equal(
-            geo.ion, methods_tests.starting_geo.ion[not_indices]
+            geo.ion, ag_methods.starting_geo.ion[not_indices]
         ))
         self.assertIsNone(np.testing.assert_array_equal(
-            geo.pos, methods_tests.starting_geo.pos[not_indices]
+            geo.pos, ag_methods.starting_geo.pos[not_indices]
         ))
 
     def test_sort_ions(self):
         ''' test atomgeo.sort_ions method '''
-        geo = methods_tests.starting_geo.sort_ions(inplace=False)
+        geo = ag_methods.starting_geo.sort_ions(inplace=False)
         self.assertIsNone(np.testing.assert_array_equal(
             geo.ion, ['Br', 'Br', 'Br', 'Cs', 'Pb']
         ))
@@ -152,7 +156,7 @@ class methods_tests(unittest.TestCase):
 
     def test_build_supercell(self):
         ''' test atomgeo.shift_pos_to_unit method '''
-        geo = methods_tests.starting_geo.build_supercell([2, 4, 3], inplace=False)
+        geo = ag_methods.starting_geo.build_supercell([2, 4, 3], inplace=False)
         self.assertIsNone(np.testing.assert_array_equal(
             geo.ion, ['Cs', 'Pb', 'Br', 'Br', 'Br', 'Cs', 'Pb', 'Br', 'Br', 'Br', 'Cs',
                       'Pb', 'Br', 'Br', 'Br', 'Cs', 'Pb', 'Br', 'Br', 'Br', 'Cs', 'Pb',

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-from mendeleev import get_all_elements
+import mendeleev as mlv
 import pickle as pkl
 
 
@@ -21,7 +21,7 @@ def generate_pseudo_dict(pseudo_path='check environment'):
         pseudos[library][xc_type][element]:
             element in ['H', 'C', 'O', ...]
 
-        NOTE: for dojo all pseudopotentials are name identically so simply use pseudos[library][element]
+        NOTE: for dojo all pseudopotentials are named identically so simply use pseudos[library][element]
     '''
 
     # path to pseudopotential files
@@ -31,7 +31,7 @@ def generate_pseudo_dict(pseudo_path='check environment'):
         raise FileNotFoundError('Provide the value of pseudo_path with option -p')
 
     # get list of element symbols from mendeleev
-    elements = [e.symbol for e in get_all_elements()]
+    elements = [e.symbol for e in mlv.get_all_elements()]
 
     def checkList(elem, check_list):
         # check obtained list
@@ -106,7 +106,7 @@ def load_pseudo_dict():
     return pseudos
 
 
-def determine_pseudo_type(pseudo_file):
+def determine_pseudo_type(pseudo_file: str):
     ''' return library name and xc_type based on pseudo_file name '''
     if 'ONCV' in pseudo_file:
         library = 'oncv'
@@ -116,13 +116,25 @@ def determine_pseudo_type(pseudo_file):
             xc_type = 'lda'
         else:
             raise ValueError('Unable to determine xc_type for oncv file: {}'.format(pseudo_file))
-    else:
+    elif pseudo_file.endswith('uspp.F.UPF'):
+        library = 'gbrv'
+        found_xc = False
         for xc_type in ['pbe', 'lda', 'pbesol']:
             if '_{}_'.format(xc_type) in pseudo_file:
-                library = 'gbrv'
+                found_xc = True
                 break
-        # otherwise library is dojo
+        if not found_xc:
+            raise ValueError('Unable to determine xc_type for gbrv file: {}'.format(pseudo_file))
+    elif pseudo_file.endswith('.upf'):
+        # pseudo is assumed to be dojo
         library = 'dojo'
+        ion = os.path.splitext(pseudo_file)[0]
+        try:
+            # try passing ion to mendeleev to ensure is is indeed formatted this way
+            mlv.element(ion)
+        except:  # noqa: E722
+            # raises sqlalchemy.orm.exc.NoResultFound (rather than import this/require install just catch anything)
+            raise ValueError('Tried to parse pseudo_file as oncv, gbrv, and dojo but failed: {}'.format(pseudo_file))
         xc_type = None
 
     return library, xc_type

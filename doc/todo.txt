@@ -10,7 +10,7 @@ High priority
 
 
 Medium priority
-    --> clean/finish examples
+    --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
 
 
