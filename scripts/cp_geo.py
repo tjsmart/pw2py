@@ -6,16 +6,19 @@ import argparse
 def parse_command_line():
     ''' parse command line options '''
     parser = argparse.ArgumentParser(
-        description='Copy geometry from a file (inpfile) and into a qe input file (qefile)'
+        description="Copy geometry from a file (inpfile) and into a qe input file (qefile)"
     )
     parser.add_argument(
-        'inpfile', metavar='inpfile', type=str, help='input geometry file to read in and then convert'
+        'inpfile', metavar='inpfile', type=str, help="input geometry file to read in and then convert"
     )
     parser.add_argument(
-        'qefile', metavar='qefile', type=str, help='qe input file to be write to'
+        'qefile', metavar='qefile', type=str, help="qe input file to be write to"
     )
     parser.add_argument(
-        '-o', '--only', metavar='arg', type=str, help='only copy (c)ell parameters | (a)tomic positions'
+        '-o', '--only', metavar='arg', type=str, help="only copy (c)ell parameters | (a)tomic positions"
+    )
+    parser.add_argument(
+        '-i', '--inplace', action='store_true', help="if set then qe input file will be overwritten"
     )
 
     return parser.parse_args()
@@ -30,7 +33,7 @@ def parse_only_option(only):
     elif args.only is None:
         option = 'default'
     else:
-        raise ValueError('Unrecognized arg for -o, --only option: {}'.format(only))
+        raise ValueError("Unrecognized arg for -o, --only option: {}".format(only))
 
     return option
 
@@ -42,4 +45,7 @@ if __name__ == "__main__":
     geo = pw.atomgeo.from_file(args.inpfile)
     inp = pw.qeinp.from_file(args.qefile)
     inp.load_geo(geo, load=only)
-    print(inp)
+    if not args.inplace:
+        print(inp)
+    else:
+        inp.write_file(args.qefile)
