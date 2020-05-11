@@ -1,5 +1,5 @@
 from copy import deepcopy
-from numpy import array
+from numpy import array, cross
 
 from .._common.resource import _convert_par, _convert_pos
 
@@ -102,3 +102,10 @@ def pos_units(self, units, inplace=True):
 def nat(self):
     ''' return number of atoms '''
     return self._ion.size
+
+
+# define vol property
+@property
+def vol(self):
+    ''' return volume of the cell '''
+    return cross(self.par[0], self.par[1]).dot(self.par[2])
