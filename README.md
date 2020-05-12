@@ -4,7 +4,7 @@ pw2py python module
 Description
 ------------------------------------
 This code creates an interface between plane-wave based codes (particularly QE) and python. 
-It define several classes and methods which are commonly useful.
+It defines several classes and modules which are commonly useful.
 
 Prerequisites:
 ------------------------------------
