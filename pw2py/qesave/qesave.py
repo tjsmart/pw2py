@@ -7,7 +7,7 @@ import mmap
 import glob
 
 
-def determine_dtype(attrib):
+def _determine_dtype(attrib):
     '''
     attrib : dictionary from xml
     return : dtype based on kind and type
@@ -38,7 +38,7 @@ def determine_dtype(attrib):
     return dtype
 
 
-def parse_dtype_and_size(buffer: mmap.mmap, pattern: str):
+def _parse_dtype_and_size(buffer: mmap.mmap, pattern: str):
     '''
     parse data type of evc and byte size
     '''
@@ -51,7 +51,7 @@ def parse_dtype_and_size(buffer: mmap.mmap, pattern: str):
     # parse evc info line as xml
     info_line = buffer.readline().replace(b'>', b'/>')
     tree = etree.fromstring(info_line)
-    dtype = determine_dtype(tree.attrib)
+    dtype = _determine_dtype(tree.attrib)
 
     # read 3 ints of size 4 bytes
     head = np.frombuffer(buffer.read(3 * 4), dtype=np.int32)
@@ -61,7 +61,7 @@ def parse_dtype_and_size(buffer: mmap.mmap, pattern: str):
     return dtype, size
 
 
-def read_info_fft_grid(buffer: mmap.mmap):
+def _read_info_fft_grid(buffer: mmap.mmap):
     '''
     parse fft_grid size from info line
     '''
@@ -73,11 +73,26 @@ def read_info_fft_grid(buffer: mmap.mmap):
     return fft_grid
 
 
-def read_data_xml(path):
+def read_data_xml(path, filename='data-file.xml'):
     '''
     parse key values from data_xml file
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+        filename(optional) - name of data xml file (str)
+
+    returns
+    ----
+        par - cell parameters (array)
+        rec - reciprocal lattice vectors (array)
+        fft_grid - fft grid size for charge density (array)
+        nspin - number of spin degrees of freedom, i.e. 1, 2, 4 (int)
+        nkpt - number of k-point (int)
+        nbnd - number of bands (int)
+        ngkvec - number of g-vectors at each kpt for evc (list of int)
     '''
-    data_xml = os.path.join(path, 'data-file.xml')
+    data_xml = os.path.join(path, filename)
     root = etree.parse(data_xml).getroot()
 
     '''
@@ -129,6 +144,15 @@ def read_data_xml(path):
 def read_eigenvalues(path, dtype=np.float64):
     '''
     read eigenvalues from qe save folder
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+        dtype(optional) - data type (type)
+
+    returns
+    ----
+        eig - eigenvalues indexed by [kpt, spin, band] (array)
     '''
     eig = []
     for ikpt, kdir in enumerate(glob.glob(os.path.join(path, 'K*'))):
@@ -142,24 +166,49 @@ def read_eigenvalues(path, dtype=np.float64):
     return np.array(eig)
 
 
-def read_gvectors(path):
-    with open(os.path.join(path, 'gvectors.dat')) as f:
-        # buffer file
-        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
-            dtype, size = parse_dtype_and_size(buffer, '<g ')
-            gvecs = np.frombuffer(buffer.read(size), dtype=dtype)
-            gvecs = gvecs.reshape((int(gvecs.size / 3), 3))
-            return gvecs
+def read_gvectors(path, filename='gvectors.dat'):
+    '''
+    read eigenvalues from qe save folder
 
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+        filename(optional) - filename to read (str)
 
-def read_charge_density(path, filename='charge-density.dat'):
+    returns
+    ----
+        gvecs - array of g-vectors for charge density grid, shape = (*, 3) (array)
+    '''
     with open(os.path.join(path, filename)) as f:
         # buffer file
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
-            fft_grid = read_info_fft_grid(buffer)
+            dtype, size = _parse_dtype_and_size(buffer, '<g ')
+            gvecs = np.frombuffer(buffer.read(size), dtype=dtype)
+            gvecs = gvecs.reshape((int(gvecs.size / 3), 3))
+
+    return gvecs
+
+
+def read_charge_density(path, filename='charge-density.dat'):
+    '''
+    read charge density from qe save folder
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+        filename(optional) - filename to read (str)
+
+    returns
+    ----
+        rho - charge density, ndim = 3, shape = fft_grid (array)
+    '''
+    with open(os.path.join(path, filename)) as f:
+        # buffer file
+        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
+            fft_grid = _read_info_fft_grid(buffer)
             rho = []
             for iz in range(fft_grid[2]):
-                dtype, size = parse_dtype_and_size(buffer, '<z.{} '.format(iz + 1))
+                dtype, size = _parse_dtype_and_size(buffer, '<z.{} '.format(iz + 1))
                 rho_part = np.frombuffer(buffer.read(size), dtype=dtype)
                 rho.append(rho_part)
             rho = np.array(rho).reshape(fft_grid)
@@ -167,12 +216,36 @@ def read_charge_density(path, filename='charge-density.dat'):
 
 
 def read_spin_polarization(path, filename='spin-polarization.dat'):
+    '''
+    read spin polarization from qe save folder
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+        filename(optional) - filename to read (str)
+
+    returns
+    ----
+        sigma - spin polarization, ndim = 3, shape = fft_grid (array)
+
+    (calls read_charge_density(path, filename='spin-polarization.dat'))
+    '''
     return read_charge_density(path, filename=filename)
 
 
 def read_wavefunction(path):
     '''
     read evc from qe save folder
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+
+    returns
+    ----
+        evc - all wavefunctions psi(G), ndim = 4, indexed by [kpt, spin, band, gvec_index] (array)
+
+    for values of G see read_gkvectors()
     '''
     def parse_nbnd():
         '''
@@ -202,7 +275,7 @@ def read_wavefunction(path):
                         # loop through bands
                         pattern = '<evc.{} '.format(iband + 1)
                         # parse dtype and size (in bytes)
-                        dtype, size = parse_dtype_and_size(buffer, pattern)
+                        dtype, size = _parse_dtype_and_size(buffer, pattern)
                         # read evc data for this band
                         evc_band = np.frombuffer(buffer.read(size), dtype=dtype)
                         evc[ikpt][ispin].append(evc_band)
@@ -213,6 +286,15 @@ def read_wavefunction(path):
 def read_gkvectors(path):
     '''
     read array of g-vectors for each k-point
+
+    input
+    ----
+        path - path to .save folder from qe calculation (str)
+
+    returns
+    ----
+        gkvectors - list of g-vectors for psi_k(k+G), ndim = 3,
+            indexed by [kpt, gvec_index, (0, 1, 2)], where x=0, y=1, z=2 (array)
     '''
     gkvectors = []
     for kdir in glob.glob(os.path.join(path, 'K*')):
@@ -220,7 +302,7 @@ def read_gkvectors(path):
             # buffer file since it is large
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
                 # parse dtype and size (in bytes)
-                dtype, size = parse_dtype_and_size(buffer, '  <GRID ')
+                dtype, size = _parse_dtype_and_size(buffer, '  <GRID ')
                 # read g-vectors at this kpt
                 gvecs_kpt = np.frombuffer(buffer.read(size), dtype=dtype)
                 # reshape and append to full list of gkvectors
@@ -229,10 +311,15 @@ def read_gkvectors(path):
     return np.array(gkvectors)
 
 
-def try_reading_all():
-    import time
+if __name__ == "__main__":
 
-    path = '/Users/tjsmart/Programs/Ping-Group/NonRad/Examples/local/lin-gs/ratio-0.0000/BN.save'
+    import time
+    import sys
+
+    try:
+        path = sys.argv[1]
+    except IndexError:
+        path = '.'
 
     absolute_begin = time.time()
 
@@ -314,7 +401,3 @@ def try_reading_all():
     absolute_end = time.time()
 
     print('\nDone reading everything in {}'.format(absolute_end - absolute_begin))
-
-
-if __name__ == "__main__":
-    try_reading_all()
