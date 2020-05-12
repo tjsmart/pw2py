@@ -7,15 +7,32 @@ from .._common.constants import nonalpha
 
 
 @classmethod
-def from_file(cls, filename):
+def from_file(cls, filename, is_prefix=None):
     '''
     create qeinp object from file
     '''
+    if is_prefix is None:
+        # determine whether filename is prefix (i.e. read prefix.in and prefix.out)
+        is_prefix = False if filename.endswith('.in') else True
+
+    if is_prefix:
+        if filename.endswith('.'):
+            inpfile = filename + 'in'
+            outfile = filename + 'out'
+        else:
+            inpfile = filename + '.in'
+            outfile = filename + '.out'
+    else:
+        inpfile = filename
+
     # read namelist
-    nml = f90nml.read(filename)
+    nml = f90nml.read(inpfile)
 
     # read qegeo
-    geo = qegeo.from_file(filename, ftype='qeinp')
+    if is_prefix:
+        geo = qegeo.from_file(outfile, ftype='qeout')
+    else:
+        geo = qegeo.from_file(inpfile, ftype='qeinp')
 
     # acquire other things, i.e. card and kpoints
     # intialize card dictionary
@@ -25,7 +42,7 @@ def from_file(cls, filename):
     kpt = None
 
     # store lines of file to iterator
-    with open(filename) as f:
+    with open(inpfile) as f:
         lines = iter(f.readlines())
 
     # loop through lines for ['CELL_PARAMETERS', 'ATOMIC_SPECIES', 'ATOMIC_POSITIONS', 'K_POINTS']
