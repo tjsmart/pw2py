@@ -211,8 +211,13 @@ def read_charge_density(path, filename='charge-density.dat'):
                 dtype, size = _parse_dtype_and_size(buffer, '<z.{} '.format(iz + 1))
                 rho_part = np.frombuffer(buffer.read(size), dtype=dtype)
                 rho.append(rho_part)
-            rho = np.array(rho).reshape(fft_grid)
-            return rho
+    # convert rho to array
+    rho = np.array(rho)
+    # flatten rho
+    rho = rho.reshape(rho.size)
+    # reshape to fft_grid
+    rho = np.array(rho).reshape(fft_grid, order='F').copy(order='C')
+    return rho
 
 
 def read_spin_polarization(path, filename='spin-polarization.dat'):

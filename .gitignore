@@ -4,3 +4,4 @@ __pycache__
 *.in.out
 demo.*
 debug.ipynb
+local
