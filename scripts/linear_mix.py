@@ -86,6 +86,13 @@ if __name__ == "__main__":
     else:
         obj1 = pw.qeinp.from_file(args.file1)
         obj2 = pw.qeinp.from_file(args.file2)
+        # change calculations to scf
+        obj1.nml.calculation = 'scf'
+        obj2.nml.calculation = 'scf'
+        if args.nonrad:
+            # if nonrad calculation, change kpoint grid to 1 1 1  0 0 0
+            obj1.kpt = [[1, 1, 1], [0, 0, 0]]
+            obj2.kpt = [[1, 1, 1], [0, 0, 0]]
 
     mix1 = deepcopy(obj1)
     mix2 = deepcopy(obj2)
