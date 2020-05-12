@@ -31,6 +31,9 @@ def parse_command_line():
     parser.add_argument(
         '-n', '--nonrad', action='store_true', help="use default nonrad list of ratios"
     )
+    parser.add_argument(
+        '-k', '--kpt', action='store_true', help="change k-point to 1 1 1 0 0 0"
+    )
 
     return parser.parse_args()
 
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     # parse ratios
     if args.nonrad:
         ratios = default_nonrad_ratios
-    if not np.array_equiv(args.ratios, default_ratios):
+    elif not np.array_equiv(args.ratios, default_ratios):
         ratios = np.fromstring(args.ratio, sep=' ', dtype=np.float64)
     else:
         ratios = default_ratios
@@ -89,7 +92,7 @@ if __name__ == "__main__":
         # change calculations to scf
         obj1.nml.calculation = 'scf'
         obj2.nml.calculation = 'scf'
-        if args.nonrad:
+        if args.kpt:
             # if nonrad calculation, change kpoint grid to 1 1 1  0 0 0
             obj1.kpt = [[1, 1, 1], [0, 0, 0]]
             obj2.kpt = [[1, 1, 1], [0, 0, 0]]
