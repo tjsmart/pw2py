@@ -9,7 +9,7 @@ from .._common.resource import _ibrav_to_par, _read_atomic_positions, \
 
 
 # Warning reading from xyz not supported!
-_valid_ftypes = ['qe', 'jdftx', 'xyz', 'xsf', 'vasp']
+_valid_ftypes = ['qeinp', 'jdftx', 'xyz', 'xsf', 'vasp']
 
 
 @classmethod
@@ -177,8 +177,8 @@ def write_file(self, filename, ftype='auto'):
         elif any([filename.lower().endswith(ext.lower()) for ext in ["pos", "jdftx"]]):
             ftype = 'jdftx'
         else:
-            ftype = 'qe'
-    elif ftype not in ['vasp', 'xyz', 'xsf', 'jdftx', 'qe']:
+            ftype = 'qeinp'
+    elif ftype not in ['vasp', 'xyz', 'xsf', 'jdftx', 'qeinp']:
         raise ValueError('Value of ftype not recognized')
 
     with open(filename, 'w') as f:

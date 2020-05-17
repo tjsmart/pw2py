@@ -102,7 +102,7 @@ def __str__(self, ftype='qeinp'):
                 out += "    {:5d}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(_an, pos[0], pos[1], pos[2])
 
     else:
-        raise ValueError('Value of ftype not recognized')
+        raise ValueError('Value of ftype not recognized: {}'.format(ftype))
 
     return out
 

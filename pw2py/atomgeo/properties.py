@@ -53,6 +53,13 @@ def pos(self, pos, pos_units=None):
     self._pos = array(pos, dtype=float)
 
 
+# define atoms property
+@property
+def atoms(self):
+    ''' return atoms as dictionary with keys as ion names and values as positions '''
+    return [{'ion': ion, 'pos': pos} for ion, pos in zip(self.ion, self.pos)]
+
+
 # define par_units property
 @property
 def par_units(self):
