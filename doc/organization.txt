@@ -1,21 +1,27 @@
 Organization of the repository
 
 PW2PY/  
+|-- doc/  
+|   |-- organization.txt  
+|   |-- todo.txt  
+|  
 |-- Examples/  
 |  
 |-- pw2py/  
+|   |-- __init__.py  
+|   |  
 |   |-- _common/  
 |   |   |-- __init__.py  
 |   |   |-- constants.py  
+|   |   |-- pseudos.pkl  
+|   |   |-- pseudos.py  
 |   |   |-- resource.py  
 |   |  
 |   |-- atomgeo/  
 |   |   |-- __init__.py  
-|   |   |-- atomgeo.py  
-|   |   |-- atoms.py  
-|   |   |-- cell.py  
 |   |   |-- init.py  
 |   |   |-- io.py  
+|   |   |-- methods.py  
 |   |   |-- properties.py  
 |   |   |-- str.py  
 |   |  
@@ -24,39 +30,49 @@ PW2PY/
 |   |   |-- init.py  
 |   |   |-- io.py  
 |   |   |-- properties.py  
-|   |   |-- qegeo.py  
 |   |   |-- str.py  
 |   |  
 |   |-- qeinp/  
 |   |   |-- __init__.py  
 |   |   |-- init.py  
 |   |   |-- io.py  
+|   |   |-- methods.py  
 |   |   |-- properties.py  
-|   |   |-- qeinp.py  
 |   |   |-- str.py  
 |   |   |  
 |   |   |-- qecard/  
 |   |   |   |-- __init__.py  
 |   |   |   |-- init.py  
 |   |   |   |-- properties.py  
-|   |   |   |-- qecard.py  
 |   |   |  
 |   |   |-- qenml/  
 |   |   |   |-- __init__.py  
 |   |   |   |-- init.py  
 |   |   |   |-- properties.py  
-|   |   |   |-- qenml.py  
 |   |   |   |-- str.py  
 |   |   |   |-- _write_code.py  
-|   |   |  
-|   |   |-- qesave/  
-|   |   |   |-- __init__.py  
-|   |   |   |-- loader.py  
-|   |   |   |-- qesave.py  
-|   |   |  
-|   |   |  
-|   |     
-|   |-- __init__.py  
+|   |  
+|   |-- qeout/  
+|   |   |-- __init__.py  
+|   |   |-- init.py  
+|   |   |-- io.py  
+|   |   |-- methods.py  
+|   |  
+|   |-- qesave/  
+|   |   |-- __init__.py  
+|   |   |-- loaders.py  
+|  
+|  
+|-- scripts/  
+|   |-- conv_geo.py  
+|   |-- cp_geo.py  
+|   |-- linear_mix.py  
+|  
+|-- tests/  
+|   |-- input_files/  
+|   |-- test_all.py  
+|   |-- test_atomgeo.py  
+|   |-- test_qeinp.py  
 |  
 |-- README.md  
 
