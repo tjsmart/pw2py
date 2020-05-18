@@ -1,5 +1,3 @@
-Very important -- why is precision bad? test case: convert file from qe to vasp and back and it is not the same...
-
 Unit tests (may help with debugging)
 
 Several todos written in-line of the code
@@ -24,3 +22,4 @@ Low priority
     --> is ntyp/nat an issue in qeinp?
 
 
+is precision an issue? seems fine--keep an eye out

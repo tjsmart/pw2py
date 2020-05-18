@@ -4,7 +4,7 @@ class atomgeo:
 
     Suggested to make object from file:
     -----
-    geo = atomgeo.from_file(filename, ftype="auto")
+    geo = atomgeo.from_file(filename, ftype='auto')
 
     Attributes:
     -----
@@ -13,7 +13,7 @@ class atomgeo:
         - cell parameters
 
     par_units (str)
-        - units of par, acceptable values include "angstrom", "bohr", "alat"
+        - units of par, acceptable values include 'angstrom', 'bohr', 'alat'
 
     nat (int)
         - number of atoms
@@ -25,7 +25,7 @@ class atomgeo:
         - atomic positions
 
     pos_units (str)
-        - units of pos, acceptable values include "angstrom", "bohr", "crystal", "alat"
+        - units of pos, acceptable values include 'angstrom', 'bohr', 'crystal', 'alat'
     '''
 
     # dunder methods
@@ -36,4 +36,5 @@ class atomgeo:
     # io methods
     from .io import from_file, write_file
     # other methods
-    from .methods import add_atom, remove_indices, replace_ion, sort_ions, build_supercell, shift_pos_to_unit
+    from .methods import add_atom, remove_indices, replace_ion, sort_ions, build_supercell, shift_pos_to_unit, \
+        nearest_neighbor
