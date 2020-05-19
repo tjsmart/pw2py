@@ -10,4 +10,6 @@ class qecard:
     from .properties import ATOMIC_SPECIES, ATOMIC_POSITIONS, K_POINTS, CELL_PARAMETERS, \
         OCCUPATIONS
     # TODO
-    # CONSTRAINTS, OCCUPATIONS, ATOMIC_FORCES
+    # CONSTRAINTS, ATOMIC_FORCES
+
+    from .str import __repr__
