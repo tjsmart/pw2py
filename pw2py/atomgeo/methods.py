@@ -9,8 +9,6 @@ def replace_ion(self, old_ion, new_ion):
     '''
     np.place(self.ion, self.ion == old_ion, new_ion)
 
-    # TODO for qeinp need to edit ATOMIC_SPECIES
-
 
 def add_atom(self, atoms):
     '''
@@ -25,8 +23,6 @@ def add_atom(self, atoms):
     self._ion = np.append(self._ion, ion)
     self._pos = np.append(self._pos, pos).reshape((self.nat, 3))
 
-    # TODO for qeinp need to increment nat, ntyp (potentially), ATOMIC_SPECIES
-
 
 def remove_indices(self, indices):
     '''
@@ -35,8 +31,6 @@ def remove_indices(self, indices):
     filt = [index not in indices for index in range(self.nat)]
     self._ion = self._ion[filt]
     self._pos = self._pos[filt]
-
-    # TODO for qeinp need to update nat, ntyp, ATOMIC_SPECIES
 
 
 def sort_ions(self, inplace=False):

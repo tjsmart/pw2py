@@ -6,7 +6,6 @@ Several todos written in-line of the code
 High priority
     --> gauranteed that several things will break when an ion name is indexed (as is often the case), need to find and resolve these issues where they exist
         -- For example try running tests with a file with 'Fe1' and 'Fe2'
-    --> all methods of atomgeo need to be checked for todos when they are used within qeinp
 
 
 Medium priority
@@ -19,7 +18,8 @@ Medium priority
 Low priority
     --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
     --> generalized supercell implementation
-    --> is ntyp/nat an issue in qeinp?
+    --> ibrav to/from 0 method in atomgeo
+    --> use isalpha() instead of re.compile?
 
 
 is precision an issue? seems fine--keep an eye out
