@@ -3,7 +3,12 @@ from numpy import fromstring, zeros
 from warnings import warn
 
 from .. import qegeo
-from .._common.constants import nonalpha
+
+
+def _read_card_option(line, card_name):
+    option = line.split(card_name)[1]
+    option = ''.join(filter(str.isalpha, option)).lower()
+    return option
 
 
 @classmethod
@@ -49,10 +54,7 @@ def from_file(cls, filename, is_prefix=None):
     for line in lines:
         line = line.split('!')[0].split('#')[0]   # trim away comments
         if 'CELL_PARAMETERS' in line:
-            card['CELL_PARAMETERS'] = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
-            # # read cell parameters
-            # par = array([fromstring(next(lines).split('!')[0].split('#')[0], sep=' ') \
-            # for _ in range(3)], dtype=float64)
+            card['CELL_PARAMETERS'] = _read_card_option(line, 'CELL_PARAMETERS')
 
         elif 'ATOMIC_SPECIES' in line:
             card['ATOMIC_SPECIES'] = {}
@@ -65,10 +67,10 @@ def from_file(cls, filename, is_prefix=None):
                 card['ATOMIC_SPECIES'][symbol] = [float(mass), str(pp)]
 
         elif 'ATOMIC_POSITIONS' in line:
-            card['ATOMIC_POSITIONS'] = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+            card['ATOMIC_POSITIONS'] = _read_card_option(line, 'ATOMIC_POSITIONS')
 
         elif 'K_POINTS' in line:
-            card['K_POINTS'] = nonalpha.sub('', line.split('K_POINTS')[1]).lower()
+            card['K_POINTS'] = _read_card_option(line, 'K_POINTS')
             # read k-points
             if card['K_POINTS'] == 'automatic':
                 kpt = fromstring(next(lines).split('!')[0].split('#')[0], sep=' ', dtype=int).reshape((2, 3))

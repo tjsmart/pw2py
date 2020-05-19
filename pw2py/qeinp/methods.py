@@ -171,7 +171,7 @@ def replace_ion(self, old_ion, new_ion):
     _fix_species(self)
 
 
-def add_atom(self, atoms):
+def add_atom(self, atoms, if_pos=[1, 1, 1]):
     '''
     append atoms to self.ion and self.pos
     atoms = ion, pos
@@ -179,6 +179,12 @@ def add_atom(self, atoms):
     calls atomgeo.add_atom(self, atoms)
     '''
     atomgeo.add_atom(self, atoms)
+
+    # append if_pos
+    init_nat = len(self.if_pos)
+    append_if_pos = np.ones((self.nat - init_nat, 3), dtype=int)
+    append_if_pos[:] = if_pos
+    self._if_pos = np.append(self.if_pos, append_if_pos).reshape(self.nat, 3)
 
     # resync nat and ntyp in nml
     self.nml._nml['system']['nat'] = self.nat

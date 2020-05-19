@@ -156,7 +156,7 @@ class qi_methods(unittest.TestCase):
             inp.card.ATOMIC_SPECIES, {
                 'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                 'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
-                'Cl': [1.0, 'Cl_ONCV_PBE-1.1.upf']
+                'Cl': [35.45, 'Cl_ONCV_PBE-1.1.upf']
             }
         )
         self.assertEqual(inp.ntyp, 3)
@@ -180,16 +180,16 @@ class qi_methods(unittest.TestCase):
                 'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                 'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
                 'Br': [1.0, 'Br_ONCV_PBE-1.0.upf'],
-                'H': [1.0, 'H_ONCV_PBE-1.0.upf'],
-                'O': [1.0, 'O_ONCV_PBE-1.0.upf']
+                'H': [1.008, 'H_ONCV_PBE-1.0.upf'],
+                'O': [15.999, 'O_ONCV_PBE-1.0.upf']
             }
         )
         # check ntyp
         self.assertEqual(inp.ntyp, 5)
-        self.assertEqual(inp.ntyp, inp.nml['system']['ntyp'])
+        self.assertEqual(inp.ntyp, inp.nml.ntyp)
         # check nat
         self.assertEqual(inp.nat, 8)
-        self.assertEqual(inp.nat, inp.nml['system']['nat'])
+        self.assertEqual(inp.nat, inp.nml.nat)
         # check if_pos
         self.assertIsNone(np.testing.assert_array_equal(
             inp.if_pos, np.ones((inp.nat, 3), dtype=int)

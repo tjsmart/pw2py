@@ -1,7 +1,7 @@
 import numpy as np
 
 from .methods import _readEigs
-from .._common.constants import bohr_to_angstrom, nonalpha
+from .._common.constants import bohr_to_angstrom
 
 
 @classmethod
@@ -96,7 +96,8 @@ def from_file(cls, filename):
             conv['tot_forc'].append(np.float64(line.split()[3]))
         elif "ATOMIC_POSITIONS" in line:
             if is_first:
-                pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+                pos_units = line.split('ATOMIC_POSITIONS')[1]
+                pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
             pos = []
             for _ in range(nat):
                 nl = next(lines).split()

@@ -108,8 +108,8 @@ def build_supercell(self, P, inplace=True):
             for k in range(int(P[2])):
                 if i == j == k == 0:
                     continue
-                ion_images.np.append(out._ion)
-                pos_images.np.append(out._pos + inv_P * [i, j, k])
+                ion_images.append(out._ion)
+                pos_images.append(out._pos + inv_P * [i, j, k])
 
     # append images
     out._ion = np.append(out._ion, ion_images)

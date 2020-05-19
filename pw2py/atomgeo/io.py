@@ -3,7 +3,7 @@ from mendeleev import element
 from numpy import array, fromstring, float64, eye
 from warnings import warn
 
-from .._common.constants import bohr_to_angstrom, nonalpha
+from .._common.constants import bohr_to_angstrom
 from .._common.resource import _ibrav_to_par, _read_atomic_positions, \
     _resolve_continuation_lines
 
@@ -129,7 +129,8 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
                     par_units = "angstrom"
                     par = array([next(lines).split()[3:6] for _ in range(3)], dtype=float64) * alat
                 elif "ATOMIC_POSITIONS" in line:
-                    pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+                    pos_units = line.split('ATOMIC_POSITIONS')[1]
+                    pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
                     lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
         else:
             # ftype.lower() == "qeinp", no need to actually check
@@ -143,12 +144,14 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
                 nat = int(nml['system']['nat'])
                 line = line.split('!')[0]   # trim away comments
                 if 'CELL_PARAMETERS' in line:
-                    par_units = nonalpha.sub('', line.split('CELL_PARAMETERS')[1]).lower()
+                    par_units = line.split('CELL_PARAMETERS')[1]
+                    par_units = ''.join(filter(str.isalpha, par_units)).lower()
                     par = array([fromstring(next(lines).split('!')[0], sep=' ')
                                  for _ in range(3)], dtype=float64)
                     # par = _convert_par(par, in_units=par_units, alat=alat)
                 elif 'ATOMIC_POSITIONS' in line:
-                    pos_units = nonalpha.sub('', line.split('ATOMIC_POSITIONS')[1]).lower()
+                    pos_units = line.split('ATOMIC_POSITIONS')[1]
+                    pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
                     lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
 
             if int(nml['system']['ibrav']) != 0:
