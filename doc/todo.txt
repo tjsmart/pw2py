@@ -1,3 +1,6 @@
+io methods need to be redone use f.readline() instead of storing entire file into memory
+should also parse the methods into separate functions (maybe in an accesible location i.e. users can use pw2py to read vasp without using atomgeo class etc.)
+
 Unit tests (may help with debugging)
 
 Several todos written in-line of the code
@@ -13,13 +16,10 @@ Medium priority
     --> update documentation elsewhere e.g. README
     --> write wavefunction to xsf file
     --> read wavefunction/eigenvalues from vasp
+    --> calculate dQ, dQ xsf
 
 
 Low priority
     --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
     --> generalized supercell implementation
     --> ibrav to/from 0 method in atomgeo
-    --> use isalpha() instead of re.compile?
-
-
-is precision an issue? seems fine--keep an eye out

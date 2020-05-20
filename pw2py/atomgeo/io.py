@@ -2,6 +2,7 @@ import f90nml
 from mendeleev import element
 from numpy import array, fromstring, float64, eye
 from warnings import warn
+import os
 
 from .._common.constants import bohr_to_angstrom
 from .._common.resource import _ibrav_to_par, _read_atomic_positions, \
@@ -35,6 +36,8 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
     '''
     if ftype.lower() not in ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']:
         raise ValueError("ftype value not recognized '{}'".format(ftype))
+
+    # TODO add resource to read from prefix
 
     # store lines of file to iterator
     with open(filename) as f:
@@ -119,12 +122,37 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
         nml = f90nml.read(filename)
         if len(nml) == 0 or ftype.lower() == "qeout":
             # then file is output
+
+            # try to find input file to read cell parameters
+            par = None
+            prefix, extension = os.path.splitext(filename)
+            if extension == '.out' and os.path.exists(prefix + '.in'):
+                nml = f90nml.read(prefix + '.in')
+                if nml['system']['ibrav'] == 0:
+                    with open(prefix + '.in') as finp:
+                        for line in finp:
+                            if 'CELL_PARAMETERS' in line:
+                                par_units = line.split('!')[0].split('CELL_PARAMETERS')[1]
+                                par_units = ''.join(filter(str.isalpha, par_units)).lower()
+                                par = array([fromstring(finp.readline().split('!')[0], sep=' ', dtype=float64)
+                                             for _ in range(3)])
+                                break
+                else:
+                    # need to convert ibrav to par
+                    par = _ibrav_to_par(nml['system'], units="angstrom")
+                    par_units = "angstrom"
+
+            # now read output file
             for line in lines:
-                if "lattice parameter (alat)" in line:
-                    alat = float64(line.split()[-2]) * bohr_to_angstrom
+                if "celldm(1)=" in line:
+                    if par is not None:
+                        continue
+                    alat = float64(line.split()[1]) * bohr_to_angstrom
                 elif "number of atoms/cell" in line:
                     nat = int(line.split()[-1])
                 elif "crystal axes:" in line:
+                    if par is not None:
+                        continue
                     # cell parameters in angstrom
                     par_units = "angstrom"
                     par = array([next(lines).split()[3:6] for _ in range(3)], dtype=float64) * alat
@@ -136,21 +164,19 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
             # ftype.lower() == "qeinp", no need to actually check
             # then file is input
             alat = None
+            if 'a' in nml['system']:
+                alat = nml['system']['a']
+            elif 'celldm' in nml['system']:
+                alat = nml['system']['celldm'][0] * bohr_to_angstrom
+            nat = int(nml['system']['nat'])
             for line in lines:
-                if 'a' in nml['system']:
-                    alat = nml['system']['a']
-                elif 'celldm' in nml['system']:
-                    alat = nml['system']['celldm'][0] * bohr_to_angstrom
-                nat = int(nml['system']['nat'])
-                line = line.split('!')[0]   # trim away comments
                 if 'CELL_PARAMETERS' in line:
-                    par_units = line.split('CELL_PARAMETERS')[1]
+                    par_units = line.split('!')[0].split('CELL_PARAMETERS')[1]
                     par_units = ''.join(filter(str.isalpha, par_units)).lower()
-                    par = array([fromstring(next(lines).split('!')[0], sep=' ')
-                                 for _ in range(3)], dtype=float64)
-                    # par = _convert_par(par, in_units=par_units, alat=alat)
+                    par = array([fromstring(next(lines).split('!')[0], sep=' ', dtype=float64)
+                                 for _ in range(3)])
                 elif 'ATOMIC_POSITIONS' in line:
-                    pos_units = line.split('ATOMIC_POSITIONS')[1]
+                    pos_units = line.split('!')[0].split('ATOMIC_POSITIONS')[1]
                     pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
                     lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
 
