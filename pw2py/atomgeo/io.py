@@ -128,7 +128,10 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
             prefix, extension = os.path.splitext(filename)
             if extension == '.out' and os.path.exists(prefix + '.in'):
                 nml = f90nml.read(prefix + '.in')
-                if nml['system']['ibrav'] == 0:
+                if nml['control']['calculation'] in ['vc-relax', 'vc-md']:
+                    # don't read input file, want cell parameters from output
+                    pass
+                elif nml['system']['ibrav'] == 0:
                     with open(prefix + '.in') as finp:
                         for line in finp:
                             if 'CELL_PARAMETERS' in line:
@@ -156,6 +159,11 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
                     # cell parameters in angstrom
                     par_units = "angstrom"
                     par = array([next(lines).split()[3:6] for _ in range(3)], dtype=float64) * alat
+                elif 'CELL_PARAMETERS' in line:
+                    alat = float64(line.strip().split('alat=')[1].rstrip(')'))
+                    par_units = "angstrom"
+                    par = array([next(lines).split()[:3] for _ in range(3)], dtype=float64)
+                    par *= alat * bohr_to_angstrom
                 elif "ATOMIC_POSITIONS" in line:
                     pos_units = line.split('ATOMIC_POSITIONS')[1]
                     pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
