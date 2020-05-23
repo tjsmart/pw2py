@@ -1,7 +1,4 @@
-io methods need to be redone use f.readline() instead of storing entire file into memory
-should also parse the methods into separate functions (maybe in an accesible location i.e. users can use pw2py to read vasp without using atomgeo class etc.)
-
-Unit tests (may help with debugging)
+Add more unit tests (may help with debugging)
 
 Several todos written in-line of the code
 
@@ -12,6 +9,8 @@ High priority
 
 
 Medium priority
+    --> test for jdftx and xyz
+    --> test for scripts
     --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
     --> write wavefunction to xsf file

@@ -1,16 +1,4 @@
-import f90nml
-from mendeleev import element
-from numpy import array, fromstring, float64, eye
-from warnings import warn
-import os
-
-from .._common.constants import bohr_to_angstrom
-from .._common.resource import _ibrav_to_par, _read_atomic_positions, \
-    _resolve_continuation_lines
-
-
-# Warning reading from xyz not supported!
-_valid_ftypes = ['qeinp', 'jdftx', 'xyz', 'xsf', 'vasp']
+from ..functions import read_geo
 
 
 @classmethod
@@ -19,7 +7,7 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
     generate atomgeo object from file
 
     input
-    ----
+    ---
     filename (str)
         - name/path to file to be read
 
@@ -28,174 +16,17 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
         - acceptable values: ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']
 
     xyz_par (float)
-        - optional, only used when reading from xyz, par is set to a box of with dimension xyz_par
+        - optional, only used when reading from xyz, par is set to a box of with dimension xyz_par in angstrom
 
-    output
-    ----
+    returns
+    ---
     atomgeo (atomgeo object)
+
+    notes
+    ---
+    reads geometry file (filename) using the ..functions.read_geo method
     '''
-    if ftype.lower() not in ['auto', 'vasp', 'qeinp', 'qeout', 'jdftx', 'xsf', 'xyz']:
-        raise ValueError("ftype value not recognized '{}'".format(ftype))
-
-    # TODO add resource to read from prefix
-
-    # store lines of file to iterator
-    with open(filename) as f:
-        lines = iter(f.readlines())
-
-    if any([filename.lower().endswith(vasp.lower()) for vasp in ["OUTCAR", "CONTCAR", "vasp"]]) \
-            or ftype.lower() == "vasp":
-        # then file is vasp
-        next(lines)  # skip first line
-        # read cell par
-        alat = float64(next(lines))
-        par = array([next(lines).split()[0:3] for _ in range(3)], dtype=float64) * alat
-        par_units = "angstrom"
-        # read ions
-        _ion = next(lines).split()
-        _count = fromstring(next(lines), sep=' ', dtype=int)
-        ion = []
-        for i, c in zip(_ion, _count):
-            ion += [i] * c
-        nat = len(ion)
-        # read pos type
-        pos_units = "crystal" if next(lines).strip().lower() == "direct" else "angstrom"
-        pos = array([next(lines).split()[0:3] for _ in range(nat)], dtype=float64)
-
-    elif filename.lower().endswith("xyz") or ftype.lower() == "xyz":
-        # then file is xyz format
-        par_units = 'angstrom'
-        # set par to a box with dimension of xyz_par
-        par = xyz_par * eye(3)
-        # first line is number of atoms
-        nat = int(next(lines))
-        # next line is a comment
-        next(lines)
-        pos_units = 'angstrom'
-        # next nat lines are positions
-        ion = []
-        pos = []
-        for _ in range(nat):
-            nl = next(lines).split()[0:4]
-            ion.append(nl[0])
-            pos.append(nl[1:4])
-
-    elif filename.lower().endswith("xsf") or ftype.lower() == "xsf":
-        for line in lines:
-            if line.startswith('PRIMVEC') or ' PRIMVEC' in line:
-                # if statement above avoids reading 'RECIP-PRIMVEC'
-                # read cell parameters
-                par_units = 'angstrom'
-                par = array([next(lines).split()[0:3] for _ in range(3)], dtype=float64)
-            elif 'PRIMCOORD' in line:
-                # read ions and pos
-                pos_units = 'angstrom'
-                _nat = int(next(lines).split()[0])
-                ion, pos = [], []
-                for _ in range(_nat):
-                    nl = next(lines).split()
-                    ion.append(element(int(nl[0])).symbol)
-                    pos.append(nl[1:4])
-
-    elif filename.lower().endswith("jdftx") or filename.lower().endswith("pos") \
-            or ftype.lower() == "jdftx":
-        # reread lines where all continuation lines have been resolved (i.e. lines that end in '\')
-        lines = iter(_resolve_continuation_lines(filename))
-        ion = []
-        pos = []
-        for line in lines:
-            line = line.split('#')[0].strip()
-            if line.startswith('lattice '):
-                par = fromstring(line.strip('lattice'), dtype=float, sep=' ').reshape((3, 3)).T
-            elif line.startswith('ion '):
-                ion.append(line.split()[1])
-                pos.append(array(line.split()[2:5], dtype=float))
-
-        pos = array(pos)
-        nat = len(ion)
-        par_units = "bohr"
-        warn("pos_units not set, defaulting to crystal")
-        pos_units = "crystal"
-
-    else:
-        # then file is QE
-        nml = f90nml.read(filename)
-        if len(nml) == 0 or ftype.lower() == "qeout":
-            # then file is output
-
-            # try to find input file to read cell parameters
-            par = None
-            prefix, extension = os.path.splitext(filename)
-            if extension == '.out' and os.path.exists(prefix + '.in'):
-                nml = f90nml.read(prefix + '.in')
-                if nml['control']['calculation'] in ['vc-relax', 'vc-md']:
-                    # don't read input file, want cell parameters from output
-                    pass
-                elif nml['system']['ibrav'] == 0:
-                    with open(prefix + '.in') as finp:
-                        for line in finp:
-                            if 'CELL_PARAMETERS' in line:
-                                par_units = line.split('!')[0].split('CELL_PARAMETERS')[1]
-                                par_units = ''.join(filter(str.isalpha, par_units)).lower()
-                                par = array([fromstring(finp.readline().split('!')[0], sep=' ', dtype=float64)
-                                             for _ in range(3)])
-                                break
-                else:
-                    # need to convert ibrav to par
-                    par = _ibrav_to_par(nml['system'], units="angstrom")
-                    par_units = "angstrom"
-
-            # now read output file
-            for line in lines:
-                if "celldm(1)=" in line:
-                    if par is not None:
-                        continue
-                    alat = float64(line.split()[1]) * bohr_to_angstrom
-                elif "number of atoms/cell" in line:
-                    nat = int(line.split()[-1])
-                elif "crystal axes:" in line:
-                    if par is not None:
-                        continue
-                    # cell parameters in angstrom
-                    par_units = "angstrom"
-                    par = array([next(lines).split()[3:6] for _ in range(3)], dtype=float64) * alat
-                elif 'CELL_PARAMETERS' in line:
-                    alat = float64(line.strip().split('alat=')[1].rstrip(')'))
-                    par_units = "angstrom"
-                    par = array([next(lines).split()[:3] for _ in range(3)], dtype=float64)
-                    par *= alat * bohr_to_angstrom
-                elif "ATOMIC_POSITIONS" in line:
-                    pos_units = line.split('ATOMIC_POSITIONS')[1]
-                    pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
-                    lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
-        else:
-            # ftype.lower() == "qeinp", no need to actually check
-            # then file is input
-            alat = None
-            if 'a' in nml['system']:
-                alat = nml['system']['a']
-            elif 'celldm' in nml['system']:
-                alat = nml['system']['celldm'][0] * bohr_to_angstrom
-            nat = int(nml['system']['nat'])
-            for line in lines:
-                if 'CELL_PARAMETERS' in line:
-                    par_units = line.split('!')[0].split('CELL_PARAMETERS')[1]
-                    par_units = ''.join(filter(str.isalpha, par_units)).lower()
-                    par = array([fromstring(next(lines).split('!')[0], sep=' ', dtype=float64)
-                                 for _ in range(3)])
-                elif 'ATOMIC_POSITIONS' in line:
-                    pos_units = line.split('!')[0].split('ATOMIC_POSITIONS')[1]
-                    pos_units = ''.join(filter(str.isalpha, pos_units)).lower()
-                    lines, pos, ion = _read_atomic_positions(lines, nat, no_if_pos=True)
-
-            if int(nml['system']['ibrav']) != 0:
-                # if lattice is specified by ibrav then build par from ibrav
-                # note this routine handles alat on its own
-                par = _ibrav_to_par(nml['system'], units="angstrom")
-                par_units = "angstrom"
-
-            elif alat is not None:
-                par *= alat
+    ion, par, par_units, pos, pos_units = read_geo(filename)
 
     return cls(ion=ion, par=par, pos=pos, pos_units=pos_units, par_units=par_units)  # pylint: disable=E1102
 

@@ -1,7 +1,14 @@
-import f90nml
 import numpy as np
+import os
 
 from .constants import bohr_to_angstrom
+
+
+def _read_qe_card_option(line, card_name):
+    ''' strip away everything to read option from qe card '''
+    option = line.split('!')[0].split('#')[0].split(card_name)[1]
+    option = ''.join(filter(str.isalpha, option)).lower()
+    return option
 
 
 def _resolve_continuation_lines(filename):
@@ -140,20 +147,43 @@ def _convert_pos(pos, in_units, out_units="angstrom", alat=None, alat_units="ang
 
 
 def _determine_ftype(filename):
-    ''' determine ftype base on filename (defaults to qe) '''
-    if any([filename.lower().endswith(ext.lower()) for ext in ["OUTCAR", "CONTCAR", "vasp"]]):
-        ftype = 'vasp'
-    elif filename.lower().endswith("xyz"):
-        ftype = 'xyz'
-    elif filename.lower().endswith("xsf"):
-        ftype = 'xsf'
-    elif any([filename.lower().endswith(ext.lower()) for ext in ["pos", "jdftx"]]):
-        ftype = 'jdftx'
-    else:
-        nml = f90nml.read(filename)
-        if len(nml) == 0:
-            ftype = 'qeout'
-        else:
-            ftype = 'qeinp'
+    '''
+    determine the type of file based on the filename extension
+    (also handles a few other cases)
 
-    return ftype
+    input
+    ---
+        filename (str)
+            - path to file
+
+    returns
+    ---
+        ftype (str)
+            - determined type of file, can be: ['vasp', 'xyz', 'xsf', 'jdftx', 'qeinp', 'qeout']
+    '''
+    base, ext = os.path.splitext(filename.lower())
+
+    # cases without extensions
+    if not ext:
+        if base in ['poscar', 'contcar']:
+            return 'vasp'
+        elif os.path.exists(base + '.in') and os.path.exists(base + '.out'):
+            # filename is a prefix for 'prefix.in' and 'prefix.out'
+            return 'qeout'
+
+    # recognized extensions
+    ftype_extensions = {
+        'vasp': ['.poscar', '.contcar', '.vasp'],
+        'xyz': ['.xyz'],
+        'xsf': ['.xsf'],
+        'jdftx': ['.pos', '.jdftx'],
+        'qeinp': ['.in'],
+        'qeout': ['.out']
+    }
+    for ftype in ftype_extensions:
+        # if ext is recognized return corresponding ftype
+        if ext in ftype_extensions[ftype]:
+            return ftype
+
+    # raise ValueError when determining ftype fails
+    raise ValueError('Unrecognizable extension or unable to determine the type of file for: {}'.format(filename))
