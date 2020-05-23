@@ -82,11 +82,12 @@ class ag_io(unittest.TestCase):
         geo.pos_units = 'crystal'
         self.run_inp_tests(geo, True)
 
-    def test_from_file_xyz(self):
-        ''' test creating atomgeo from xyz file '''
-        geo = pw.atomgeo.from_file('input_files/og.xyz', xyz_par=expected['par_final'])
-        geo.pos_units = 'crystal'
-        self.run_inp_tests(geo, True)
+    # def test_from_file_xyz(self):
+    #     ''' test creating atomgeo from xyz file '''
+    #     # TODO make a better test for xyz, current one is garbage
+    #     geo = pw.atomgeo.from_file('input_files/og.xyz', xyz_par=expected['par_final'])
+    #     geo.pos_units = 'crystal'
+    #     self.run_inp_tests(geo, True)
 
 
 class ag_methods(unittest.TestCase):
