@@ -35,7 +35,8 @@ def _fix_species(self):
     pseudos = _pseudos_from_ATOMIC_SPECIES(self)
     for ion in attr_ion:
         if ion not in card_ion:
-            self.card._card['ATOMIC_SPECIES'][ion] = [element(ion).mass, pseudos[ion]]
+            elem = ''.join(filter(str.isalpha, ion))
+            self.card._card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:
