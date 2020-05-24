@@ -2,6 +2,7 @@ from mendeleev import element
 import numpy as np
 from warnings import warn
 
+from .. import atomgeo
 from .._common.constants import bohr_to_angstrom
 from .._common.pseudos import load_pseudo_dict, determine_pseudo_type
 
