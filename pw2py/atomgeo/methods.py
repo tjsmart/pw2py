@@ -3,6 +3,13 @@ import numpy as np
 from pandas import DataFrame
 
 
+def elements(self):
+    '''
+    return elemental names of each ion (stripping number i.e. 'Fe2' will return 'Fe')
+    '''
+    return np.array([''.join(filter(str.isalpha, ion)) for ion in self.ion])
+
+
 def replace_ion(self, old_ion, new_ion):
     '''
     replace ion species 'old_ion' with 'new_ion'

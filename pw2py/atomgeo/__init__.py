@@ -37,4 +37,4 @@ class atomgeo:
     from .io import from_file, write_file
     # other methods
     from .methods import add_atom, remove_indices, replace_ion, sort_ions, build_supercell, shift_pos_to_unit, \
-        nearest_neighbor
+        nearest_neighbor, elements
