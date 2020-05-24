@@ -1,10 +1,5 @@
 Several todos written in-line of the code
 
-High priority
-    --> in qeinp are A, B, C, celldm ... working? Are they necessary? Just use nml.a etc. right?
-    --> in qenml all attributes names should be lowercase to match f90nml default and avoid confusion...
-
-
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts
