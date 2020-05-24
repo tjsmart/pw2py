@@ -1,8 +1,6 @@
 from collections import Counter
 from copy import deepcopy
 
-from mendeleev import element
-
 
 def to_string(self, ftype='qeinp'):
     '''
@@ -98,8 +96,7 @@ def to_string(self, ftype='qeinp'):
             out += _section
             out += "    {:5d}    {:3d}\n".format(geo.nat, 1)
             for ion, pos in zip(geo.ion, geo.pos):
-                _an = element(ion).atomic_number
-                out += "    {:5d}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(_an, pos[0], pos[1], pos[2])
+                out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
 
     else:
         raise ValueError('Value of ftype not recognized: {}'.format(ftype))
