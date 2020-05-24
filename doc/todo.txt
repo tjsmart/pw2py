@@ -1,5 +1,9 @@
 Several todos written in-line of the code
 
+High priority
+    --> deprecate qegeo, just use atomgeo and qeinp, qegeo has proven to not be useful
+
+
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts

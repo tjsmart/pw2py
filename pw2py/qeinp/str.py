@@ -1,7 +1,7 @@
 from numpy import array_equal, ones
 
 
-def __repr__(self):
+def to_string(self):
     '''
     convert qeinp to string
     '''
@@ -50,5 +50,5 @@ def __repr__(self):
     return out
 
 
-def __str__(self):
-    return repr(self)
+def __repr__(self):
+    return to_string(self)
