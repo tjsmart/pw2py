@@ -18,7 +18,6 @@ class qeinp(atomgeo):
 
     from .io import from_file, write_file
 
-    from .properties import kpt, par_units, pos_units, ion, par, pos, A, B, C, celldm, \
-        cosAB, cosAC, cosBC, ibrav, if_pos, ntyp
+    from .properties import kpt, par_units, pos_units, ion, par, pos, ibrav, if_pos, ntyp
 
     from .methods import load_geo, replace_ion, add_atom, remove_indices

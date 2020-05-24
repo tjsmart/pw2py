@@ -117,108 +117,20 @@ def if_pos(self, if_pos):
 # define ibrav property
 @property
 def ibrav(self):
-    ''' return value of atomgeo._ibrav '''
+    ''' return value of self.nml.ibrav '''
     return self.nml.ibrav
 
 
 @ibrav.setter
 def ibrav(self, ibrav):
-    ''' set value of atomgeo._ibrav '''
+    ''' set value of self.nml.ibrav but also update CELL_PARAMETERS and namelist '''
     if ibrav == 0:
         self.nml.ibrav = 0
-        self.card.CELL_PARAMETERS = self._par_units
+        self.card.CELL_PARAMETERS = self.par_units
         for attr in ['a', 'b', 'c', 'cosab', 'cosac', 'cosbc', 'celldm']:
             try:
                 self.nml._nml['system'].pop(attr)
             except KeyError:
                 pass
     else:
-        raise ValueError('Changing ibrav to nonzero values is not implemented')
-
-
-# define lattice A, B, C property
-@property
-def A(self):
-    ''' return value of atomgeo._A '''
-    return self.nml.A
-
-
-@A.setter
-def A(self, A):
-    ''' set value of atomgeo._A '''
-    self.nml.A = float(A)
-
-
-@property
-def B(self):
-    ''' return value of atomgeo._B '''
-    return self.nml.B
-
-
-@B.setter
-def B(self, B):
-    ''' set value of atomgeo._B '''
-    self.nml.B = float(B)
-
-
-@property
-def C(self):
-    ''' return value of atomgeo._C '''
-    return self.nml.C
-
-
-@C.setter
-def C(self, C):
-    ''' set value of atomgeo._C '''
-    self.nml.C = float(C)
-
-
-@property
-def cosAB(self):
-    ''' return value of atomgeo._cosAB '''
-    return self.nml.cosAB
-
-
-@cosAB.setter
-def cosAB(self, cosAB):
-    ''' set value of atomgeo._cosAB '''
-    self.nml.cosAB = float(cosAB)
-
-
-@property
-def cosBC(self):
-    ''' return value of atomgeo._cosBC '''
-    return self.nml.cosBC
-
-
-@cosBC.setter
-def cosBC(self, cosBC):
-    ''' set value of atomgeo._cosBC '''
-    self.nml.cosBC = float(cosBC)
-
-
-@property
-def cosAC(self):
-    ''' return value of atomgeo._cosAC '''
-    return self.nml.cosAC
-
-
-@cosAC.setter
-def cosAC(self, cosAC):
-    ''' set value of atomgeo._cosAC '''
-    self.nml.cosAC = float(cosAC)
-
-
-# define lattice celldm property
-@property
-def celldm(self):
-    ''' return value of atomgeo._celldm '''
-    return self.nml.celldm
-
-
-@celldm.setter
-def celldm(self, celldm):
-    ''' set value of atomgeo._celldm '''
-    if array(celldm).shape != self.nml.celldm.shape:
-        raise ValueError("Passed array is not of the same shape as the original array")
-    self.nml.celldm = array(celldm, dtype=float)
+        raise NotImplementedError('Changing ibrav to nonzero values is not implemented')
