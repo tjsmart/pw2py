@@ -2,7 +2,7 @@ import f90nml
 from numpy import fromstring, zeros
 from warnings import warn
 
-from .. import atomgeo
+from ..functions import read_geo
 from .._common.resource import _read_qe_card_option
 
 
@@ -31,9 +31,9 @@ def from_file(cls, filename, is_prefix=None):
 
     # read atomgeo
     if is_prefix:
-        geo = atomgeo.from_file(outfile, ftype='qeout')
+        ion, par, par_units, pos, pos_units, if_pos = read_geo(outfile, ftype='qeout', read_if_pos=True)
     else:
-        geo = atomgeo.from_file(inpfile, ftype='qeinp')
+        ion, par, par_units, pos, pos_units, if_pos = read_geo(inpfile, ftype='qeinp', read_if_pos=True)
 
     # acquire other things, i.e. card and kpoints
     # intialize card dictionary
@@ -98,7 +98,7 @@ def from_file(cls, filename, is_prefix=None):
             elif 'ATOMIC_FORCES' in line:
                 warn('ATOMIC_FORCES not implemented and could not be read.')
 
-    return cls(nml, geo, card, kpt)  # pylint: disable=E1102
+    return cls(nml, card, ion, par, par_units, pos, pos_units, if_pos, kpt)  # pylint: disable=E1102
 
 
 def write_file(self, filename):

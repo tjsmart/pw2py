@@ -5,7 +5,7 @@ from .qenml import qenml
 from .. import atomgeo
 
 
-def __init__(self, nml, geo, card, kpt, if_pos=None):
+def __init__(self, nml, card, ion, par, par_units, pos, pos_units, if_pos, kpt):
     ''' initialize qeinp object '''
 
     '''
@@ -18,8 +18,8 @@ def __init__(self, nml, geo, card, kpt, if_pos=None):
         if_pos -> if_pos for relaxing/fixing atomic positions in input file
     '''
     # use atomgeo to instantiate many properties
-    atomgeo.__init__(self, ion=geo.ion, par=geo.par, pos=geo.pos,
-                     par_units=geo.par_units, pos_units=geo.pos_units)
+    atomgeo.__init__(self, ion=ion, par=par, pos=pos,
+                     par_units=par_units, pos_units=pos_units)
     # set nml and card attributes
     self.nml = qenml(nml)
     self.card = qecard(card)
