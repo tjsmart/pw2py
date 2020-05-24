@@ -86,7 +86,10 @@ def read_xsf(filename):
                 ion, pos = [], []
                 for _ in range(nat):
                     nl = f.readline().split()
-                    ion.append(element(int(nl[0])).symbol)
+                    try:
+                        ion.append(element(int(nl[0])).symbol)
+                    except ValueError:
+                        ion.append(nl[0])
                     pos.append(nl[1:4])
                 ion = np.array(ion)
                 pos = np.array(pos, dtype=np.float64)
