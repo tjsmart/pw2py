@@ -1,22 +1,16 @@
-Add more unit tests (may help with debugging)
-
 Several todos written in-line of the code
 
-
-High priority
-    --> gauranteed that several things will break when an ion name is indexed (as is often the case), need to find and resolve these issues where they exist
-        -- For example try running tests with a file with 'Fe1' and 'Fe2'
-
-
-Medium priority
+Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts
+    --> tests for file with labels (like the co3o4 file)
+
+Medium priority
     --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
-    --> write wavefunction to xsf file
+    --> write wavefunction to xsf file / cube file
     --> read wavefunction/eigenvalues from vasp
     --> calculate dQ, dQ xsf
-
 
 Low priority
     --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
