@@ -2,13 +2,8 @@ import f90nml
 from numpy import fromstring, zeros
 from warnings import warn
 
-from .. import qegeo
-
-
-def _read_card_option(line, card_name):
-    option = line.split(card_name)[1]
-    option = ''.join(filter(str.isalpha, option)).lower()
-    return option
+from .. import atomgeo
+from .._common.resource import _read_qe_card_option
 
 
 @classmethod
@@ -32,12 +27,13 @@ def from_file(cls, filename, is_prefix=None):
 
     # read namelist
     nml = f90nml.read(inpfile)
+    assert len(nml) != 0, "Input file does not contain a valid namelist!"
 
-    # read qegeo
+    # read atomgeo
     if is_prefix:
-        geo = qegeo.from_file(outfile, ftype='qeout')
+        geo = atomgeo.from_file(outfile, ftype='qeout')
     else:
-        geo = qegeo.from_file(inpfile, ftype='qeinp')
+        geo = atomgeo.from_file(inpfile, ftype='qeinp')
 
     # acquire other things, i.e. card and kpoints
     # intialize card dictionary
@@ -46,65 +42,61 @@ def from_file(cls, filename, is_prefix=None):
     # intialize kpt (default is None)
     kpt = None
 
-    # store lines of file to iterator
+    # parse additional data from inpfile
     with open(inpfile) as f:
-        lines = iter(f.readlines())
+        # need to get: ['CELL_PARAMETERS', 'ATOMIC_SPECIES', 'ATOMIC_POSITIONS', 'K_POINTS']
+        # also get if_pos and kpt
+        for line in f:
+            if 'CELL_PARAMETERS' in line:
+                # TODO why not just use par_units from above?
+                card['CELL_PARAMETERS'] = _read_qe_card_option(line, 'CELL_PARAMETERS')
+            elif 'ATOMIC_SPECIES' in line:
+                card['ATOMIC_SPECIES'] = {}
+                for _ in range(int(nml['system']['ntyp'])):
+                    nl = f.readline()
+                    try:
+                        symbol, mass, pp = nl.split('!')[0].split('#')[0].split()
+                    except ValueError:
+                        raise ValueError('Unable to unpack this line in ATOMIC_SPECIES: {}'.format(nl))
+                    card['ATOMIC_SPECIES'][symbol] = [float(mass), str(pp)]
+            elif 'ATOMIC_POSITIONS' in line:
+                card['ATOMIC_POSITIONS'] = _read_qe_card_option(line, 'ATOMIC_POSITIONS')
+            elif 'K_POINTS' in line:
+                card['K_POINTS'] = _read_qe_card_option(line, 'K_POINTS')
+                # read k-points
+                if card['K_POINTS'] == 'automatic':
+                    kpt = fromstring(f.readline().split('!')[0].split('#')[0], sep=' ', dtype=int).reshape((2, 3))
+                elif card['K_POINTS'] == 'gamma':
+                    kpt = None
+                else:
+                    # TODO add support for crystal_b etc.
+                    kpt = None
+                    warn("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
 
-    # loop through lines for ['CELL_PARAMETERS', 'ATOMIC_SPECIES', 'ATOMIC_POSITIONS', 'K_POINTS']
-    for line in lines:
-        line = line.split('!')[0].split('#')[0]   # trim away comments
-        if 'CELL_PARAMETERS' in line:
-            card['CELL_PARAMETERS'] = _read_card_option(line, 'CELL_PARAMETERS')
-
-        elif 'ATOMIC_SPECIES' in line:
-            card['ATOMIC_SPECIES'] = {}
-            for _ in range(int(nml['system']['ntyp'])):
-                nl = next(lines)
+            elif 'OCCUPATIONS' in line:
                 try:
-                    symbol, mass, pp = nl.split('!')[0].split('#')[0].split()
-                except ValueError:
-                    raise ValueError('Unable to unpack this line in ATOMIC_SPECIES: {}'.format(nl))
-                card['ATOMIC_SPECIES'][symbol] = [float(mass), str(pp)]
+                    nbnd = nml['system']['nbnd']
+                except AttributeError:
+                    raise ValueError('Unable to read OCCUPATIONS when nbnd is not set.')
+                try:
+                    nspin = nml['system']['nspin']
+                except AttributeError:
+                    nspin = 1
+                occ = zeros((nspin, nbnd))
+                for ispin in range(nspin):
+                    bands_read = 0
+                    while bands_read < nml['system']['nbnd']:
+                        arr = fromstring(f.readline(), sep=' ')
+                        occ[ispin, bands_read:bands_read + len(arr)] = arr
+                        bands_read += len(arr)
 
-        elif 'ATOMIC_POSITIONS' in line:
-            card['ATOMIC_POSITIONS'] = _read_card_option(line, 'ATOMIC_POSITIONS')
+                card['OCCUPATIONS'] = occ
 
-        elif 'K_POINTS' in line:
-            card['K_POINTS'] = _read_card_option(line, 'K_POINTS')
-            # read k-points
-            if card['K_POINTS'] == 'automatic':
-                kpt = fromstring(next(lines).split('!')[0].split('#')[0], sep=' ', dtype=int).reshape((2, 3))
-            elif card['K_POINTS'] == 'gamma':
-                kpt = None
-            else:
-                # TODO add support for crystal_b etc.
-                kpt = None
-                warn("K_POINTS option '{}' not supported, please use 'automatic' or 'gamma'")
+            elif 'CONSTRAINTS' in line:
+                warn('CONSTRAINTS not implemented and could not be read.')
 
-        elif 'OCCUPATIONS' in line:
-            try:
-                nbnd = nml['system']['nbnd']
-            except AttributeError:
-                raise ValueError('Unable to read OCCUPATIONS when nbnd is not set.')
-            try:
-                nspin = nml['system']['nspin']
-            except AttributeError:
-                nspin = 1
-            occ = zeros((nspin, nbnd))
-            for ispin in range(nspin):
-                bands_read = 0
-                while bands_read < nml['system']['nbnd']:
-                    arr = fromstring(next(lines), sep=' ')
-                    occ[ispin, bands_read:bands_read + len(arr)] = arr
-                    bands_read += len(arr)
-
-            card['OCCUPATIONS'] = occ
-
-        elif 'CONSTRAINTS' in line:
-            warn('CONSTRAINTS not implemented and could not be read.')
-
-        elif 'ATOMIC_FORCES' in line:
-            warn('ATOMIC_FORCES not implemented and could not be read.')
+            elif 'ATOMIC_FORCES' in line:
+                warn('ATOMIC_FORCES not implemented and could not be read.')
 
     return cls(nml, geo, card, kpt)  # pylint: disable=E1102
 
