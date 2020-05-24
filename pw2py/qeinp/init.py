@@ -1,9 +1,11 @@
+import numpy as np
+
 from .qecard import qecard
 from .qenml import qenml
-from .. import qegeo
+from .. import atomgeo
 
 
-def __init__(self, nml, geo, card, kpt):
+def __init__(self, nml, geo, card, kpt, if_pos=None):
     ''' initialize qeinp object '''
 
     '''
@@ -11,12 +13,19 @@ def __init__(self, nml, geo, card, kpt):
         nml -> all of the namelists attributes
         geo -> ion, pos, par, units
         card -> dictionary holding card options (ATOMIC_POSITIONS, etc.)
+    other:
+        kpt -> specified kpoint grid
+        if_pos -> if_pos for relaxing/fixing atomic positions in input file
     '''
-    # use qegeo to instantiate many properties
-    qegeo.__init__(self, geo, geo.if_pos, geo._nml)
-
-    delattr(self, '_nml')
-
+    # use atomgeo to instantiate many properties
+    atomgeo.__init__(self, ion=geo.ion, par=geo.par, pos=geo.pos,
+                     par_units=geo.par_units, pos_units=geo.pos_units)
+    # set nml and card attributes
     self.nml = qenml(nml)
     self.card = qecard(card)
+    # additional attributes
     self._kpt = kpt
+    if if_pos is None:
+        self._if_pos = np.ones((self.nat, 3), dtype=np.int32)
+    else:
+        self._if_pos = np.array(if_pos, dtype=np.int32)

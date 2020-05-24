@@ -1,7 +1,7 @@
-from .. import qegeo
+from .. import atomgeo
 
 
-class qeinp(qegeo):
+class qeinp(atomgeo):
     '''
     class for quantum espresso input file
         qedict = dictionary of namelists (nml), ATOMIC_SPECIES, CELL_PARAMETERS, ATOMIC_POSITIONS, and K_POINTS
