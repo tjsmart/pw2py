@@ -45,21 +45,11 @@ def sort_ions(self, inplace=False):
     sort ions into categories and reorder corresponding positions
     '''
     out = self if inplace else deepcopy(self)
-
-    # TODO do this without making a dataframe may be better?
-    # save ion and pos to dataframe
-    columns = ['ion'] + ['pos{}'.format(i) for i in range(3)]
-    df = DataFrame(columns=columns)
-    df.ion = self.ion
-    for i in range(3):
-        df['pos{}'.format(i)] = self.pos[:, i]
-
-    # sort dataframe by ion column
-    df.sort_values(by=['ion'], inplace=True)
-
+    # calculate indices of sorted ion array
+    sorted_index = np.argsort(self.ion)
     # update ion and pos
-    out.ion = list(df['ion'])
-    out.pos = np.array(df.loc[:, 'pos0':'pos2'])
+    out.ion = self.ion[sorted_index]
+    out.pos = self.pos[sorted_index]
 
     if not inplace:
         return out
