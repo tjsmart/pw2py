@@ -7,6 +7,27 @@ from .._common.constants import bohr_to_angstrom
 from .._common.resource import _ibrav_to_par, _read_qe_card_option, _determine_ftype
 
 
+def _read_qe_atomic_positions(f, nat, read_if_pos=False):
+    ''' read ion, pos, if_pos from qe atomic_positions '''
+    ion, pos, if_pos = [], [], []
+    for _ in range(nat):
+        nl = f.readline().split('!')[0].split('#')[0].split()
+        ion.append(nl[0])
+        pos.append(nl[1:4])
+        if read_if_pos:
+            try:
+                # cannot use [4:7], because IndexError will not be thrown
+                if_pos.append([nl[4], nl[5], nl[6]])
+            except IndexError:
+                if_pos.append([1, 1, 1])  # default values
+    ion = np.array(ion)
+    pos = np.array(pos, dtype=np.float64)
+    if read_if_pos:
+        if_pos = np.array(if_pos, dtype=np.int32)
+
+    return ion, pos, if_pos
+
+
 def read_vasp(filename):
     '''
     read geometry from vasp file
@@ -133,7 +154,7 @@ def read_jdftx(filename):
     return ion, par, par_units, pos, pos_units
 
 
-def read_qeout(filename, par_units='angstrom'):
+def read_qeout(filename, par_units='angstrom', read_if_pos=False):
     '''
     read geometry from qeout file
 
@@ -193,15 +214,12 @@ def read_qeout(filename, par_units='angstrom'):
                 par = np.array([f.readline().split()[:3] for _ in range(3)], dtype=np.float64) * alat
             elif 'ATOMIC_POSITIONS' in line:
                 pos_units = _read_qe_card_option(line, 'ATOMIC_POSITIONS')
-                ion, pos = [], []
-                for _ in range(nat):
-                    nl = f.readline().split()[0:4]
-                    ion.append(nl[0])
-                    pos.append(nl[1:4])
-                ion = np.array(ion)
-                pos = np.array(pos, dtype=np.float64)
+                ion, pos, if_pos = _read_qe_atomic_positions(f, nat, read_if_pos=read_if_pos)
 
-    return ion, par, par_units, pos, pos_units
+    if read_if_pos:
+        return ion, par, par_units, pos, pos_units, if_pos
+    else:
+        return ion, par, par_units, pos, pos_units
 
 
 def read_qeinp(filename, read_if_pos=False):
@@ -226,21 +244,7 @@ def read_qeinp(filename, read_if_pos=False):
                 par = np.array([f.readline().split()[0:3] for _ in range(3)], dtype=np.float64)
             elif 'ATOMIC_POSITIONS' in line:
                 pos_units = _read_qe_card_option(line, 'ATOMIC_POSITIONS')
-                ion, pos, if_pos = [], [], []
-                for _ in range(nat):
-                    nl = f.readline().split('!')[0].split('#')[0].split()
-                    ion.append(nl[0])
-                    pos.append(nl[1:4])
-                    if read_if_pos:
-                        try:
-                            # cannot use [4:7], because IndexError will not be thrown
-                            if_pos.append([nl[4], nl[5], nl[6]])
-                        except IndexError:
-                            if_pos.append([1, 1, 1])  # default values
-                ion = np.array(ion)
-                pos = np.array(pos, dtype=np.float64)
-                if read_if_pos:
-                    if_pos = np.array(if_pos, dtype=np.int32)
+                ion, pos, if_pos = _read_qe_atomic_positions(f, nat, read_if_pos=read_if_pos)
         if int(nml['system']['ibrav']) != 0:
             # if lattice is specified by ibrav then build par from ibrav
             # note this routine handles alat on its own
@@ -290,7 +294,7 @@ def read_geo(filename, ftype='auto', read_if_pos=False):
     if ftype == 'qeinp':
         return read_qeinp(filename, read_if_pos=read_if_pos)
     elif ftype == 'qeout':
-        return read_qeout(filename)
+        return read_qeout(filename, read_if_pos=read_if_pos)
     elif ftype == 'jdftx':
         return read_jdftx(filename)
     elif ftype == 'xyz':
