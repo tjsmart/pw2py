@@ -204,7 +204,7 @@ def read_qeout(filename, par_units='angstrom'):
     return ion, par, par_units, pos, pos_units
 
 
-def read_qeinp(filename):
+def read_qeinp(filename, read_if_pos=False):
     '''
     read geometry from qeinp file
 
@@ -226,13 +226,21 @@ def read_qeinp(filename):
                 par = np.array([f.readline().split()[0:3] for _ in range(3)], dtype=np.float64)
             elif 'ATOMIC_POSITIONS' in line:
                 pos_units = _read_qe_card_option(line, 'ATOMIC_POSITIONS')
-                ion, pos = [], []
+                ion, pos, if_pos = [], [], []
                 for _ in range(nat):
-                    nl = f.readline().split()[0:4]
+                    nl = f.readline().split('!')[0].split('#')[0].split()
                     ion.append(nl[0])
                     pos.append(nl[1:4])
+                    if read_if_pos:
+                        try:
+                            # cannot use [4:7], because IndexError will not be thrown
+                            if_pos.append([nl[4], nl[5], nl[6]])
+                        except IndexError:
+                            if_pos.append([1, 1, 1])  # default values
                 ion = np.array(ion)
                 pos = np.array(pos, dtype=np.float64)
+                if read_if_pos:
+                    if_pos = np.array(if_pos, dtype=np.int32)
         if int(nml['system']['ibrav']) != 0:
             # if lattice is specified by ibrav then build par from ibrav
             # note this routine handles alat on its own
@@ -241,10 +249,13 @@ def read_qeinp(filename):
         elif alat is not None:
             par *= alat
 
-    return ion, par, par_units, pos, pos_units
+    if read_if_pos:
+        return ion, par, par_units, pos, pos_units, if_pos
+    else:
+        return ion, par, par_units, pos, pos_units
 
 
-def read_geo(filename, ftype='auto'):
+def read_geo(filename, ftype='auto', read_if_pos=False):
     '''
     read geometry of an arbitrary geometry file (filename)
 
@@ -255,6 +266,8 @@ def read_geo(filename, ftype='auto'):
         ftype (str) (optional)
             - type of file to be read, can be: ['vasp', 'xyz', 'xsf', 'jdftx', 'qeinp', 'qeout']
             - default is 'auto', wherein ftype is determined based on extension of file or other
+        read_if_pos (bool) (optional)
+            - only used if ftype='qeinp', in which case if_pos will be read and returned
 
     returns
     ---
@@ -275,7 +288,7 @@ def read_geo(filename, ftype='auto'):
 
     # call appropriate function
     if ftype == 'qeinp':
-        return read_qeinp(filename)
+        return read_qeinp(filename, read_if_pos=read_if_pos)
     elif ftype == 'qeout':
         return read_qeout(filename)
     elif ftype == 'jdftx':
