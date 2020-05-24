@@ -336,63 +336,63 @@ def celldm(self, celldm):
 
 
 @property
-def A(self):
-    return self._nml['system']['A']
+def a(self):
+    return self._nml['system']['a']
 
 
-@A.setter
-def A(self, A):
-    self._nml['system']['A'] = A
-
-
-@property
-def B(self):
-    return self._nml['system']['B']
-
-
-@B.setter
-def B(self, B):
-    self._nml['system']['B'] = B
+@a.setter
+def a(self, a):
+    self._nml['system']['a'] = a
 
 
 @property
-def C(self):
-    return self._nml['system']['C']
+def b(self):
+    return self._nml['system']['b']
 
 
-@C.setter
-def C(self, C):
-    self._nml['system']['C'] = C
-
-
-@property
-def cosAB(self):
-    return self._nml['system']['cosAB']
-
-
-@cosAB.setter
-def cosAB(self, cosAB):
-    self._nml['system']['cosAB'] = cosAB
+@b.setter
+def b(self, b):
+    self._nml['system']['b'] = b
 
 
 @property
-def cosAC(self):
-    return self._nml['system']['cosAC']
+def c(self):
+    return self._nml['system']['c']
 
 
-@cosAC.setter
-def cosAC(self, cosAC):
-    self._nml['system']['cosAC'] = cosAC
+@c.setter
+def c(self, c):
+    self._nml['system']['c'] = c
 
 
 @property
-def cosBC(self):
-    return self._nml['system']['cosBC']
+def cosab(self):
+    return self._nml['system']['cosab']
 
 
-@cosBC.setter
-def cosBC(self, cosBC):
-    self._nml['system']['cosBC'] = cosBC
+@cosab.setter
+def cosab(self, cosab):
+    self._nml['system']['cosab'] = cosab
+
+
+@property
+def cosac(self):
+    return self._nml['system']['cosac']
+
+
+@cosac.setter
+def cosac(self, cosac):
+    self._nml['system']['cosac'] = cosac
+
+
+@property
+def cosbc(self):
+    return self._nml['system']['cosbc']
+
+
+@cosbc.setter
+def cosbc(self, cosbc):
+    self._nml['system']['cosbc'] = cosbc
 
 
 @property
@@ -827,54 +827,54 @@ def lda_plus_u_kind(self, lda_plus_u_kind):
 
 
 @property
-def Hubbard_U(self):
-    return self._nml['system']['Hubbard_U']
+def hubbard_u(self):
+    return self._nml['system']['hubbard_u']
 
 
-@Hubbard_U.setter
-def Hubbard_U(self, Hubbard_U):
-    self._nml['system']['Hubbard_U'] = [float(h) for h in list(Hubbard_U)]
-
-
-@property
-def Hubbard_J0(self):
-    return self._nml['system']['Hubbard_J0']
-
-
-@Hubbard_J0.setter
-def Hubbard_J0(self, Hubbard_J0):
-    self._nml['system']['Hubbard_J0'] = [float(h) for h in list(Hubbard_J0)]
+@hubbard_u.setter
+def hubbard_u(self, hubbard_u):
+    self._nml['system']['hubbard_u'] = [float(h) for h in list(hubbard_u)]
 
 
 @property
-def Hubbard_alpha(self):
-    return self._nml['system']['Hubbard_alpha']
+def hubbard_j0(self):
+    return self._nml['system']['hubbard_j0']
 
 
-@Hubbard_alpha.setter
-def Hubbard_alpha(self, Hubbard_alpha):
-    self._nml['system']['Hubbard_alpha'] = [float(h) for h in list(Hubbard_alpha)]
-
-
-@property
-def Hubbard_beta(self):
-    return self._nml['system']['Hubbard_beta']
-
-
-@Hubbard_beta.setter
-def Hubbard_beta(self, Hubbard_beta):
-    self._nml['system']['Hubbard_beta'] = [float(h) for h in list(Hubbard_beta)]
+@hubbard_j0.setter
+def hubbard_j0(self, hubbard_j0):
+    self._nml['system']['hubbard_j0'] = [float(h) for h in list(hubbard_j0)]
 
 
 @property
-def Hubbard_J(self):
-    return self._nml['system']['Hubbard_J']
+def hubbard_alpha(self):
+    return self._nml['system']['hubbard_alpha']
 
 
-@Hubbard_J.setter
-def Hubbard_J(self, Hubbard_J):
-    # TODO type not understand leaving this open
-    self._nml['system']['Hubbard_J'] = Hubbard_J
+@hubbard_alpha.setter
+def hubbard_alpha(self, hubbard_alpha):
+    self._nml['system']['hubbard_alpha'] = [float(h) for h in list(hubbard_alpha)]
+
+
+@property
+def hubbard_beta(self):
+    return self._nml['system']['hubbard_beta']
+
+
+@hubbard_beta.setter
+def hubbard_beta(self, hubbard_beta):
+    self._nml['system']['hubbard_beta'] = [float(h) for h in list(hubbard_beta)]
+
+
+@property
+def hubbard_j(self):
+    return self._nml['system']['hubbard_j']
+
+
+@hubbard_j.setter
+def hubbard_j(self, hubbard_j):
+    # TODO type not understood leaving this open
+    self._nml['system']['hubbard_j'] = hubbard_j
 
 
 @property
@@ -889,16 +889,16 @@ def starting_ns_eigenvalue(self, starting_ns_eigenvalue):
 
 
 @property
-def U_projection_type(self):
-    return self._nml['system']['U_projection_type']
+def u_projection_type(self):
+    return self._nml['system']['u_projection_type']
 
 
-@U_projection_type.setter
-def U_projection_type(self, U_projection_type):
-    if str(U_projection_type).lower() not in \
+@u_projection_type.setter
+def u_projection_type(self, u_projection_type):
+    if str(u_projection_type).lower() not in \
             ['atomic', 'ortho-atomic', 'norm-atomic', 'file', 'pseudo']:
-        raise ValueError('Invalid value for U_projection_type')
-    self._nml['system']['U_projection_type'] = str(U_projection_type).lower()
+        raise ValueError('Invalid value for u_projection_type')
+    self._nml['system']['u_projection_type'] = str(u_projection_type).lower()
 
 
 @property
