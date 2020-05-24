@@ -2,7 +2,6 @@ from mendeleev import element
 import numpy as np
 from warnings import warn
 
-from .. import atomgeo, qegeo
 from .._common.constants import bohr_to_angstrom
 from .._common.pseudos import load_pseudo_dict, determine_pseudo_type
 
@@ -63,17 +62,14 @@ def load_geo(self, geo, load='default'):
     if load not in ['default', 'cell', 'atoms']:
         raise ValueError('Unrecognized value for load: {}'.format(load))
 
-    if isinstance(geo, atomgeo):
-        # convert atomgeo to qegeo
-        geo = qegeo(geo, None, None)
-    elif not isinstance(geo, qegeo):
-        raise ValueError('geo must be of type atomgeo or qegeo, passed type: {}'.format(type(geo)))
+    if not isinstance(geo, atomgeo):
+        raise ValueError('geo must be of type pw2py.atomgeo, passed type: {}'.format(type(geo)))
 
     if load == 'default' or load == 'atoms':
         self._pos = geo.pos
         self._pos_units = geo.pos_units
         self.card._card['ATOMIC_POSITIONS'] = geo.pos_units
-        self._if_pos = geo.if_pos
+        self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
 
         if not np.array_equal(self._ion, geo.ion):
             self._ion = geo.ion

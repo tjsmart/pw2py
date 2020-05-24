@@ -9,7 +9,6 @@ def to_string(self, ftype='qeinp'):
     ftype = ftype.lower()
 
     if ftype == 'qeinp':
-        # TODO need to be able to handle cases with ibrav != 0 (maybe this should be qegeo specific)
         _ntyp = len(set(self.ion))
         out = "&control\n/\n\n&system\n    ibrav = 0\n    ntyp = {}\n    nat = {}\n/\n\n&electrons\n/\n\n"\
             .format(_ntyp, str(self.nat))

@@ -18,10 +18,8 @@ Available subpackages
 ---------------------
 atomgeo
     class for reading/manipulating/writing atomic geometry
-qegeo
-    subclass of atomgeo with extended functionality for quantum espresso
 qeinp
-    subclass of qegeo with functionality for handling full quantum espresso input file
+    subclass of atomgeo with functionality for handling full quantum espresso input file
 qeout
     class for processing quantum espresso output file
 qesave
@@ -29,7 +27,6 @@ qesave
 '''
 
 from .atomgeo import atomgeo  # noqa: F401
-from .qegeo import qegeo  # noqa: F401
 from .qeinp import qeinp  # noqa: F401
 from .qeout import qeout  # noqa: F401
 from . import qesave  # noqa: F401
