@@ -30,7 +30,7 @@ class atomgeo:
 
     # dunder methods
     from .init import __init__
-    from .str import __str__, __repr__
+    from .str import __str__, __repr__, to_string
     # properties
     from .properties import ion, nat, par, par_units, pos, pos_units, vol, atoms
     # io methods

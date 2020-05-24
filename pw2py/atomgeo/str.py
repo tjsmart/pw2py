@@ -4,7 +4,7 @@ from copy import deepcopy
 from mendeleev import element
 
 
-def __str__(self, ftype='qeinp'):
+def to_string(self, ftype='qeinp'):
     '''
     convert atomgeo to str (default is qeinp format)
     '''
@@ -105,6 +105,13 @@ def __str__(self, ftype='qeinp'):
         raise ValueError('Value of ftype not recognized: {}'.format(ftype))
 
     return out
+
+
+def __str__(self, ftype='qeinp'):
+    '''
+    default str method of atomgeo
+    '''
+    return self.to_string(ftype=ftype)
 
 
 def __repr__(self):
