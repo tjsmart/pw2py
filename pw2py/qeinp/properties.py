@@ -129,7 +129,7 @@ def ibrav(self, ibrav):
         self.card.CELL_PARAMETERS = self.par_units
         for attr in ['a', 'b', 'c', 'cosab', 'cosac', 'cosbc', 'celldm']:
             try:
-                self.nml._nml['system'].pop(attr)
+                self.nml['system'].pop(attr)
             except KeyError:
                 pass
     else:

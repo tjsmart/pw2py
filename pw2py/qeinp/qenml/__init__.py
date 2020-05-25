@@ -1,4 +1,7 @@
-class qenml:
+from f90nml.namelist import Namelist
+
+
+class qenml(Namelist):
     '''
     class for handling quantum espresso namelists
         > control
@@ -10,7 +13,7 @@ class qenml:
     It is a wrapper on the f90nml namelist class
     '''
 
-    from .init import __init__
+    # from .init import __init__
 
     from .properties import calculation, title, verbosity, restart_mode, wf_collect, nstep, iprint, tstress, tprnfor, \
         dt, outdir, wfcdir, prefix, lkpoint_dir, max_seconds, etot_conv_thr, forc_conv_thr, disk_io, pseudo_dir, \
@@ -32,6 +35,6 @@ class qenml:
         refold_pos, upscale, bfgs_ndim, trust_radius_max, trust_radius_min, trust_radius_ini, w_1, w_2, cell_dynamics, \
         press, wmass, cell_factor, press_conv_thr, cell_dofree, ibrav, celldm, a, b, c, cosab, cosac, cosbc, nat, ntyp
 
-    from .str import __repr__, __str__
+    # from .str import __repr__, __str__
 
     # from .io import from_file, write_file

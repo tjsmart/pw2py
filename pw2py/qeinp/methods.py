@@ -36,12 +36,12 @@ def _fix_species(self):
     for ion in attr_ion:
         if ion not in card_ion:
             elem = ''.join(filter(str.isalpha, ion))
-            self.card._card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
+            self.card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:
         if ion not in attr_ion:
-            self.card._card['ATOMIC_SPECIES'].pop(ion)
+            self.card['ATOMIC_SPECIES'].pop(ion)
 
 
 # TODO
@@ -69,7 +69,7 @@ def load_geo(self, geo, load='default'):
     if load == 'default' or load == 'atoms':
         self._pos = geo.pos
         self._pos_units = geo.pos_units
-        self.card._card['ATOMIC_POSITIONS'] = geo.pos_units
+        self.card['ATOMIC_POSITIONS'] = geo.pos_units
         self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
 
         if not np.array_equal(self._ion, geo.ion):
@@ -78,8 +78,8 @@ def load_geo(self, geo, load='default'):
             _fix_species(self)
 
         # resync nat and ntyp in nml
-        self.nml._nml['system']['nat'] = self.nat
-        self.nml._nml['system']['ntyp'] = self.ntyp
+        self.nml['system']['nat'] = self.nat
+        self.nml['system']['ntyp'] = self.ntyp
 
     if load == 'default' or load == 'cell':
         # TODO move this into an implementation of setting ibrav from 0 (i.e. put ibrav setter)
@@ -87,14 +87,14 @@ def load_geo(self, geo, load='default'):
         if self.ibrav in [1, 2, 3]:
             # check if new par == old par * constant
             if np.allclose(geo.par/geo.par[0, 0], self.par/self.par[0, 0]):
-                if 'A' in self.nml._nml['system']:
-                    self.nml._nml['system']['A'] = geo.par[0, 0]
+                if 'a' in self.nml['system']:
+                    self.nml['system']['a'] = geo.par[0, 0]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['A'] *= bohr_to_angstrom
-                elif 'celldm' in self.nml._nml['system']:
-                    self.nml._nml['system']['celldm'][0] = geo.par[0, 0]
+                        self.nml['system']['a'] *= bohr_to_angstrom
+                elif 'celldm' in self.nml['system']:
+                    self.nml['system']['celldm'][0] = geo.par[0, 0]
                     if geo.par_units == 'angstrom':
-                        self.nml._nml['system']['celldm'][0] /= bohr_to_angstrom
+                        self.nml['system']['celldm'][0] /= bohr_to_angstrom
                 else:
                     warn('Unable to preserve ibrav due to missing nml items')
                     self.ibrav = 0
@@ -105,18 +105,18 @@ def load_geo(self, geo, load='default'):
             # check if par[:2] = old par[:2] * constant and par[2] = old par[2] * constant
             if np.allclose(geo.par[:2]/geo.par[0, 0], self.par[:2]/self.par[0, 0]) and \
                     np.allclose(geo.par[2]/geo.par[2, 2], self.par[2]/self.par[2, 2]):
-                if 'A' in self.nml._nml['system']:
-                    self.nml._nml['system']['A'] = geo.par[0, 0]
+                if 'a' in self.nml['system']:
+                    self.nml['system']['a'] = geo.par[0, 0]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['A'] *= bohr_to_angstrom
-                    self.nml._nml['system']['C'] = geo.par[2, 2]
+                        self.nml['system']['a'] *= bohr_to_angstrom
+                    self.nml['system']['c'] = geo.par[2, 2]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['C'] *= bohr_to_angstrom
-                elif 'celldm' in self.nml._nml['system']:
-                    self.nml._nml['system']['celldm'][0] = geo.par[0, 0]
+                        self.nml['system']['c'] *= bohr_to_angstrom
+                elif 'celldm' in self.nml['system']:
+                    self.nml['system']['celldm'][0] = geo.par[0, 0]
                     if geo.par_units == 'angstrom':
-                        self.nml._nml['system']['celldm'][0] /= bohr_to_angstrom
-                    self.nml._nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
+                        self.nml['system']['celldm'][0] /= bohr_to_angstrom
+                    self.nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
                 else:
                     warn('Unable to preserve ibrav due to missing nml items')
                     self.ibrav = 0
@@ -126,22 +126,22 @@ def load_geo(self, geo, load='default'):
         elif self.ibrav == 8:
             # check if par[i] = old par[i] for i in range(3)
             if all([np.allclose(geo.par[i]/geo.par[i, i], self.par[i]/self.par[i, i]) for i in range(3)]):
-                if 'A' in self.nml._nml['system']:
-                    self.nml._nml['system']['A'] = geo.par[0, 0]
+                if 'a' in self.nml['system']:
+                    self.nml['system']['a'] = geo.par[0, 0]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['A'] *= bohr_to_angstrom
-                    self.nml._nml['system']['B'] = geo.par[1, 1]
+                        self.nml['system']['a'] *= bohr_to_angstrom
+                    self.nml['system']['b'] = geo.par[1, 1]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['B'] *= bohr_to_angstrom
-                    self.nml._nml['system']['C'] = geo.par[2, 2]
+                        self.nml['system']['b'] *= bohr_to_angstrom
+                    self.nml['system']['c'] = geo.par[2, 2]
                     if geo.par_units == 'bohr':
-                        self.nml._nml['system']['C'] *= bohr_to_angstrom
-                elif 'celldm' in self.nml._nml['system']:
-                    self.nml._nml['system']['celldm'][0] = geo.par[0, 0]
+                        self.nml['system']['c'] *= bohr_to_angstrom
+                elif 'celldm' in self.nml['system']:
+                    self.nml['system']['celldm'][0] = geo.par[0, 0]
                     if geo.par_units == 'angstrom':
-                        self.nml._nml['system']['celldm'][0] /= bohr_to_angstrom
-                    self.nml._nml['system']['celldm'][1] = geo.par[1, 1] / geo.par[0, 0]
-                    self.nml._nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
+                        self.nml['system']['celldm'][0] /= bohr_to_angstrom
+                    self.nml['system']['celldm'][1] = geo.par[1, 1] / geo.par[0, 0]
+                    self.nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
                 else:
                     warn('Unable to preserve ibrav due to missing nml items')
                     self.ibrav = 0
@@ -156,7 +156,7 @@ def load_geo(self, geo, load='default'):
         # update par, par_units,
         self._par = geo.par
         self._par_units = geo.par_units
-        self.card._card['CELL_PARAMETERS'] = geo.par_units
+        self.card['CELL_PARAMETERS'] = geo.par_units
 
 
 def replace_ion(self, old_ion, new_ion):
@@ -185,8 +185,8 @@ def add_atom(self, atoms, if_pos=[1, 1, 1]):
     self._if_pos = np.append(self.if_pos, append_if_pos).reshape(self.nat, 3)
 
     # resync nat and ntyp in nml
-    self.nml._nml['system']['nat'] = self.nat
-    self.nml._nml['system']['ntyp'] = self.ntyp
+    self.nml['system']['nat'] = self.nat
+    self.nml['system']['ntyp'] = self.ntyp
 
     # fix ATOMIC_SPECIES
     _fix_species(self)
@@ -201,8 +201,8 @@ def remove_indices(self, indices):
     atomgeo.remove_indices(self, indices)
 
     # resync nat and ntyp in nml
-    self.nml._nml['system']['nat'] = self.nat
-    self.nml._nml['system']['ntyp'] = self.ntyp
+    self.nml['system']['nat'] = self.nat
+    self.nml['system']['ntyp'] = self.ntyp
 
     # fix ATOMIC_SPECIES
     _fix_species(self)

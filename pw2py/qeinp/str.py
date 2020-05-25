@@ -24,12 +24,12 @@ def to_string(self):
         else:
             out += "    {:1d}  {:1d}  {:1d}\n".format(*if_pos)
     out += "\n"
-    if 'K_POINTS' in self.card._card:
+    if 'K_POINTS' in self.card:
         out += "K_POINTS {}\n".format(self.card.K_POINTS)
         if self.card.K_POINTS == "automatic":
             out += "    {}  {}  {}    {}  {}  {}\n".format(*self.kpt[0], *self.kpt[1])
         out += "\n"
-    if 'OCCUPATIONS' in self.card._card:
+    if 'OCCUPATIONS' in self.card:
         out += "OCCUPATIONS\n"
         row_length = 8
         for ispin in range(self.card.OCCUPATIONS.shape[0]):
@@ -51,4 +51,8 @@ def to_string(self):
 
 
 def __repr__(self):
+    return to_string(self)
+
+
+def __str__(self):
     return to_string(self)
