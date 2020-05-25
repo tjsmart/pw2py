@@ -243,16 +243,16 @@ def calc_dR2(self, geo, units='angstrom', suppress_warnings=False):
     '''
     Calculate deltaR2_i = (self.pos - geo.pos)**2
 
-    returns np.sum(np.power(calc_dR(self, geo), 2), axis=1)
+    returns np.sum(np.power(self.calc_dR(geo), 2), axis=1)
     '''
-    return np.sum(np.power(calc_dR(
-        self, geo, units=units, suppress_warnings=suppress_warnings
+    return np.sum(np.power(self.calc_dR(
+        geo, units=units, suppress_warnings=suppress_warnings
     ), 2), axis=1)
 
 
-def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=False):
+def calc_dQ2(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=False):
     '''
-    Calculate deltaQ = sqrt(sum_i mass_i * (deltaR_i)**2)
+    Calculate deltaQ2 = mass_i * (deltaR_i)**2
 
     (deltaR_i)**2 = calc_dR2(self, geo)
     '''
@@ -263,7 +263,15 @@ def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=
     assert np.array_equal(self.elements(), geo.elements()), \
         'Elements of calculation do not match! Mass needs to be unambiguous'
 
-    # calculate mass_i
-    m = self.mass(units=mass_units)
+    return np.multiply(self.mass(units=mass_units), dR2)
 
-    return np.sqrt(np.sum(np.multiply(m, dR2)))
+
+def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=False):
+    '''
+    Calculate deltaQ = sqrt(sum_i (deltaQ_i)**2)
+
+    returns np.sqrt(np.sum(self.calc_dQ2(geo)))
+    '''
+    return np.sqrt(np.sum(
+        self.calc_dQ2(geo, pos_units=pos_units, mass_units=mass_units, suppress_warnings=suppress_warnings)
+    ))
