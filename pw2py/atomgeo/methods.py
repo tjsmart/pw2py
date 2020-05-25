@@ -2,12 +2,27 @@ from copy import deepcopy
 import numpy as np
 from pandas import DataFrame
 
+from .._common.mass import load_mass_dict
+
 
 def elements(self):
     '''
     return elemental names of each ion (stripping number i.e. 'Fe2' will return 'Fe')
     '''
     return np.array([''.join(filter(str.isalpha, ion)) for ion in self.ion])
+
+
+def mass(self, units='au'):
+    '''
+    return mass of each ion
+
+    TODO implement different unit conversions, currently will only return au
+    '''
+    units = units.lower()
+    if units != 'au':
+        raise NotImplementedError('Only au is currently supported')
+    mass_dict = load_mass_dict()
+    return np.array([mass_dict[ion] for ion in self.elements()])
 
 
 def replace_ion(self, old_ion, new_ion):
