@@ -52,7 +52,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
@@ -89,7 +89,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
@@ -128,7 +128,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],

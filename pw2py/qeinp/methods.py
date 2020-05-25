@@ -36,12 +36,12 @@ def _fix_species(self):
     for ion in attr_ion:
         if ion not in card_ion:
             elem = ''.join(filter(str.isalpha, ion))
-            self.card._card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
+            self.card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:
         if ion not in attr_ion:
-            self.card._card['ATOMIC_SPECIES'].pop(ion)
+            self.card['ATOMIC_SPECIES'].pop(ion)
 
 
 # TODO
@@ -69,7 +69,7 @@ def load_geo(self, geo, load='default'):
     if load == 'default' or load == 'atoms':
         self._pos = geo.pos
         self._pos_units = geo.pos_units
-        self.card._card['ATOMIC_POSITIONS'] = geo.pos_units
+        self.card['ATOMIC_POSITIONS'] = geo.pos_units
         self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
 
         if not np.array_equal(self._ion, geo.ion):
@@ -156,7 +156,7 @@ def load_geo(self, geo, load='default'):
         # update par, par_units,
         self._par = geo.par
         self._par_units = geo.par_units
-        self.card._card['CELL_PARAMETERS'] = geo.par_units
+        self.card['CELL_PARAMETERS'] = geo.par_units
 
 
 def replace_ion(self, old_ion, new_ion):
