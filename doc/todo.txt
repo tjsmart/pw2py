@@ -6,11 +6,12 @@ Add more unit tests (may help with debugging)
     --> tests for file with labels (like the co3o4 file)
 
 Medium priority
+    --> qeout could use some love
     --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
     --> write wavefunction to xsf file / cube file
     --> read wavefunction/eigenvalues from vasp
-    --> calculate dQ, dQ xsf
+    --> dQ xsf
 
 Low priority
     --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
