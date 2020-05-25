@@ -14,7 +14,7 @@ class qeinp(atomgeo):
 
     from .init import __init__
 
-    from .str import __repr__, to_string
+    from .str import __repr__, __str__, to_string
 
     from .io import from_file, write_file
 

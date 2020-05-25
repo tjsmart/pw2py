@@ -52,3 +52,7 @@ def to_string(self):
 
 def __repr__(self):
     return to_string(self)
+
+
+def __str__(self):
+    return to_string(self)
