@@ -1,6 +1,9 @@
 from copy import deepcopy
 import numpy as np
 from pandas import DataFrame
+from warnings import warn
+
+from .._common.mass import load_mass_dict
 
 
 def elements(self):
@@ -8,6 +11,19 @@ def elements(self):
     return elemental names of each ion (stripping number i.e. 'Fe2' will return 'Fe')
     '''
     return np.array([''.join(filter(str.isalpha, ion)) for ion in self.ion])
+
+
+def mass(self, units='au'):
+    '''
+    return mass of each ion
+
+    TODO implement different unit conversions, currently will only return au
+    '''
+    units = units.lower()
+    if units != 'au':
+        raise NotImplementedError('Only au is currently supported')
+    mass_dict = load_mass_dict()
+    return np.array([mass_dict[ion] for ion in self.elements()])
 
 
 def replace_ion(self, old_ion, new_ion):
@@ -186,3 +202,76 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
         return answer[0]
     else:
         return answer
+
+
+def calc_dR(self, geo, units='angstrom', suppress_warnings=False):
+    '''
+    Calculate deltaR_i = self.pos - geo.pos
+
+    if necessary creates copies of self and geo to convert them to angstrom
+    '''
+    units = units.lower()
+    # wrong usage checks
+    assert str(type(geo)) == "<class 'pw2py.atomgeo.atomgeo'>", 'geo is not of an instance of pw2py.atomgeo!'
+    assert self.nat == geo.nat, 'number of atoms from self and geo do not match: {} != {}'.format(self.nat, geo.nat)
+    assert units in ['angstrom', 'bohr'], 'Only angstrom and bohr are supported'
+
+    # warning checks
+    if not suppress_warnings:
+        if not np.array_equal(self.par, geo.par):
+            warn('Cell parameters do not match!')
+        if not np.array_equal(self.elements(), geo.elements()):
+            warn('Elements of calculation do not match!')
+
+    # if needed copy and convert to pos to supplied units
+    if self.pos_units != units:
+        self_c = deepcopy(self)
+        self_c.pos_units = units
+    else:
+        self_c = self
+
+    if geo.pos_units != units:
+        geo_c = deepcopy(geo)
+        geo_c.pos_units = units
+    else:
+        geo_c = geo
+
+    return self_c.pos - geo_c.pos
+
+
+def calc_dR2(self, geo, units='angstrom', suppress_warnings=False):
+    '''
+    Calculate deltaR2_i = (self.pos - geo.pos)**2
+
+    returns np.sum(np.power(self.calc_dR(geo), 2), axis=1)
+    '''
+    return np.sum(np.power(self.calc_dR(
+        geo, units=units, suppress_warnings=suppress_warnings
+    ), 2), axis=1)
+
+
+def calc_dQ2(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=False):
+    '''
+    Calculate deltaQ2 = mass_i * (deltaR_i)**2
+
+    (deltaR_i)**2 = calc_dR2(self, geo)
+    '''
+    # calculate deltaR_i
+    dR2 = calc_dR2(self, geo, suppress_warnings=suppress_warnings, units=pos_units)
+
+    # check that self and geo are comprised of the same elements
+    assert np.array_equal(self.elements(), geo.elements()), \
+        'Elements of calculation do not match! Mass needs to be unambiguous'
+
+    return np.multiply(self.mass(units=mass_units), dR2)
+
+
+def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=False):
+    '''
+    Calculate deltaQ = sqrt(sum_i (deltaQ_i)**2)
+
+    returns np.sqrt(np.sum(self.calc_dQ2(geo)))
+    '''
+    return np.sqrt(np.sum(
+        self.calc_dQ2(geo, pos_units=pos_units, mass_units=mass_units, suppress_warnings=suppress_warnings)
+    ))

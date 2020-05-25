@@ -12,7 +12,9 @@ PW2PY/
 |   |  
 |   |-- _common/  
 |   |   |-- __init__.py  
-|   |   |-- constants.py  
+|   |   |-- constants.py   
+|   |   |-- mass.pkl  
+|   |   |-- mass.py  
 |   |   |-- pseudos.pkl  
 |   |   |-- pseudos.py  
 |   |   |-- resource.py  
@@ -22,13 +24,6 @@ PW2PY/
 |   |   |-- init.py  
 |   |   |-- io.py  
 |   |   |-- methods.py  
-|   |   |-- properties.py  
-|   |   |-- str.py  
-|   |  
-|   |-- qegeo/  
-|   |   |-- __init__.py 
-|   |   |-- init.py  
-|   |   |-- io.py  
 |   |   |-- properties.py  
 |   |   |-- str.py  
 |   |  
@@ -42,14 +37,11 @@ PW2PY/
 |   |   |  
 |   |   |-- qecard/  
 |   |   |   |-- __init__.py  
-|   |   |   |-- init.py  
 |   |   |   |-- properties.py  
 |   |   |  
 |   |   |-- qenml/  
 |   |   |   |-- __init__.py  
-|   |   |   |-- init.py  
 |   |   |   |-- properties.py  
-|   |   |   |-- str.py  
 |   |   |   |-- _write_code.py  
 |   |  
 |   |-- qeout/  
@@ -70,7 +62,7 @@ PW2PY/
 |  
 |-- tests/  
 |   |-- input_files/  
-|   |-- test_all.py  
+|   |-- run_all.py  
 |   |-- test_atomgeo.py  
 |   |-- test_qeinp.py  
 |  
