@@ -32,7 +32,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
@@ -69,7 +69,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
@@ -108,7 +108,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
