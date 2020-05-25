@@ -32,7 +32,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
@@ -52,7 +52,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
@@ -69,7 +69,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
@@ -89,7 +89,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],
@@ -108,7 +108,7 @@ class qi_io(unittest.TestCase):
         self.run_inp_tests(inp, False)
         # check nml
         self.assertEqual(
-            inp.nml._nml, Namelist([
+            inp.nml, Namelist([
                 ('control',
                  Namelist([('calculation', 'vc-relax'), ('wf_collect', True)])
                  ),
@@ -128,7 +128,7 @@ class qi_io(unittest.TestCase):
         )
         # check card
         self.assertEqual(
-            inp.card._card, {
+            inp.card, {
                 'ATOMIC_SPECIES': {
                     'Cs': [1.0, 'Cs_ONCV_PBE-1.0.upf'],
                     'Pb': [1.0, 'Pb_ONCV_PBE-1.0.upf'],

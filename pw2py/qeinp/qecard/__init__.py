@@ -1,15 +1,20 @@
-class qecard:
+class qecard(dict):
     '''
     class for handling quantum espresso cards
-        > ATOMIC_SPECIES, ATOMIC_POSITIONS, K_POINTS, CELL_PARAMETERS, \
-        CONSTRAINTS, OCCUPATIONS, ATOMIC_FORCES
-    '''
+        > is a subclass of dict
+        > properties include:
+            ATOMIC_SPECIES
+            ATOMIC_POSITIONS
+            K_POINTS
+            CELL_PARAMETERS
+            OCCUPATIONS
 
-    from .init import __init__
+    to be implemented:
+            CONSTRAINTS
+            ATOMIC_FORCES
+    '''
 
     from .properties import ATOMIC_SPECIES, ATOMIC_POSITIONS, K_POINTS, CELL_PARAMETERS, \
         OCCUPATIONS
     # TODO
     # CONSTRAINTS, ATOMIC_FORCES
-
-    from .str import __repr__
