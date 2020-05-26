@@ -1,5 +1,10 @@
 Several todos written in-line of the code
 
+High priority
+    --> from_file('local/scf') fails?
+    --> from_file('local/scf.out') fails?
+
+
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts
@@ -11,7 +16,6 @@ Medium priority
     --> update documentation elsewhere e.g. README
     --> write wavefunction to xsf file / cube file
     --> read wavefunction/eigenvalues from vasp
-    --> dQ xsf
 
 Low priority
     --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
