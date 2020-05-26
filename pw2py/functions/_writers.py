@@ -31,7 +31,7 @@ def write_reshaped_grid(f, grid, grid_order='C', fmt='%13.6e', columns=6):
                     f.write(' ')
 
 
-def write_xsf(geo, filename, force=None, grid=None, grid_order='C'):
+def write_xsf(filename, geo, force=None, grid=None, grid_order='C'):
     '''
     Write geo to xsf file
     '''
