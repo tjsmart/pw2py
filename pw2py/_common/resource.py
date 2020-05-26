@@ -187,3 +187,16 @@ def _determine_ftype(filename):
 
     # raise ValueError when determining ftype fails
     raise ValueError('Unrecognizable extension or unable to determine the type of file for: {}'.format(filename))
+
+
+def savetxt_with_maxcol(f, X, columns=6, fmt='%13.6e'):
+    '''
+    calls np.savetxt, fits X.reshape((X.size/columns, columns)) and saves to f
+
+    if X.size%columns != 0, the remaining elements are handled appropriately appended to the end
+    '''
+    X = np.array(X).flatten()
+    rows, remainder = divmod(X.size, columns)
+    np.savetxt(f, X[:rows*columns].reshape((rows, columns)), fmt=fmt)
+    if remainder != 0:
+        np.savetxt(f, X[-remainder:].reshape((1, remainder)), fmt=fmt)

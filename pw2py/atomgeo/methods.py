@@ -4,6 +4,7 @@ from pandas import DataFrame
 from warnings import warn
 
 from .._common.mass import load_mass_dict
+from ..functions._writers import write_xsf
 
 
 def elements(self):
@@ -275,3 +276,18 @@ def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=
     return np.sqrt(np.sum(
         self.calc_dQ2(geo, pos_units=pos_units, mass_units=mass_units, suppress_warnings=suppress_warnings)
     ))
+
+
+def dQ_field_2_xsf(self, geo, filename, suppress_warnings=False):
+    '''
+    Calculate deltaQ_i = sqrt(mass_i) * (self.pos_i - geo.pos_i)
+
+    Write to xsf file (filename)
+    '''
+    # calculate deltaQ_field
+    deltaQ_field = np.multiply(
+        np.power(self.mass().reshape(self.nat, 1), 0.5),
+        self.calc_dR(geo, suppress_warnings=suppress_warnings)
+    )
+    # write to xsf file
+    write_xsf(self, filename, force=deltaQ_field)
