@@ -6,3 +6,4 @@ demo.*
 debug.ipynb
 local
 .vscode
+venv/
