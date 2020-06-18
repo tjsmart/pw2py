@@ -1,20 +1,24 @@
 Several todos written in-line of the code
 
+
 High priority
-    --> from_file('local/scf') fails?
-    --> from_file('local/scf.out') fails?
+    --> remove dependency of mendeleev? Ultimately no need to keep it around
+        --> faster and more portable!, user could always import mendeleev for extra purposes
 
 
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts
     --> tests for file with labels (like the co3o4 file)
+    --> tests for qesave
 
 Medium priority
     --> qeout could use some love
+    --> class for qedir (bundles classes and methods for reading qeinp, qeout, and qesave!)
     --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
-    --> write wavefunction to xsf file / cube file
+    --> write wavefunction to cube file
+        --> also need to fix xsf after figuring out how flatten with order='F'
     --> read wavefunction/eigenvalues from vasp
 
 Low priority

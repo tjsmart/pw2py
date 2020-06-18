@@ -177,7 +177,10 @@ def read_qeout(filename, par_units='angstrom', read_if_pos=False):
     prefix, extension = os.path.splitext(filename)
     if extension == '.out' and os.path.exists(prefix + '.in'):
         nml = f90nml.read(prefix + '.in')
-        if nml['control']['calculation'] in ['vc-relax', 'vc-md']:
+        if ('calculation' not in nml['control']) or (nml['control']['calculation'] in ['scf', 'nscf', 'bands']):
+            # no relaxations preformed in output file just read qeinp file
+            return read_qeinp(prefix + '.in', read_if_pos=read_if_pos)
+        elif ('calculation' in nml['control']) and (nml['control']['calculation'] in ['vc-relax', 'vc-md']):
             # don't read input file, want cell parameters from output
             pass
         elif nml['system']['ibrav'] == 0:
