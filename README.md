@@ -11,18 +11,19 @@ Prerequisites:
 * [Python3](https://www.python.org/downloads)
 * Python Packages: [f90nml](https://pypi.org/project/f90nml/), [numpy](https://pypi.org/project/numpy/), [pandas](https://pypi.org/project/numpy/), [mendeleev](https://pypi.org/project/mendeleev/), [lxml](https://pypi.org/project/lxml/), [scipy](https://pypi.org/project/scipy/)
 
-Install this module:
+Installation:
 ------------------
 
+To install pw2py, navigate to the root of the repository and execute:
+
 ```bash
-# create directory for local python modules
-mkdir -p $(python -m site --user-site) 2> /dev/null
+pip install .
+```
 
-# EITHER create a link to the package (suggested for development)
-ln -fs $(realpath ./pw2py) $(python -m site --user-site)/$f
+To uninstall pw2py execute:
 
-# OR copy the package (suggested for permanent copy)
-cp -r ./pw2py $(python -m site --user-site)
+```bash
+pip uninstall pw2py
 ```
 
 Examples:
