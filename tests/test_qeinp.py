@@ -2,9 +2,12 @@
 
 import unittest
 import numpy as np
-import pw2py as pw
 from f90nml import Namelist
 from copy import deepcopy
+import sys
+
+sys.path.append('..')
+import pw2py as pw
 
 import test_atomgeo
 

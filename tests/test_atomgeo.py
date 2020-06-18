@@ -2,8 +2,11 @@
 
 import unittest
 import numpy as np
-import pw2py as pw
 from copy import deepcopy
+import sys
+
+sys.path.append('..')
+import pw2py as pw
 
 
 expected = {
