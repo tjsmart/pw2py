@@ -1,6 +1,11 @@
 Several todos written in-line of the code
 
 
+High priority
+    --> remove dependency of mendeleev? Ultimately no need to keep it around
+        --> faster and more portable!, user could always import mendeleev for extra purposes
+
+
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
     --> test for scripts
@@ -13,6 +18,7 @@ Medium priority
     --> clean/finish examples (rename to tutorials -- make videos?)
     --> update documentation elsewhere e.g. README
     --> write wavefunction to cube file
+        --> also need to fix xsf after figuring out how flatten with order='F'
     --> read wavefunction/eigenvalues from vasp
 
 Low priority
