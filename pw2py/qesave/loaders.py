@@ -27,9 +27,9 @@ def _determine_dtype(attrib):
         if int(attrib['kind']) == 4:
             dtype = np.int32
         elif int(attrib['kind']) == 2:
-            dtype = np.float16
+            dtype = np.int16
         elif int(attrib['kind']) == 1:
-            dtype = np.float8
+            dtype = np.int8
     # if dtype wasn't set raise error
     if dtype is None:
         raise ValueError('Unexpected kind: {}, for type {}'.format(attrib['kind'], attrib['type']))
