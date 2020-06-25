@@ -1,4 +1,4 @@
-from mendeleev import element
+# from mendeleev import element
 import numpy as np
 from warnings import warn
 
@@ -36,7 +36,8 @@ def _fix_species(self):
     for ion in attr_ion:
         if ion not in card_ion:
             elem = ''.join(filter(str.isalpha, ion))
-            self.card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
+            # self.card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
+            self.card['ATOMIC_SPECIES'][ion] = [1.0, pseudos[elem]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import mendeleev as mlv
+# import mendeleev as mlv
 import pickle as pkl
 
 
@@ -14,7 +14,8 @@ def generate_mass_dict():
     creates dictionary relating element symbols (e.g., 'H' or 'O') and element mass (e.g., 1.008, 15.999)
     returns {element.symbol: element.mass for element in mendeleev.get_all_elements()}
     '''
-    return {element.symbol: element.mass for element in mlv.get_all_elements()}
+    raise NotImplementedError("Not Implemented without mendeleev")
+    # return {element.symbol: element.mass for element in mlv.get_all_elements()}
 
 
 def load_mass_dict():

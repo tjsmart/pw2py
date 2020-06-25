@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import mendeleev as mlv
+# import mendeleev as mlv
 import pickle as pkl
 
 
@@ -31,7 +31,8 @@ def generate_pseudo_dict(pseudo_path='check environment'):
         raise FileNotFoundError('Provide the value of pseudo_path with option -p')
 
     # get list of element symbols from mendeleev
-    elements = [e.symbol for e in mlv.get_all_elements()]
+    raise NotImplementedError('Not implemented without mendeleev')
+    # elements = [e.symbol for e in mlv.get_all_elements()]
 
     def checkList(elem, check_list):
         # check obtained list
@@ -129,12 +130,12 @@ def determine_pseudo_type(pseudo_file: str):
         # pseudo is assumed to be dojo
         library = 'dojo'
         ion = os.path.splitext(pseudo_file)[0]
-        try:
-            # try passing ion to mendeleev to ensure is is indeed formatted this way
-            mlv.element(ion)
-        except:  # noqa: E722
-            # raises sqlalchemy.orm.exc.NoResultFound (rather than import this/require install just catch anything)
-            raise ValueError('Tried to parse pseudo_file as oncv, gbrv, and dojo but failed: {}'.format(pseudo_file))
+#         try:
+#             # try passing ion to mendeleev to ensure is is indeed formatted this way
+#             mlv.element(ion)
+#         except:  # noqa: E722
+#             # raises sqlalchemy.orm.exc.NoResultFound (rather than import this/require install just catch anything)
+#             raise ValueError('Tried to parse pseudo_file as oncv, gbrv, and dojo but failed: {}'.format(pseudo_file))
         xc_type = None
 
     return library, xc_type
