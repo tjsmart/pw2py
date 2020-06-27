@@ -19,7 +19,6 @@ setup(
     install_requires=[
         'f90nml',
         'lxml',
-        'mendeleev',
         'numpy',
         'pandas',
         'scipy'
