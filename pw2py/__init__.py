@@ -26,6 +26,7 @@ qesave
     module with functions for reading quantum espresso *.save folder
 '''
 
+from .element import element  # noqa: F401
 from .atomgeo import atomgeo  # noqa: F401
 from .qeinp import qeinp  # noqa: F401
 from .qeout import qeout  # noqa: F401
