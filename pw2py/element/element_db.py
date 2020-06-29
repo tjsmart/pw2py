@@ -27,7 +27,7 @@ def generate_db():
     '''
     if not os.path.exists(db_folder):
         os.mkdir(db_folder)
-    assert mendeleev, "Mendeleev module is reuired to regenerate database"
+    assert mendeleev, "Mendeleev module is required to regenerate database"
     # cache mendeleev elements
     all_elements = mendeleev.get_all_elements()
     # make each database
