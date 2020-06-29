@@ -24,4 +24,5 @@ class element:
     from .str import __repr__
     # other methods
     from .methods import request, symbols
+    from .element_db import load_db
 
