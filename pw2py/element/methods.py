@@ -53,3 +53,10 @@ def request(arg, attr, inp='auto'):
     db = load_db(db_name)
     return db[arg_str]
 
+
+@staticmethod
+def symbols():
+    '''
+    returns a list of all atomic symbols
+    '''
+    return load_db('symbols')

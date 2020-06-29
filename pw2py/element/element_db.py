@@ -22,6 +22,8 @@ def generate_db():
     creates dictionaries relating element symbols (e.g., 'H' or 'O'), element mass (e.g., 1.008, 15.999), and element numbers
 
     for mass key, use format .4f
+
+    also creates list for symbols
     '''
     if not os.path.exists(db_folder):
         os.mkdir(db_folder)
@@ -41,6 +43,8 @@ def generate_db():
         pkl.dump({'{:.4f}'.format(element.atomic_weight): element.atomic_number for element in all_elements}, f)
     with open(get_file_path('number_to_mass'), 'wb') as f:
         pkl.dump({str(element.atomic_number): element.atomic_weight for element in all_elements}, f)
+    with open(get_file_path('symbols'), 'wb') as f:
+        pkl.dump([element.symbol for element in all_elements], f)
 
 
 def load_db(db_name):

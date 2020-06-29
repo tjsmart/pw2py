@@ -23,5 +23,5 @@ class element:
     from .init import __init__
     from .str import __repr__
     # other methods
-    from .methods import request
+    from .methods import request, symbols
 
