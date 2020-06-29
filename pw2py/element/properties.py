@@ -41,4 +41,3 @@ def symbol(self, arg):
     self._symbol = arg
     self._mass = self.request(arg, 'mass')
     self._number = self.request(arg, 'number')
-

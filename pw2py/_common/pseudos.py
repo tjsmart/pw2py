@@ -128,7 +128,7 @@ def determine_pseudo_type(pseudo_file: str):
     elif pseudo_file.endswith('.upf'):
         # pseudo is assumed to be dojo
         library = 'dojo'
-        ion = os.path.splitext(pseudo_file)[0]
+        # ion = os.path.splitext(pseudo_file)[0]
         xc_type = None
 
     return library, xc_type

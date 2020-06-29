@@ -25,4 +25,3 @@ class element:
     # other methods
     from .methods import request, symbols
     from .element_db import load_db
-

@@ -1,5 +1,6 @@
 from .element_db import load_db
 
+
 @staticmethod
 def request(arg, attr, inp='auto'):
     '''

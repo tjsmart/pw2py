@@ -11,4 +11,3 @@ def __init__(self, arg):
         self.symbol = arg
     else:
         raise TypeError("Can only instatiate element from int, float, or str, passed type: {}".format(type(arg)))
-

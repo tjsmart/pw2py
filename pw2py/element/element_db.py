@@ -2,8 +2,6 @@
 
 import os
 import pickle as pkl
-import pandas as pd
-
 # Ignore ImportError for users without mendeleev
 try:
     import mendeleev
@@ -13,13 +11,15 @@ except ImportError:
 
 db_folder = os.path.join(os.path.dirname(__file__), 'db')
 
+
 def get_file_path(db_name):
     return os.path.join(db_folder, '{}.pkl'.format(db_name))
 
 
 def generate_db():
     '''
-    creates dictionaries relating element symbols (e.g., 'H' or 'O'), element mass (e.g., 1.008, 15.999), and element numbers
+    creates dictionaries relating element symbols (e.g., 'H' or 'O'),
+    element mass (e.g., 1.008, 15.999), and element numbers
 
     for mass key, use format .4f
 

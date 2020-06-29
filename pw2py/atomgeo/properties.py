@@ -8,6 +8,7 @@ from .._common.resource import _convert_par, _convert_pos
 _valid_par_units = ['angstrom', 'bohr', 'alat']
 _valid_pos_units = ['angstrom', 'bohr', 'crystal', 'alat']
 
+
 # define ion property
 @property
 def ion(self):
