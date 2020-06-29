@@ -1,0 +1,79 @@
+.
+├── Examples
+├── README.md
+├── debug.ipynb
+├── doc
+│   ├── organization.txt
+│   ├── requirements-dev.txt
+│   ├── requirements-specific.txt
+│   ├── requirements.txt
+│   └── todo.txt
+├── pw2py
+│   ├── __init__.py
+│   ├── _common
+│   │   ├── __init__.py
+│   │   ├── constants.py
+│   │   ├── pseudos.pkl
+│   │   ├── pseudos.py
+│   │   └── resource.py
+│   ├── atomgeo
+│   │   ├── __init__.py
+│   │   ├── init.py
+│   │   ├── io.py
+│   │   ├── methods.py
+│   │   ├── properties.py
+│   │   └── str.py
+│   ├── element
+│   │   ├── __init__.py
+│   │   ├── db
+│   │   │   ├── mass_to_number.pkl
+│   │   │   ├── mass_to_symbol.pkl
+│   │   │   ├── number_to_mass.pkl
+│   │   │   ├── number_to_symbol.pkl
+│   │   │   ├── symbol_to_mass.pkl
+│   │   │   ├── symbol_to_number.pkl
+│   │   │   └── symbols.pkl
+│   │   ├── element_db.py
+│   │   ├── init.py
+│   │   ├── methods.py
+│   │   ├── properties.py
+│   │   └── str.py
+│   ├── functions
+│   │   ├── __init__.py
+│   │   ├── _wfc.py
+│   │   ├── _writers.py
+│   │   └── read_geo.py
+│   ├── qeinp
+│   │   ├── __init__.py
+│   │   ├── init.py
+│   │   ├── io.py
+│   │   ├── methods.py
+│   │   ├── properties.py
+│   │   ├── qecard
+│   │   │   ├── __init__.py
+│   │   │   └── properties.py
+│   │   ├── qenml
+│   │   │   ├── __init__.py
+│   │   │   ├── _write_code.py
+│   │   │   └── properties.py
+│   │   └── str.py
+│   ├── qeout
+│   │   ├── __init__.py
+│   │   ├── init.py
+│   │   ├── io.py
+│   │   └── methods.py
+│   └── qesave
+│       ├── __init__.py
+│       └── loaders.py
+├── scripts
+│   ├── conv_geo.py
+│   ├── cp_geo.py
+│   └── linear_mix.py
+├── setup.py
+└── tests
+    ├── input_files
+    ├── run_all.py
+    ├── test_atomgeo.py
+    └── test_qeinp.py
+
+24 directories, 147 files
