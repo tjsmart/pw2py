@@ -1,8 +1,8 @@
-# from mendeleev import element
 import numpy as np
 from warnings import warn
 
 from .. import atomgeo
+from .. import element
 from .._common.constants import bohr_to_angstrom
 from .._common.pseudos import load_pseudo_dict, determine_pseudo_type
 
@@ -35,9 +35,8 @@ def _fix_species(self):
     pseudos = _pseudos_from_ATOMIC_SPECIES(self)
     for ion in attr_ion:
         if ion not in card_ion:
-            elem = ''.join(filter(str.isalpha, ion))
-            # self.card['ATOMIC_SPECIES'][ion] = [element(elem).mass, pseudos[elem]]
-            self.card['ATOMIC_SPECIES'][ion] = [1.0, pseudos[elem]]
+            symbol = ''.join(filter(str.isalpha, ion))
+            self.card['ATOMIC_SPECIES'][ion] = [element.request(symbol, 'mass'), pseudos[symbol]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-# import mendeleev as mlv
 import pickle as pkl
+
+from .. import element
 
 
 # file where pseudos will be stored
@@ -18,10 +19,10 @@ def generate_pseudo_dict(pseudo_path='check environment'):
             xc_type in ['pbe', 'lda', 'pbesol']
                 NOTE: for oncv, no pbesol
                 NOTE: for dojo, see below
-        pseudos[library][xc_type][element]:
-            element in ['H', 'C', 'O', ...]
+        pseudos[library][xc_type][symbol]:
+            symbol in ['H', 'C', 'O', ...]
 
-        NOTE: for dojo all pseudopotentials are named identically so simply use pseudos[library][element]
+        NOTE: for dojo all pseudopotentials are named identically so simply use pseudos[library][symbol]
     '''
 
     # path to pseudopotential files
@@ -30,9 +31,7 @@ def generate_pseudo_dict(pseudo_path='check environment'):
     if not os.path.isdir(pseudo_path):
         raise FileNotFoundError('Provide the value of pseudo_path with option -p')
 
-    # get list of element symbols from mendeleev
-    raise NotImplementedError('Not implemented without mendeleev')
-    # elements = [e.symbol for e in mlv.get_all_elements()]
+    symbols = element.symbols()
 
     def checkList(elem, check_list):
         # check obtained list
@@ -55,33 +54,33 @@ def generate_pseudo_dict(pseudo_path='check environment'):
     for library in libraries:
         if library == 'dojo':
             pseudos[library] = {}
-            for element in elements:
-                pseudos[library][element] = '{}.upf'.format(element)
+            for symbol in symbols:
+                pseudos[library][symbol] = '{}.upf'.format(symbol)
         elif library == 'oncv':
             pseudos[library] = {}
             for xc_type in xc_types:
                 if xc_type == 'pbesol':
                     continue
                 pseudos[library][xc_type] = {}
-                for element in elements:
-                    prefix = element + "_{}_{}".format(library.upper(), xc_type.upper())
+                for symbol in symbols:
+                    prefix = symbol + "_{}_{}".format(library.upper(), xc_type.upper())
                     pp_list = [pp for pp in os.listdir(pseudo_path) if pp.startswith(prefix)]
                     if len(pp_list) == 2:
                         # default to picking 1.1 for oncv
                         pp_list = [pp for pp in pp_list if "1.1" in pp]
-                    pseudos[library][xc_type][element] = checkList(element, pp_list)
+                    pseudos[library][xc_type][symbol] = checkList(symbol, pp_list)
         elif library == 'gbrv':
             pseudos[library] = {}
             for xc_type in xc_types:
                 pseudos[library][xc_type] = {}
-                for element in elements:
-                    if element == 'Hf':
+                for symbol in symbols:
+                    if symbol == 'Hf':
                         # special case use Hf plus4
-                        prefix = element.lower() + "_{}_plus4".format(xc_type)
+                        prefix = symbol.lower() + "_{}_plus4".format(xc_type)
                     else:
-                        prefix = element.lower() + "_{}_".format(xc_type)
+                        prefix = symbol.lower() + "_{}_".format(xc_type)
                     pp_list = [pp for pp in os.listdir(pseudo_path) if pp.startswith(prefix)]
-                    pseudos[library][xc_type][element] = checkList(element, pp_list)
+                    pseudos[library][xc_type][symbol] = checkList(symbol, pp_list)
 
     return pseudos
 
@@ -95,10 +94,10 @@ def load_pseudo_dict():
             xc_type in ['pbe', 'lda', 'pbesol']
                 NOTE: for oncv, no pbesol
                 NOTE: for dojo, see below
-        pseudos[library][xc_type][element]:
-            element in ['H', 'C', 'O', ...]
+        pseudos[library][xc_type][symbol]:
+            symbol in ['H', 'C', 'O', ...]
 
-        NOTE: for dojo all pseudopotentials are name identically so simply use pseudos[library][element]
+        NOTE: for dojo all pseudopotentials are name identically so simply use pseudos[library][symbol]
     '''
     if not os.path.exists(dump_file):
         main()
@@ -130,12 +129,6 @@ def determine_pseudo_type(pseudo_file: str):
         # pseudo is assumed to be dojo
         library = 'dojo'
         ion = os.path.splitext(pseudo_file)[0]
-#         try:
-#             # try passing ion to mendeleev to ensure is is indeed formatted this way
-#             mlv.element(ion)
-#         except:  # noqa: E722
-#             # raises sqlalchemy.orm.exc.NoResultFound (rather than import this/require install just catch anything)
-#             raise ValueError('Tried to parse pseudo_file as oncv, gbrv, and dojo but failed: {}'.format(pseudo_file))
         xc_type = None
 
     return library, xc_type

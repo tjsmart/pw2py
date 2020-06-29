@@ -1,8 +1,8 @@
 import f90nml
-# from mendeleev import element
 import numpy as np
 import os
 
+from .. import element
 from .._common.constants import bohr_to_angstrom
 from .._common.resource import _ibrav_to_par, _read_qe_card_option, _determine_ftype
 
@@ -107,10 +107,12 @@ def read_xsf(filename):
                 ion, pos = [], []
                 for _ in range(nat):
                     nl = f.readline().split()
-                    # try:
-                    #     ion.append(element(int(nl[0])).symbol)
-                    # except ValueError:
-                    ion.append(nl[0])
+                    try:
+                        ion.append(
+                            element.request(int(nl[0]), 'symbol')
+                        )
+                    except ValueError:
+                        ion.append(nl[0])
                     pos.append(nl[1:4])
                 ion = np.array(ion)
                 pos = np.array(pos, dtype=np.float64)
