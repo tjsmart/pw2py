@@ -9,7 +9,7 @@ It defines several classes and modules which are commonly useful.
 Prerequisites:
 ------------------------------------
 * [Python3](https://www.python.org/downloads)
-* Python Packages: [f90nml](https://pypi.org/project/f90nml/), [numpy](https://pypi.org/project/numpy/), [pandas](https://pypi.org/project/numpy/), [mendeleev](https://pypi.org/project/mendeleev/), [lxml](https://pypi.org/project/lxml/), [scipy](https://pypi.org/project/scipy/)
+* Python Packages: [f90nml](https://pypi.org/project/f90nml/), [numpy](https://pypi.org/project/numpy/), [pandas](https://pypi.org/project/numpy/), [lxml](https://pypi.org/project/lxml/), [scipy](https://pypi.org/project/scipy/)
 
 Installation:
 ------------------
