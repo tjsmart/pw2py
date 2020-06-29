@@ -3,7 +3,7 @@ import numpy as np
 from pandas import DataFrame
 from warnings import warn
 
-from .._common.mass import load_mass_dict
+from .. import element
 from ..functions._writers import write_xsf
 
 
@@ -23,7 +23,7 @@ def mass(self, units='au'):
     units = units.lower()
     if units != 'au':
         raise NotImplementedError('Only au is currently supported')
-    mass_dict = load_mass_dict()
+    mass_dict = element.load_db('symbol_to_mass')
     return np.array([mass_dict[ion] for ion in self.elements()])
 
 
