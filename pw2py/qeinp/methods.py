@@ -166,6 +166,10 @@ def replace_ion(self, old_ion, new_ion):
     calls atomgeo.replace_ion(self, old_ion, new_ion)
     '''
     atomgeo.replace_ion(self, old_ion, new_ion)
+
+    # resync ntyp in nml
+    self.nml['system']['ntyp'] = self.ntyp
+
     _fix_species(self)
 
 
