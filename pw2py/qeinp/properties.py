@@ -13,16 +13,22 @@ def ntyp(self):
 
 @property
 def kpt(self):
-    ''' return value of atomgeo._kpt '''
+    ''' return value of qeinp._kpt '''
     return self._kpt
 
 
 @kpt.setter
 def kpt(self, kpt):
-    ''' set value of atomgeo._kpt '''
-    if array(kpt).shape != self.kpt.shape:
-        raise ValueError("Passed array is not of the same shape as the original array")
-    self._kpt = array(kpt, dtype=int)
+    ''' set value of qeinp._kpt, pass None to use gamma only'''
+    if kpt is None:
+        self._kpt = None
+        self.nml.K_POINTS = 'gamma'
+    else:
+        assert array(kpt).shape == (3, 3), \
+            "Passed array does not have the correct shape (3, 3), passed: {}".format(array(kpt).shape)
+        if self.kpt is None and self.nml.K_POINTS == 'gamma':
+            self.nml.K_POINTS = 'automatic'
+        self._kpt = array(kpt, dtype=int)
 
 
 # extend functionality of par_units
