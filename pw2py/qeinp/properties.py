@@ -22,12 +22,11 @@ def kpt(self, kpt):
     ''' set value of qeinp._kpt, pass None to use gamma only'''
     if kpt is None:
         self._kpt = None
-        self.nml.K_POINTS = 'gamma'
+        self.card.K_POINTS = 'gamma'
     else:
-        assert array(kpt).shape == (3, 3), \
-            "Passed array does not have the correct shape (3, 3), passed: {}".format(array(kpt).shape)
-        if self.kpt is None and self.nml.K_POINTS == 'gamma':
-            self.nml.K_POINTS = 'automatic'
+        assert array(kpt).shape == (2, 3), \
+            "Passed array does not have the correct shape (2, 3), passed: {}".format(array(kpt).shape)
+        self.card.K_POINTS = 'automatic'
         self._kpt = array(kpt, dtype=int)
 
 
