@@ -21,13 +21,9 @@ Vim usage (with ale)
 ```
 ~/.vim/plugged/ale/autoload/ale/fixers
 ```
-3. Copy or symlink the vimscipt file `qelint.vim` to the ale fixers folder you found above.
+3. Use the `install.sh` to install add the qelint script to ale fixers.
 ```
-cp qelint.vim ~/.vim/plugged/ale/autoload/ale/fixers            # copy
-ln -fs $PWD/qelint.vim ~/.vim/plugged/ale/autoload/ale/fixers   # symlink
+./install.sh -l ~/.vim/plugged/ale/autoload/ale/fixers  # using symlinks
+# OR
+./install.sh ~/.vim/plugged/ale/autoload/ale/fixers     # copies source files
 ```
-4. Locate the ale `registry.vim` file:
-```
-~/.vim/plugged/ale/autoload/ale/fix/registry.vim
-```
-5. Open the file and 
