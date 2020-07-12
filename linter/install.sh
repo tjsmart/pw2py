@@ -22,6 +22,10 @@ arg_parse(){
             break
         fi
     done
+    if [ -z $path_to_ale ]; then
+        echo "Please provide the path to ale" >&2
+        exit 1
+    fi
 }
 
 check_ale(){
@@ -108,15 +112,14 @@ inst="\n\
 \\\       'description': 'Format quantum espresso input files',\n\
 \\\   },"
 
-echo "Parsing user input"
 arg_parse $@
-echo "installing qelint to /usr/local/bin"
+echo "Installing qelint to /usr/local/bin ..."
 install_qelint
-echo "configuring users ale"
+echo "Configuring users ale ..."
 configure_ale
-echo "script ran successfully!"
+echo "Script ran successfully! :)"
 echo "--------------------------"
 
 echo "Almost done! Don't forget to add these lines to your ~/.vimrc!"
-echo "let g:ale_fixers = {'espresso': ['qelint']}"
-echo "let g:ale_fix_on_save = 1"
+echo "    let g:ale_fixers = {'espresso': ['qelint']}"
+echo "    let g:ale_fix_on_save = 1"
