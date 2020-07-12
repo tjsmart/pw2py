@@ -3,6 +3,7 @@ qelint
 
 qelint uses pw2py formatting to lint quantum espresso input files
 
+
 Basic usage
 ====
 
@@ -11,10 +12,11 @@ To lint a qe input file:
 qelint scf.in
 ```
 
-Vim usage (with [ale](https://github.com/dense-analysis/ale))
+Vim usage (with ale)
 ===
 
-1. Install ale from their git repo.
+0. Install [vim-qe](https://github.com/tjsmart/vim-qe), a vim plugin for quantum espresso input files.
+1. Install [ale](https://github.com/dense-analysis/ale) from their git repo.
 2. Find the location of the ale repository. For example:
 ```
 ~/.vim/plugged/ale/autoload/ale/fixers
