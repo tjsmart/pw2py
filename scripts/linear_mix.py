@@ -7,7 +7,8 @@ from copy import deepcopy
 
 
 default_ratios = np.linspace(0, 1, 11)
-default_nonrad_ratios = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1])
+default_nonrad_ratios = np.array(
+    [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1])
 
 
 def parse_command_line():
@@ -53,10 +54,11 @@ if __name__ == "__main__":
     # parse ratios
     if args.nonrad:
         ratios = default_nonrad_ratios
-    elif not np.array_equiv(args.ratios, default_ratios):
-        ratios = np.fromstring(args.ratio, sep=' ', dtype=np.float64)
+    elif isinstance(args.ratios, str):
+        ratios = np.fromstring(args.ratios, sep=' ', dtype=np.float64)
     else:
-        ratios = default_ratios
+        ratios = args.ratios    # default ratios
+
     # comments to user
     print('Generating mix structures from: {} and {}'.format(args.file1, args.file2))
     print('Mixing ratios: ' + ' '.join('{:6.4f}'.format(r) for r in ratios))
