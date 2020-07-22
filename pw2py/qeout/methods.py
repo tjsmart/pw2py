@@ -24,6 +24,7 @@ def final_energy(filename, conv_level='automatic', units='ev'):
             - energy(float) = energy in Ry
             - conv_level(str) = level of convergence achieved
     '''
+    assert units.lower() in ['ev', 'ry', 'ha'], "Only eV, Ry, and Ha are supported units"
     # build dictionary of energy instances
     energy_instances = {}
     instances = ['Final', '!!', '!', 'total energy']
@@ -56,10 +57,12 @@ def final_energy(filename, conv_level='automatic', units='ev'):
         # for automatic iterate through instances and return first available instance
         for instance in instances:
             if instance in energy_instances:
-                if units == 'eV':
+                if units.lower() == 'ev':
                     return energy_instances[instance] * ry_to_ev, instance
-                else:
-                    return energy_instances[instance] * ry_to_ev, instance
+                elif units.lower() == 'ry':
+                    return energy_instances[instance], instance
+                elif units.lower() == 'ha':
+                    return energy_instances[instance] * 0.5, instance
 
     elif conv_level not in energy_instances:
         # user specified conv_level was not found in the file
