@@ -213,9 +213,12 @@ def read_qeout(filename, par_units='angstrom', read_if_pos=False):
                     continue
                 par = np.array([f.readline().split()[3:6] for _ in range(3)], dtype=np.float64) * alat
             elif 'CELL_PARAMETERS' in line:
-                alat = np.float64(line.strip().split('alat=')[1].rstrip(')'))
-                if par_units == 'angstrom':
-                    alat *= bohr_to_angstrom
+                if 'alat=' in line:
+                    alat = np.float64(line.strip().split('alat=')[1].rstrip(')'))
+                    if par_units == 'angstrom':
+                        alat *= bohr_to_angstrom
+                else:
+                    alat = 1
                 par = np.array([f.readline().split()[:3] for _ in range(3)], dtype=np.float64) * alat
             elif 'ATOMIC_POSITIONS' in line:
                 pos_units = _read_qe_card_option(line, 'ATOMIC_POSITIONS')
