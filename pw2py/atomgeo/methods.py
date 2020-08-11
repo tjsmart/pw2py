@@ -8,6 +8,13 @@ from .. import element
 from ..functions._writers import write_xsf
 
 
+def _cell_translations(self) -> np.ndarray:
+    '''
+    cell translations by +1/-1 of cell parameters
+    '''
+    return np.dot([t for t in it.product([-1, 0, 1], repeat=3)], self.par)
+
+
 def elements(self):
     '''
     return elemental names of each ion (stripping number i.e. 'Fe2' will return 'Fe')
@@ -181,7 +188,7 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
         atoms_df['dist'] = atoms_df['pos'].apply(lambda x: np.linalg.norm(x - site_pos))
     else:
         # calculate translations by +/-1 of cell parameters
-        translations = np.dot([t for t in it.product([-1, 0, 1], repeat=3)], self.par)
+        translations = self._cell_translations()
         # calculate images of the site
         site_images = site_pos + translations
         atoms_df['dist'] = atoms_df['pos'].apply(
@@ -304,3 +311,27 @@ def dQ_field_2_xsf(self, geo, filename, suppress_warnings=False):
     )
     # write to xsf file
     write_xsf(self, filename, force=deltaQ_field)
+
+
+def calc_distance(self, x: np.ndarray) -> float:
+    '''
+    Calculate the distance from self.pos and vector x, considering boundary conditions
+    '''
+    if self.pos_units != 'angstrom':
+        # geo is a copy self
+        geo = deepcopy(self)
+        # convert pos to angstrom
+        geo.pos_units = 'angstrom'
+    else:
+        # geo is a pointer to self
+        geo = self
+    # check users input X
+    X = np.array(x)
+    assert X.shape == (3,), \
+        "x must be vector in 3D with shape (3,), passed: {}".format(x.shape)
+    translations = geo._cell_translations()
+    X_images = X + translations
+    distances = np.array([
+        np.linalg.norm(pos - X_images, axis=1).min() for pos in geo.pos
+    ])
+    return distances
