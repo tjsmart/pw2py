@@ -19,6 +19,9 @@ def from_file(cls, filename, is_prefix=None):
         if filename.endswith('.'):
             inpfile = filename + 'in'
             outfile = filename + 'out'
+        elif filename.endswith('.out'):
+            inpfile = filename[:-3] + 'in'
+            outfile = filename
         else:
             inpfile = filename + '.in'
             outfile = filename + '.out'
