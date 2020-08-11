@@ -2,6 +2,7 @@ from copy import deepcopy
 import numpy as np
 from pandas import DataFrame
 from warnings import warn
+import itertools as it
 
 from .. import element
 from ..functions._writers import write_xsf
@@ -136,7 +137,7 @@ def build_supercell(self, P, inplace=True):
         return out
 
 
-def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'):
+def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index', with_boundaries=True):
     '''
     Calculate nearest neighbors of site_id
 
@@ -155,6 +156,8 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
                 - 'index': list of indices (ints)
                 - 'dist': list of distances in angstrom (floats)
                 - 'atoms': list of dictionaries with keys 'ion' and 'pos' (dicts)
+        with_boundaries (optional) (bool)
+            - if True than boundary conditions are considered when computing distances
 
     returns
     ----
@@ -173,7 +176,17 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
     # build dataframe
     atoms_df = DataFrame(geo.atoms)
     # create column for distances to site_id
-    atoms_df['dist'] = atoms_df['pos'].apply(lambda x: np.linalg.norm(x - atoms_df.loc[site_id, 'pos']))
+    site_pos = atoms_df.loc[site_id, 'pos']
+    if not with_boundaries:
+        atoms_df['dist'] = atoms_df['pos'].apply(lambda x: np.linalg.norm(x - site_pos))
+    else:
+        # calculate translations by +/-1 of cell parameters
+        translations = np.dot([t for t in it.product([-1, 0, 1], repeat=3)], self.par)
+        # calculate images of the site
+        site_images = site_pos + translations
+        atoms_df['dist'] = atoms_df['pos'].apply(
+            lambda x: np.linalg.norm(x - site_images, axis=1).min()
+        )
     # sort by distance
     atoms_df.sort_values(['dist', 'ion'], inplace=True)
     # if including site_id, start_index = 0, else start_index = 1
