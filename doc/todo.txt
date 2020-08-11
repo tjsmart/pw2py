@@ -1,5 +1,7 @@
 Several todos written in-line of the code
 
+Add typing to methods/attributes
+
 
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
