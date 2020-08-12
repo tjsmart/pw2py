@@ -26,6 +26,13 @@ To uninstall pw2py execute:
 pip uninstall pw2py
 ```
 
+To update pw2py execute:
+
+```bash
+git pull
+pip install .
+```
+
 Examples:
 ------------------------------------
 Try out the examples under the directory [Examples](Examples/)
