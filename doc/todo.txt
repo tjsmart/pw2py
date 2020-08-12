@@ -2,6 +2,8 @@ Several todos written in-line of the code
 
 Add typing to methods/attributes
 
+./scripts/reorder_atoms.py needs better implementation for checking (cases where distances alone cannot determine if two atoms are the same)
+
 
 Add more unit tests (may help with debugging)
     --> test for jdftx and xyz
