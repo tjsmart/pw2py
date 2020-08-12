@@ -31,3 +31,4 @@ from .atomgeo import atomgeo  # noqa: F401
 from .qeinp import qeinp  # noqa: F401
 from .qeout import qeout  # noqa: F401
 from . import qesave  # noqa: F401
+from ._common.resource import _determine_ftype  # noqa: F401
