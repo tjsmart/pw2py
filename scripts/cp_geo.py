@@ -18,7 +18,7 @@ def parse_command_line():
         '-o', '--only', metavar='arg', type=str, help="only copy (c)ell parameters | (a)tomic positions"
     )
     parser.add_argument(
-        '-i', '--inplace', action='store_true', help="if set then qe input file will be overwritten"
+        '-s', '--stdout', action='store_true', help="if set then qe input file will be written to stdout"
     )
 
     return parser.parse_args()
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     geo = pw.atomgeo.from_file(args.inpfile)
     inp = pw.qeinp.from_file(args.qefile)
     inp.load_geo(geo, load=only)
-    if not args.inplace:
+    if args.stdout:
         print(inp)
     else:
         inp.write_file(args.qefile)
