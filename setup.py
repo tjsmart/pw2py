@@ -24,8 +24,9 @@ setup(
         'scipy'
     ],
     scripts=[
-        'scripts/conv_geo.py',
-        'scripts/cp_geo.py',
-        'scripts/linear_mix.py',
+        'scripts/conv_geo',
+        'scripts/cp_geo',
+        'scripts/linear_mix',
+        'scripts/reorder_atoms'
     ]
 )
