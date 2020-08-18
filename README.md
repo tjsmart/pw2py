@@ -33,6 +33,19 @@ git pull
 pip install .
 ```
 
+(Development) To symlink the package to local user site execute:
+
+```bash
+ln -fs $PWD/pw2py $(python3 -m site --user-site)
+```
+
+(Development) To symlink the scripts to local user site execute:
+
+```bash
+mkdir -p ~/.local/bin 2> /dev/null
+for f in scripts/* ; do ln -fs $PWD/$f ~/.local/bin ; done
+```
+
 Examples:
 ------------------------------------
 Try out the examples under the directory [Examples](Examples/)
