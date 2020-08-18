@@ -36,7 +36,8 @@ def _fix_species(self):
     for ion in attr_ion:
         if ion not in card_ion:
             symbol = ''.join(filter(str.isalpha, ion))
-            self.card['ATOMIC_SPECIES'][ion] = [element.request(symbol, 'mass'), pseudos[symbol]]
+            self.card['ATOMIC_SPECIES'][ion] = [
+                element.request(symbol, 'mass'), pseudos[symbol]]
 
     # second remove ion in atomic species not in ion
     for ion in card_ion:
@@ -64,7 +65,8 @@ def load_geo(self, geo, load='default'):
         raise ValueError('Unrecognized value for load: {}'.format(load))
 
     if not isinstance(geo, atomgeo):
-        raise ValueError('geo must be of type pw2py.atomgeo, passed type: {}'.format(type(geo)))
+        raise ValueError(
+            'geo must be of type pw2py.atomgeo, passed type: {}'.format(type(geo)))
 
     if load == 'default' or load == 'atoms':
         self._pos = geo.pos
@@ -116,7 +118,8 @@ def load_geo(self, geo, load='default'):
                     self.nml['system']['celldm'][0] = geo.par[0, 0]
                     if geo.par_units == 'angstrom':
                         self.nml['system']['celldm'][0] /= bohr_to_angstrom
-                    self.nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
+                    self.nml['system']['celldm'][2] = geo.par[2, 2] / \
+                        geo.par[0, 0]
                 else:
                     warn('Unable to preserve ibrav due to missing nml items')
                     self.ibrav = 0
@@ -140,8 +143,10 @@ def load_geo(self, geo, load='default'):
                     self.nml['system']['celldm'][0] = geo.par[0, 0]
                     if geo.par_units == 'angstrom':
                         self.nml['system']['celldm'][0] /= bohr_to_angstrom
-                    self.nml['system']['celldm'][1] = geo.par[1, 1] / geo.par[0, 0]
-                    self.nml['system']['celldm'][2] = geo.par[2, 2] / geo.par[0, 0]
+                    self.nml['system']['celldm'][1] = geo.par[1, 1] / \
+                        geo.par[0, 0]
+                    self.nml['system']['celldm'][2] = geo.par[2, 2] / \
+                        geo.par[0, 0]
                 else:
                     warn('Unable to preserve ibrav due to missing nml items')
                     self.ibrav = 0
@@ -149,7 +154,8 @@ def load_geo(self, geo, load='default'):
                 self.ibrav = 0
 
         elif self.ibrav != 0:
-            warn('Value of ibrav not preserved because it is not implemented in load_pos: {}'.format(self.ibrav))
+            warn('Value of ibrav not preserved because it is not implemented in load_pos: {}'.format(
+                self.ibrav))
             self.ibrav = 0
 
         # now that the nasty part here is what you'd expect
@@ -203,6 +209,30 @@ def remove_indices(self, indices):
     calls atomgeo.remove_indices(self, indices)
     '''
     atomgeo.remove_indices(self, indices)
+
+    # resync nat and ntyp in nml
+    self.nml['system']['nat'] = self.nat
+    self.nml['system']['ntyp'] = self.ntyp
+
+    # fix ATOMIC_SPECIES
+    _fix_species(self)
+
+
+def build_supercell(self, P, inplace=True, if_pos=[1, 1, 1]):
+    '''
+    Build supercell
+
+    Only simple supercells are implemented wherein the shape of the cell cannot be changed
+
+    P (np.array, int, size = (3,1))
+    '''
+    atomgeo.build_supercell(self, P, inplace=inplace)
+
+    # append if_pos
+    init_nat = len(self.if_pos)
+    append_if_pos = np.ones((self.nat - init_nat, 3), dtype=int)
+    append_if_pos[:] = if_pos
+    self._if_pos = np.append(self.if_pos, append_if_pos).reshape(self.nat, 3)
 
     # resync nat and ntyp in nml
     self.nml['system']['nat'] = self.nat

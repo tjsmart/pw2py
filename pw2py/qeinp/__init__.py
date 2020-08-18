@@ -20,4 +20,4 @@ class qeinp(atomgeo):
 
     from .properties import kpt, par_units, pos_units, ion, par, pos, ibrav, if_pos, ntyp
 
-    from .methods import load_geo, replace_ion, add_atom, remove_indices
+    from .methods import load_geo, replace_ion, add_atom, remove_indices, build_supercell
