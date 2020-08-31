@@ -36,6 +36,7 @@ pip install .
 (Development) To symlink the package to local user site execute:
 
 ```bash
+mkdir -p $(python3 -m site --user-site)
 ln -fs $PWD/pw2py $(python3 -m site --user-site)
 ```
 
