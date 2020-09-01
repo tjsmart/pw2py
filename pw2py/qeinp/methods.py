@@ -72,7 +72,10 @@ def load_geo(self, geo, load='default'):
         self._pos = geo.pos
         self._pos_units = geo.pos_units
         self.card['ATOMIC_POSITIONS'] = geo.pos_units
-        self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
+        try:
+            self._if_pos = geo.if_pos
+        except AttributeError:
+            self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
 
         if not np.array_equal(self._ion, geo.ion):
             self._ion = geo.ion
