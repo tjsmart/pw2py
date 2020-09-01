@@ -29,7 +29,7 @@ def from_file(cls, filename):
             nat = int(line.split()[-1])
         elif "number of electrons" in line:
             # TODO use nelec ?
-            nelec = int(float(line.split()[-1]))    # noqa: F841
+            nelec = int(float(line.split()[5]))    # noqa: F841
         elif "number of Kohn-Sham states" in line:
             nbnd = int(line.split()[-1])
         elif "number of atomic types" in line:

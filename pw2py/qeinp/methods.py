@@ -53,12 +53,14 @@ def _fix_species(self):
 #     pass
 
 
-def load_geo(self, geo, load='default'):
+def load_geo(self, geo, load='default', keep_if_pos=False):
     '''
     return new qeinp object with geometry from geo
 
     load (str)
         -- can be default, cell, or atoms
+    keep_if_pos (bool)
+        -- if true, and geo does not have attribute 'if_pos' then keep if_pos of self
     '''
     load = load.lower()
     if load not in ['default', 'cell', 'atoms']:
@@ -75,7 +77,9 @@ def load_geo(self, geo, load='default'):
         try:
             self._if_pos = geo.if_pos
         except AttributeError:
-            self._if_pos = np.ones((geo.nat, 3))  # use default value for if_pos
+            if not keep_if_pos:
+                # use default value for if_pos
+                self._if_pos = np.ones((geo.nat, 3))
 
         if not np.array_equal(self._ion, geo.ion):
             self._ion = geo.ion

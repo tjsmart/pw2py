@@ -42,9 +42,12 @@ if __name__ == "__main__":
     args = parse_command_line()
     only = parse_only_option(args.only)
     import pw2py as pw
-    geo = pw.atomgeo.from_file(args.inpfile)
+    if args.inpfile.endswith('.in') or args.inpfile.endswith('.out'):
+        geo = pw.qeinp.from_file(args.inpfile)
+    else:
+        geo = pw.atomgeo.from_file(args.inpfile)
     inp = pw.qeinp.from_file(args.qefile)
-    inp.load_geo(geo, load=only)
+    inp.load_geo(geo, load=only, keep_if_pos=True)
     if args.stdout:
         print(inp)
     else:
