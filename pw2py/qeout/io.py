@@ -29,7 +29,7 @@ def from_file(cls, filename):
             nat = int(line.split()[-1])
         elif "number of electrons" in line:
             # TODO use nelec ?
-            nelec = int(float(line.split()[5]))    # noqa: F841
+            nelec = int(float(line.split()[4]))    # noqa: F841
         elif "number of Kohn-Sham states" in line:
             nbnd = int(line.split()[-1])
         elif "number of atomic types" in line:
@@ -63,7 +63,11 @@ def from_file(cls, filename):
                 conv['E'].append(np.float64(line.split()[-2]))
 
         elif "has" in line:
-            conv['nsteps'].append(int(line.split()[-2]))
+            _nsteps = line.split()[-2]
+            try:
+                conv['nsteps'].append(int(_nsteps))
+            except ValueError:
+                continue
         elif "SPIN UP" in line:
             [next(lines) for _ in range(2)]
             if "k = 0.0000 0.0000 0.0000" in line:
