@@ -35,7 +35,7 @@ def parse_command_line():
     )
     parser.add_argument(
         '-d', '--defect', metavar='arg', type=str,
-        help="list of indices (base 1) or position (if float) for location of charged defect",
+        help="list of indices (base 1) or position (if float) for location of charged defect, for multiple defects seperate by ','",  # noqa
         default=None
     )
     parser.add_argument(
@@ -44,6 +44,10 @@ def parse_command_line():
     )
     parser.add_argument(
         '-m', '--mag', action='store_true', help="disable conversion of starting_magnetization which can fail"
+    )
+    parser.add_argument(
+        '-f', '--fixd', metavar='arg', type=str, help="enables fix-electron-density with specified prefix",
+        default=None
     )
 
     return parser.parse_args()
@@ -82,9 +86,11 @@ def qeinp2jdftx(qefile, **kwargs):
         'initial-state charge.$VAR\n'
         "dump-name charge.$VAR\n"
         "dump End State Dtot EigStats\n"
-        "electronic-SCF  energyDiffThreshold 1e-7 nIterations 200\n"
-        "\n"
     )
+
+    if ('fixd' not in kwargs) or (kwargs['fixd'] is None):
+        out += "electronic-SCF  energyDiffThreshold 1e-7 nIterations 200\n"
+    out += "\n"
 
     ####################################
     # read and converted lines from qeinp
@@ -103,9 +109,9 @@ def qeinp2jdftx(qefile, **kwargs):
         warnings.warn('PSEUDO ONLY WORKS FOR ONCV AND GBRV')
     # other
     out += (
-        f"elec-cutoff {inp.nml.ecutwfc/2} {inp.nml.ecutrho if 'ecutrho' in inp.nml else ''}\n"
+        f"elec-cutoff {inp.nml.ecutwfc/2} {inp.nml.ecutrho/2 if 'ecutrho' in inp.nml['system'] else ''}\n"
         f"{'spintype z-spin' if ('nspin' in inp.nml['system']) and (inp.nml.nspin == 2) else ''}\n"
-        f"kpoint-folding {arr2str(inp.kpt[0])}\n"
+        f"kpoint-folding {arr2str(inp.kpt[0]) if inp.card.K_POINTS == 'automatic' else '1 1 1'}\n"
     )
     if ('occupations' in inp.nml['system']) and inp.nml.occupations == ('smearing'):
         out += f"elec-smearing {qesmearing2jdftx[inp.nml.smearing]} {inp.nml.degauss/2}\n"
@@ -131,23 +137,35 @@ def qeinp2jdftx(qefile, **kwargs):
     if 'defect' in kwargs and kwargs['defect'] is not None:
         assert 'tot_charge' in inp.nml['system'], \
             "tot_charge must be in qe input file in order to use --defect"
-        if "." in kwargs['defect']:
-            # contains a float, position given
-            cd_pos = np.fromstring(kwargs['defect'], sep=' ')
-        else:
-            # integers, correspond to indices
-            indices = np.fromstring(kwargs['defect'], sep=' ', dtype=int) - 1
-            cd_pos = np.average(inp.pos[indices], axis=0)
-        out += ((
-            "# enabled by user option --defect\n"
-            f"charged-defect {arr2str(cd_pos)} {-inp.nml.tot_charge} 1\n"
-        ))
+
+        out += "# enabled by user option --defect\n"
+        # partition charge if the user specified several defects
+        number_of_defects = kwargs['defect'].count(',') + 1
+        defect_charge = -inp.nml.tot_charge / number_of_defects
+        # iterate through comma seperated defect options
+        for defect_option in kwargs['defect'].split(','):
+            if "." in defect_option:
+                # contains a float, absolute position given
+                cd_pos = np.fromstring(defect_option, sep=' ')
+            else:
+                # integers, correspond to indices
+                indices = np.fromstring(defect_option, sep=' ', dtype=int) - 1
+                cd_pos = np.average(inp.pos[indices], axis=0)
+            out += f"charged-defect {arr2str(cd_pos)} {defect_charge} 1\n"
         out += "\n"
 
     if 'corr' in kwargs and kwargs['corr'] is not None:
         out += ((
             "# enabled by user option --corr\n"
             f"charged-defect-correction {kwargs['corr']} 8. 1.\n"
+        ))
+        out += "\n"
+
+    if ('fixd' in kwargs) and (kwargs['fixd'] is not None):
+        out += ((
+            "# enabled by user option --fixd\n"
+            f"fix-electron-density {kwargs['fixd']}.$VAR\n"
+
         ))
         out += "\n"
 
@@ -160,7 +178,7 @@ if __name__ == '__main__':
 
     # read qe input and write to jdftx file
     out = qeinp2jdftx(args.qefile,
-                      trunc=args.trunc, defect=args.defect, corr=args.corr)
+                      trunc=args.trunc, defect=args.defect, corr=args.corr, fixd=args.fixd)
 
     # write atomic positions
     geo = pw.atomgeo.from_file(args.qefile)
