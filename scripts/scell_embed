@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+
+import argparse
+import numpy as np
+import pw2py as pw
+
+
+def parse_command_line():
+    ''' parse command line options '''
+    parser = argparse.ArgumentParser(
+        description="Embed atoms from one calculation into another larger supercell"
+    )
+    parser.add_argument(
+        'sfile', metavar='sfile', type=str, help="first qe input file to read in with smaller cell"
+    )
+    parser.add_argument(
+        'lfile', metavar='lfile', type=str, help="second qe input or atomic geometry file to read in with larger cell"
+    )
+    parser.add_argument(
+        '-k', '--kpt', action='store_true', help="change k-point to gamma"
+    )
+    parser.add_argument(
+        '-t', '--thresh', metavar='arg', type=float, help='thresh for deciding if atom is replaced (percentage)',
+        default=0.1
+    )
+    parser.add_argument(
+        '-v', '--verbose', action='store_true', help="print extra information"
+    )
+
+    return parser.parse_args()
+
+
+def find_nearest(pos: np.ndarray, geo: pw.atomgeo) -> int:
+    '''
+    calculated distance of pos w.r.t. geo.pos, return closest
+    '''
+    gdistance = geo.calc_distance(pos)
+    return geo.ion[np.argmin(gdistance)], gdistance.min()
+
+
+def calc_bonds(geo: pw.atomgeo) -> dict:
+    '''
+    calculate bond lengths of each species in geo
+    fails if geometry is not pristine
+    returns:
+        dict where keys correspond to ion names and values are tuples of nearest ion and distance
+    '''
+    species = np.unique(geo.ion)
+    ids = [np.argwhere(geo.ion == ion)[0, 0] for ion in species]
+    # collect bond_lengths
+    bond_lengths = {}
+    for spec, i in zip(species, ids):
+        # calculate nearest (n)ion and (n)dist of spec(ies)
+        nion, _, ndist = geo.nearest_neighbor(i, 1, return_type='df').iloc[0]
+        bond_lengths[spec] = (nion, ndist)
+    return bond_lengths
+
+
+if __name__ == "__main__":
+    args = parse_command_line()
+
+    # read in large geo
+    lgeo = pw.atomgeo.from_file(args.lfile)
+
+    # read in small input file
+    sinp = pw.qeinp.from_file(args.sfile)
+
+    # convert atomic positions to angstrom (so distances are true)
+    for obj in [lgeo, sinp]:
+        obj.pos_units = 'angstrom'
+
+    # NOTE THIS also will work if adding option to shift small cell (say you want it in center)
+    # NOTE Can also work if I say want to cut the radius first
+
+    # assuming user does not have a defect at the edge!!!
+    # 1st in the large geo detect nearest neighbor distance
+    #   --> do for each type (store dict) (nearest)
+    # 2nd iterate through large geo, if the atoms nearest neighbor of the small cell is too small then remove
+    # 3rd simply append/add small geo to large geo
+    # 4th load large geo to small input file
+    # NOTE Need to warn or specity to user that defect cannot be at the boundary but a shift can be used.
+
+    # calc bonds in the pristine (larger) geo
+    lbonds = calc_bonds(lgeo)
+
+    # fix small input bravais lattice parameters (if in use)
+    if sinp.nml.ibrav != 0:
+        if 'a' in sinp.nml['system']:
+            sinp.nml.a = lgeo.par[0, 0] / sinp.par[0, 0]
+        if 'b' in sinp.nml['system']:
+            sinp.nml.b = lgeo.par[1, 1] / sinp.par[1, 1]
+        if 'c' in sinp.nml['system']:
+            sinp.nml.c = lgeo.par[2, 2] / sinp.par[2, 2]
+        if 'celldm' in sinp.nml['system']:
+            raise ValueError("celldm not implemented!!")
+    # load parameters directly
+    sinp._par = lgeo.par
+
+    # iterate through large pos if matchiing small pos found then replace
+    index_to_remove = []
+    # for ion, pos in zip(lgeo.ion, lgeo.pos):
+    for i, atom in enumerate(lgeo.atoms):
+        # nearest_distance = sinp.calc_distance(pos)
+        nion, ndist = find_nearest(atom['pos'], sinp)
+        if ndist < lbonds[atom['ion']][-1] * (1 - args.thresh):
+            if args.verbose:
+                print(f"large atom {i}: {atom}, near to small: {nion} {ndist}")
+            index_to_remove.append(i)
+
+    # must remove some supercell atoms otherwise something went wrong!
+    assert len(index_to_remove) > 0, "Something is probably wrong with input!"
+
+    # remove indices
+    if args.verbose:
+        print(f"removing {len(index_to_remove)} atoms from lgeo")
+    lgeo.remove_indices(index_to_remove)
+
+    # double check large geo atoms are all self-connected (for cases where small geo has vacancies)
+    index_inconsistent = []
+    for i, ion in enumerate(lgeo.ion):
+        idist = lgeo.nearest_neighbor(i, 1, return_type='dist')
+        if idist > lbonds[ion][-1] * (1 + args.thresh):
+            if args.verbose:
+                print(f"large atom {i} found to be detached: {idist}")
+            index_inconsistent.append(i)
+
+    # remove incosistent indices
+    if args.verbose:
+        print(f"removing another {len(index_inconsistent)} atoms from lgeo")
+    lgeo.remove_indices(index_inconsistent)
+
+    # append small geo to large geo
+    lgeo.add_atom((sinp.ion, sinp.pos))
+
+    # finally load large geo to small input, convert back to crystal and save
+    sinp.load_geo(lgeo)
+    sinp.pos_units = 'crystal'
+
+    if args.kpt:
+        # change kpoints to gamma only
+        sinp.kpt = [[1, 1, 1], [0, 0, 0]]
+        sinp.card.K_POINTS = 'gamma'
+
+    # print to stdout
+    print(sinp)

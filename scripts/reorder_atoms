@@ -3,7 +3,6 @@
 import argparse
 import pw2py as pw
 import numpy as np
-import warnings
 
 
 def parse_command_line() -> argparse.ArgumentParser:
