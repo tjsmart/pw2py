@@ -3,6 +3,7 @@
 import argparse
 import pw2py as pw
 import numpy as np
+import copy
 
 
 def parse_command_line() -> argparse.ArgumentParser:
@@ -35,6 +36,51 @@ def find_nearest(pos: np.ndarray, geo: pw.atomgeo) -> int:
     return np.argmin(gdistance)
 
 
+def reorder_atoms(geo1, geo2, write_geo=None, inplace=False):
+    ''' reorder positions of geo2, returning new geo with matching orders to fit geo1 '''
+    # convert atomic positions to angstrom (so distances are true)
+    for obj in [geo1, geo2]:
+        obj.pos_units = 'angstrom'
+    if write_geo is not None:
+        write_geo.pos_units = 'angstrom'
+    else:
+        copy2 = copy.deepcopy(geo2)
+    # swap positions based on nearest neighbor index
+    for i, pos in enumerate(geo1.pos):
+        corrected_i = find_nearest(pos, geo2)
+        if write_geo is not None:
+            write_geo.pos[i] = geo2.pos[corrected_i]
+        else:
+            copy2.pos[i] = geo2.pos[corrected_i]
+    # convert back to crystal and return
+    if write_geo is not None:
+        write_geo.pos_units = 'crystal'
+        return
+    else:
+        copy2.pos_units = 'crystal'
+        if inplace:
+            geo2 = copy2
+            return
+        else:
+            return copy2
+
+
+def fix_boundaries(geo1, geo2, inplace=False):
+    # convert atomic positions to crystal (so can easily decrement increment positions by integers)
+    for obj in [geo1, geo2]:
+        obj.pos_units = 'crystal'
+    # calculate difference and round to int
+    diff = np.rint(geo1.pos - geo2.pos)
+    # apply diff and return
+    if inplace:
+        geo2.pos += diff
+        return
+    else:
+        copy2 = copy.deepcopy(geo2)
+        copy2.pos += diff
+        return copy2
+
+
 if __name__ == '__main__':
     args = parse_command_line()
 
@@ -50,17 +96,11 @@ if __name__ == '__main__':
     fix2 = pw.qeinp.from_file(args.file2) if ftype == 'qeinp' \
         else pw.atomgeo.from_file(args.file2)
 
-    # convert atomic positions to angstrom (so distances are true)
-    for obj in [geo1, geo2, fix2]:
-        obj.pos_units = 'angstrom'
-
     # swap positions based on nearest neighbor index
-    for i, pos in enumerate(geo1.pos):
-        corrected_i = find_nearest(pos, geo2)
-        fix2.pos[i] = geo2.pos[corrected_i]
+    reorder_atoms(geo1, geo2, write_geo=fix2)
 
-    # convert back to crystal
-    fix2.pos_units = 'crystal'
+    # fix boundary atoms
+    fix_boundaries(geo1, fix2, inplace=True)
 
     if args.inplace:
         fix2.write_file(args.file2)
