@@ -36,7 +36,7 @@ def write_file(self, filename, ftype='auto'):
     write atomgeo to file (QE format)
     '''
     if ftype == 'auto':
-        if any([filename.lower().endswith(ext.lower()) for ext in ["OUTCAR", "CONTCAR", "vasp"]]):
+        if any([filename.lower().endswith(ext.lower()) for ext in ["POSCAR", "CONTCAR", "vasp"]]):
             ftype = 'vasp'
         elif filename.lower().endswith("xyz"):
             ftype = 'xyz'

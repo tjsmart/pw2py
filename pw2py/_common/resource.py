@@ -165,6 +165,7 @@ def _determine_ftype(filename):
 
     # cases without extensions
     if not ext:
+        base = base.split('/')[-1]
         if base in ['poscar', 'contcar']:
             return 'vasp'
         elif os.path.exists(base + '.in') and os.path.exists(base + '.out'):
