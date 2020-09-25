@@ -6,7 +6,7 @@ import numpy as np
 import copy
 
 
-def parse_command_line() -> argparse.ArgumentParser:
+def parse_command_line():
     ''' parse command line options '''
     parser = argparse.ArgumentParser(
         description="Read in two files and reorder atoms so that they match (according to distance)"
@@ -28,7 +28,7 @@ def parse_command_line() -> argparse.ArgumentParser:
     return parser.parse_args()
 
 
-def find_nearest(pos: np.ndarray, geo: pw.atomgeo) -> int:
+def find_nearest(pos, geo):
     '''
     calculated distance of pos w.r.t. geo.pos, return closest
     '''
