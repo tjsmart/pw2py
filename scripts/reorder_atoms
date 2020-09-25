@@ -103,9 +103,9 @@ if __name__ == '__main__':
     fix_boundaries(geo1, fix2, inplace=True)
 
     if args.inplace:
-        fix2.write_file(args.file2)
+        fix2.write_file(args.file2, sort=False)
     else:
         if ftype == 'qeinp':
             print(fix2)
         else:
-            print(fix2.to_string(ftype=ftype))
+            print(fix2.to_string(ftype=ftype, sort=False))

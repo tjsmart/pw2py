@@ -31,7 +31,7 @@ def from_file(cls, filename, ftype='auto', xyz_par=20):
     return cls(ion=ion, par=par, pos=pos, pos_units=pos_units, par_units=par_units)  # pylint: disable=E1102
 
 
-def write_file(self, filename, ftype='auto'):
+def write_file(self, filename, ftype='auto', sort=True):
     '''
     write atomgeo to file (QE format)
     '''
@@ -50,6 +50,6 @@ def write_file(self, filename, ftype='auto'):
         raise ValueError('Value of ftype not recognized')
 
     with open(filename, 'w') as f:
-        f.write(self.__str__(ftype=ftype))
+        f.write(self.__str__(ftype=ftype, sort=sort))
 
     return None

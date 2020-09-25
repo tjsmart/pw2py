@@ -2,9 +2,11 @@ from collections import Counter
 from copy import deepcopy
 
 
-def to_string(self, ftype='qeinp'):
+def to_string(self, ftype='qeinp', sort=True):
     '''
     convert atomgeo to str (default is qeinp format)
+
+    sort = False, then vasp output is not sorted first, may fail!!
     '''
     ftype = ftype.lower()
 
@@ -14,16 +16,18 @@ def to_string(self, ftype='qeinp'):
             .format(_ntyp, str(self.nat))
         out += "CELL_PARAMETERS {}\n".format(self.par_units)
         for par in self.par:
-            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                par[0], par[1], par[2])
         out += "\n"
         out += "ATOMIC_POSITIONS {}\n".format(self.pos_units)
         for ion, pos in zip(self.ion, self.pos):
             # print(ion, pos)
-            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                ion, pos[0], pos[1], pos[2])
         out += "\n"
 
     elif ftype == 'vasp':
-        geo = self.sort_ions(inplace=False)
+        geo = self.sort_ions(inplace=False) if sort else self
         # header
         out = "Generated from the PW2PY python module\n"
         # alat
@@ -31,7 +35,8 @@ def to_string(self, ftype='qeinp'):
         out += "{}\n".format('1.0')
         # par
         for par in geo.par:
-            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                par[0], par[1], par[2])
         # collect unique ions and count of each
         ionAndCount = Counter(geo.ion)
         # ions
@@ -45,7 +50,8 @@ def to_string(self, ftype='qeinp'):
             out += "{}\n".format("direct")
         # pos
         for pos in geo.pos:
-            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(pos[0], pos[1], pos[2])
+            out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                pos[0], pos[1], pos[2])
 
     elif ftype == 'jdftx':
         _if_pos = 1
@@ -61,12 +67,15 @@ def to_string(self, ftype='qeinp'):
         out += "lattice \\\n"
         for i, par in enumerate(geo.par.T):
             if i == 0 or i == 1:
-                out += "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(par[0], par[1], par[2])
+                out += "    {:16.9f}  {:16.9f}  {:16.9f} \\\n".format(
+                    par[0], par[1], par[2])
             elif i == 2:
-                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                    par[0], par[1], par[2])
         # write ion and pos
         for ion, pos in zip(geo.ion, geo.pos):
-            out += "ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(ion, pos[0], pos[1], pos[2], _if_pos)
+            out += "ion  {:5s}  {:16.9f}  {:16.9f}  {:16.9f} {}\n".format(
+                ion, pos[0], pos[1], pos[2], _if_pos)
 
     elif ftype == 'xyz':
         geo = deepcopy(self)
@@ -76,7 +85,8 @@ def to_string(self, ftype='qeinp'):
         # description
         out += "Generated from the PW2PY python module\n"
         for ion, pos in zip(geo.ion, geo.pos):
-            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+            out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                ion, pos[0], pos[1], pos[2])
 
     elif ftype == 'xsf':
         geo = deepcopy(self)
@@ -88,14 +98,16 @@ def to_string(self, ftype='qeinp'):
         for _section in ["PRIMVEC\n", "CONVVEC\n"]:
             out += _section
             for par in geo.par:
-                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(par[0], par[1], par[2])
+                out += "    {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                    par[0], par[1], par[2])
         # ion and pos
         geo.pos_units = 'angstrom'
         for _section in ["PRIMCOORD\n", "CONVCOORD\n"]:
             out += _section
             out += "    {:5d}    {:3d}\n".format(geo.nat, 1)
             for ion, pos in zip(geo.ion, geo.pos):
-                out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(ion, pos[0], pos[1], pos[2])
+                out += "    {:5s}  {:16.9f}  {:16.9f}  {:16.9f}\n".format(
+                    ion, pos[0], pos[1], pos[2])
 
     else:
         raise ValueError('Value of ftype not recognized: {}'.format(ftype))
@@ -103,11 +115,11 @@ def to_string(self, ftype='qeinp'):
     return out
 
 
-def __str__(self, ftype='qeinp'):
+def __str__(self, ftype='qeinp', sort=True):
     '''
     default str method of atomgeo
     '''
-    return self.to_string(ftype=ftype)
+    return self.to_string(ftype=ftype, sort=sort)
 
 
 def __repr__(self):

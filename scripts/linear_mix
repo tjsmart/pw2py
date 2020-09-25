@@ -115,7 +115,7 @@ if __name__ == "__main__":
         # write files
         path1 = os.path.join(dir1, basename)
         path2 = os.path.join(dir2, basename)
-        mix1.write_file(path1)
-        mix2.write_file(path2)
+        mix1.write_file(path1, sort=False)
+        mix2.write_file(path2, sort=False)
 
     print('\nDone! :)')
