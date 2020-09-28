@@ -17,7 +17,8 @@ def from_file(cls, filename):
     is_exx = False
     conv = {}
     for key in ['E', '!', '!!', 'dE', 'nsteps', 'nsteps_exx', 'tot_forc', 'max_forc',
-                'mag_tot', 'mag_abs', 'time', 'time_exx', 'tot_mag', 'abs_mag', 'Fermi']:
+                'mag_tot', 'mag_abs', 'time', 'time_exx', 'tot_mag', 'abs_mag', 'Fermi',
+                'occupied', 'occupations']:
         conv[key] = []
     list_pos, if_pos, ion, list_eigs = [], [], [], []
 
@@ -40,13 +41,15 @@ def from_file(cls, filename):
         elif "Starting magnetic structure" in line:
             is_mag = True
         elif "crystal axes:" in line:
-            par = np.array([next(lines)[0].split()[3:6] for _ in range(3)], dtype=np.float64) * alat
+            par = np.array([next(lines)[0].split()[3:6]
+                            for _ in range(3)], dtype=np.float64) * alat
         elif "total cpu time spent up to now is" in line:
             conv['time'].append(np.float64(line.split()[-2]))
         elif "total energy              =" in line:
             if "!!" in line:
                 conv['!!'].append(np.float64(line.split()[-2]))
-                conv['nsteps_exx'].append(sum(conv['nsteps']) - sum(conv['nsteps_exx']))
+                conv['nsteps_exx'].append(
+                    sum(conv['nsteps']) - sum(conv['nsteps_exx']))
                 conv['time_exx'].append(conv['time'][-1])
             elif "!" in line:
                 conv['!'].append(np.float64(line.split()[-2]))
@@ -74,19 +77,34 @@ def from_file(cls, filename):
                 # TODO need to other kpoints
                 eigs, lines = _readEigs(lines, nbnd)
                 list_eigs.append(eigs)
+                # then read occ
+                next(lines)
+                occ, lines = _readEigs(lines, nbnd)
+                conv['occupations'].append(occ)
 
         elif "SPIN DOWN" in line:
             [next(lines) for _ in range(2)]
             if "k = 0.0000 0.0000 0.0000" in line:
                 eigs, lines = _readEigs(lines, nbnd)
                 list_eigs.append(eigs)
+                # then read occ
+                next(lines)
+                occ, lines = _readEigs(lines, nbnd)
+                conv['occupations'].append(occ)
 
         elif "k = 0.0000 0.0000 0.0000" in line:
             eigs, lines = _readEigs(lines, nbnd)
             list_eigs.append(eigs)
+            # then read occ
+            next(lines)
+            occ, lines = _readEigs(lines, nbnd)
+            conv['occupations'].append(occ)
 
         elif "Fermi" in line:
             conv['Fermi'].append(np.float64(line.split()[-2]))
+        elif "occupied" in line:
+            conv['occupied'].append(
+                np.fromstring(line.split(':')[-1], sep=' '))
         elif "Forces acting on atoms" in line:
             max_forc = -1.0
             next(lines)
@@ -108,7 +126,8 @@ def from_file(cls, filename):
                 if is_first:
                     ion.append(nl[0])
                     try:
-                        if_pos.append(np.array([nl[4], nl[5], nl[6]], dtype=int))
+                        if_pos.append(
+                            np.array([nl[4], nl[5], nl[6]], dtype=int))
                     except IndexError:
                         if_pos.append(np.ones(3, dtype=int))
                 pos.append(np.array(nl[1:4], dtype=np.float64))
