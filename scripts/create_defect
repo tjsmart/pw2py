@@ -48,14 +48,20 @@ if __name__ == "__main__":
     defect = parse_defect(args.defect)
     inp = pw.qeinp.from_file(args.filein)
     # TODO
-    if defect == 's' or defect == 'i':
+    if defect == 'i':
         raise NotImplementedError(
-            "subsitutional and interstitial defects not yet implemented! :/")
+            "interstitial defects not yet implemented! :/")
         # TODO -- see above on idea for handling option
     elif defect == 'v':
         sep = ',' if ',' in args.option else ' '
         indices = np.fromstring(args.option, sep=sep, dtype=int) - 1
         inp.remove_indices(indices)
+    elif defect == 's':
+        indices, ions = [], []
+        for substr in args.option.split(','):
+            indices.append(int(substr.split()[0]) - 1)
+            ions.append(substr.split()[1])
+        inp.ion[indices] = ions
 
     # write to stdout or overwite
     if args.inplace:
