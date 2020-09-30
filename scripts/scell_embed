@@ -29,6 +29,13 @@ def parse_command_line():
     parser.add_argument(
         '-f', '--fixpos', action='store_true', help="use if_pos = 0 for large geo atoms"
     )
+    parser.add_argument(
+        '-c', '--cut', metavar='cut', type=str, help=(
+            "central position to cut smaller atoms about for spherical embedding"
+            "e.g. '6.7 0.5 0.4 0' will cut 6.7 Ang about the point 0.5 0.4 0 (in crystal)"
+        ),
+        default=None
+    )
 
     return parser.parse_args()
 
@@ -59,6 +66,15 @@ def calc_bonds(geo: pw.atomgeo) -> dict:
     return bond_lengths
 
 
+def cut_geo(geo: pw.atomgeo, radius: float, center: np.ndarray, center_is_crystal=True) -> None:
+    assert geo.pos_units == 'angstrom', f"geo must have pos_units of angstrom, current: {geo.pos_units}"
+    center = sinp.par.T.dot(center).T if center_is_crystal else center
+    diff_pos = geo.pos - center
+    diff_length = np.linalg.norm(diff_pos, axis=1)
+    indices_outside_radius = np.argwhere(diff_length > radius).flatten()
+    geo.remove_indices(indices_outside_radius)
+
+
 if __name__ == "__main__":
     args = parse_command_line()
 
@@ -72,8 +88,12 @@ if __name__ == "__main__":
     for obj in [lgeo, sinp]:
         obj.pos_units = 'angstrom'
 
-    # NOTE THIS also will work if adding option to shift small cell (say you want it in center)
-    # NOTE Can also work if I say want to cut the radius first
+    # cut small inp geo if enabled
+    if args.cut is not None:
+        radius, center = args.cut.split(',')
+        radius = float(radius)
+        center = np.fromstring(center, sep=' ')
+        cut_geo(sinp, radius, center, center_is_crystal=True)
 
     # assuming user does not have a defect at the edge!!!
     # 1st in the large geo detect nearest neighbor distance
