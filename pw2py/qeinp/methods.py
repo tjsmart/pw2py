@@ -247,3 +247,16 @@ def build_supercell(self, P, inplace=True, if_pos=[1, 1, 1]):
 
     # fix ATOMIC_SPECIES
     _fix_species(self)
+
+
+def to_atomgeo(self):
+    '''
+    Return atomgeo object
+    '''
+    return atomgeo(
+        ion=self.ion,
+        par=self.par,
+        pos=self.pos,
+        par_units=self.par_units,
+        pos_units=self.pos_units
+    )
