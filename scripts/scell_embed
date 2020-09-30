@@ -26,6 +26,9 @@ def parse_command_line():
     parser.add_argument(
         '-v', '--verbose', action='store_true', help="print extra information"
     )
+    parser.add_argument(
+        '-f', '--fixpos', action='store_true', help="use if_pos = 0 for large geo atoms"
+    )
 
     return parser.parse_args()
 
@@ -96,7 +99,7 @@ if __name__ == "__main__":
     # load parameters directly
     sinp._par = lgeo.par
 
-    # iterate through large pos if matchiing small pos found then replace
+    # iterate through large pos if matching small pos found then replace
     index_to_remove = []
     # for ion, pos in zip(lgeo.ion, lgeo.pos):
     for i, atom in enumerate(lgeo.atoms):
@@ -129,12 +132,20 @@ if __name__ == "__main__":
         print(f"removing another {len(index_inconsistent)} atoms from lgeo")
     lgeo.remove_indices(index_inconsistent)
 
+    # store length of lgeo (used if fixpos enabled)
+    len_wo_small = lgeo.nat
+
     # append small geo to large geo
     lgeo.add_atom((sinp.ion, sinp.pos))
 
     # finally load large geo to small input, convert back to crystal and save
     sinp.load_geo(lgeo)
     sinp.pos_units = 'crystal'
+
+    # some user options
+    if args.fixpos:
+        # set if_pos for lgeo atoms
+        sinp.if_pos[:len_wo_small] = np.zeros((len_wo_small, 3), dtype=int)
 
     if args.kpt:
         # change kpoints to gamma only

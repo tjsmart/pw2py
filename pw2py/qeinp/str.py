@@ -22,7 +22,7 @@ def to_string(self):
         if array_equal(if_pos, ones(3, dtype=int)):
             out += "\n"
         else:
-            out += "    {:1d}  {:1d}  {:1d}\n".format(*if_pos)
+            out += "    {:1.0f}  {:1.0f}  {:1.0f}\n".format(*if_pos)
     out += "\n"
     if 'K_POINTS' in self.card:
         out += "K_POINTS {}\n".format(self.card.K_POINTS)
