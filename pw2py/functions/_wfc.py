@@ -47,7 +47,7 @@ def calc_wfc3D_squared_real(wfc, gvec, scaling=2, shape=None, lsign=False):
     # reshape wfc to be 3-dim array defined over gvec
     wfc3D = reshape_wfc3D(wfc, gvec, scaling=scaling, shape=shape)
     # fourier transform wfc to real space
-    wfc3D = scipy.fftpack.fftn(wfc3D, overwrite_x=True) / wfc3D.size
+    wfc3D = scipy.fftpack.fftn(wfc3D, overwrite_x=True) / (wfc3D.size)**0.5
     # calculate |wfc3D|^2 = conj(wfc3D) * wfc3D
     if lsign:
         wfc3D = np.real(np.sign(wfc3D)) * np.abs(wfc3D)**2
