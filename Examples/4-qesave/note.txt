@@ -1,0 +1,1 @@
+while this calculation had 3kpoints only one (gamma) is provided to reduce the size of the qe save folder

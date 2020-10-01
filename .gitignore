@@ -7,3 +7,4 @@ debug.ipynb
 local
 .vscode
 venv/
+temp/
