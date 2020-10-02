@@ -18,6 +18,7 @@ def parse_command_line():
             "if vac: indices of atoms to remove e.g. '1 2 3'"
             " | if sub: indices and species of atoms to subsitute (comma seperated) e.g. '1 N, 2 H, 3 O'"
             " | if int: position and species of atoms to add (comma seperated) e.g. '1.9 7.2 3.0 B, 2.1 5.3 8.0 O'"
+            " | if replace: replace all species X with species Y e.g. 'Sn Ti'"
         )
     )
     parser.add_argument(
@@ -39,6 +40,8 @@ def parse_defect(defect):
         return 's'
     elif _defect == 'i' or _defect == 'int' or _defect == 'interstitial' or _defect == 'interstitials':
         return 'i'
+    elif _defect == 'r' or _defect == 'rep' or _defect == 'replace':
+        return 'r'
     else:
         raise ValueError(f"Unrecognized value for defect: {defect}")
 
@@ -62,6 +65,9 @@ if __name__ == "__main__":
             indices.append(int(substr.split()[0]) - 1)
             ions.append(substr.split()[1])
         inp.ion[indices] = ions
+    elif defect == 'r':
+        old_ion, new_ion = args.option.split()
+        inp.replace_ion(old_ion, new_ion)
 
     # write to stdout or overwite
     if args.inplace:
