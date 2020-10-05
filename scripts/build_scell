@@ -22,8 +22,28 @@ def parse_command_line():
         '-s', '--shrink', action='store_true',
         help="shrink lattice instead of expanding (only makes sense for pristine)"
     )
+    parser.add_argument(
+        '-o', '--overlap', action='store_true',
+        help="disable checking for overlapping atoms at boundary"
+    )
 
     return parser.parse_args()
+
+
+def remove_overlapping_atoms(inp: pw.qeinp, thresh: float = 0.1):
+    ''' remove atoms with equivelent positions '''
+
+    # TODO
+    raise NotImplementedError("Sorry removing overlapping atoms not finished!")
+
+    index_to_remove = []
+    for i in range(inp.nat):
+        if i in index_to_remove:
+            continue
+        nseries = inp.nearest_neighbor(i, return_type='df').iloc[0]
+        if nseries['dist'] < thresh:
+            index_to_remove.append(nseries.name)
+    inp.remove_indices(index_to_remove)
 
 
 def fix_ibrav(inp: pw.qeinp):
@@ -59,16 +79,17 @@ if __name__ == "__main__":
         # build Delaunay tesselation: https://stackoverflow.com/questions/29311682/finding-if-point-is-in-3d-poly-in-python # noqa
         dly = Delaunay(points_of_cell)
         # remove atoms not in new par
-        index_to_remove = []
-        for i, pos in enumerate(inp.pos):
-            if dly.find_simplex(pos) < 0:
-                index_to_remove.append(i)
-        # also need to to check for atoms on the boundary
-        # TODO
+        index_to_remove = [
+            i for i, pos in enumerate(inp.pos)if dly.find_simplex(pos) < 0
+        ]
+
         # remove atoms
         inp.remove_indices(index_to_remove)
         # convert to crystal
         inp.pos_units = 'crystal'
+        if args.overlap:
+            # also need to to check for atoms on the boundary
+            remove_overlapping_atoms(inp)
         # fix ibrav
         fix_ibrav(inp)
         print(inp)
