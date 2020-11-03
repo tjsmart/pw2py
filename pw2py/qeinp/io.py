@@ -104,7 +104,7 @@ def from_file(cls, filename, is_prefix=None):
     return cls(nml, card, ion, par, par_units, pos, pos_units, if_pos, kpt)  # pylint: disable=E1102
 
 
-def write_file(self, filename):
+def write_file(self, filename, **kwargs):
     '''
     create qeinput object from file
     '''

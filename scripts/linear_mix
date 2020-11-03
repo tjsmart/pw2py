@@ -35,6 +35,9 @@ def parse_command_line():
     parser.add_argument(
         '-k', '--kpt', action='store_true', help="change k-point to 1 1 1 0 0 0"
     )
+    parser.add_argument(
+        '-o', '--one', action='store_true', help="only create one folder based on file1"
+    )
 
     return parser.parse_args()
 
@@ -47,6 +50,17 @@ def mkdir_ignore(path):
         os.mkdir(path)
     except FileExistsError:
         pass
+
+
+def make_mix_file(mix, ratio, obj1, obj2, lin_dir):
+    # make ratio dir
+    dirname = os.path.join(lin_dir, 'ratio-{:6.4f}'.format(ratio))
+    mkdir_ignore(dirname)
+    # mix positions
+    mix.pos = (1 - ratio) * obj1.pos + ratio * obj2.pos
+    # write files
+    path = os.path.join(dirname, basename)
+    mix.write_file(path, sort=False)
 
 
 if __name__ == "__main__":
@@ -80,10 +94,14 @@ if __name__ == "__main__":
             basename = 'scf.in'
 
     # make directories for putting ratio-* folders
-    lin_dir1 = 'lin1'
-    lin_dir2 = 'lin2'
-    mkdir_ignore(lin_dir1)
-    mkdir_ignore(lin_dir2)
+    if not args.one:
+        lin_dir1 = 'lin1'
+        lin_dir2 = 'lin2'
+        mkdir_ignore(lin_dir1)
+        mkdir_ignore(lin_dir2)
+    else:
+        lin_dir1 = 'lin'
+        mkdir_ignore(lin_dir1)
 
     if args.geo:
         obj1 = pw.atomgeo.from_file(args.file1)
@@ -104,18 +122,10 @@ if __name__ == "__main__":
 
     for ratio in ratios:
         print('.', end='')
-        # make ratio dir
-        dir1 = os.path.join(lin_dir1, 'ratio-{:6.4f}'.format(ratio))
-        dir2 = os.path.join(lin_dir2, 'ratio-{:6.4f}'.format(ratio))
-        mkdir_ignore(dir1)
-        mkdir_ignore(dir2)
-        # mix positions
-        mix1.pos = (1 - ratio) * obj1.pos + ratio * obj2.pos
-        mix2.pos = (1 - ratio) * obj1.pos + ratio * obj2.pos
-        # write files
-        path1 = os.path.join(dir1, basename)
-        path2 = os.path.join(dir2, basename)
-        mix1.write_file(path1, sort=False)
-        mix2.write_file(path2, sort=False)
+        # make first mix file
+        make_mix_file(mix1, ratio, obj1, obj2, lin_dir1)
+        if not args.one:
+            # make second mix file
+            make_mix_file(mix2, ratio, obj1, obj2, lin_dir2)
 
     print('\nDone! :)')
