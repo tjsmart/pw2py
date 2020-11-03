@@ -4,11 +4,13 @@ import argparse
 import numpy as np
 import os
 from copy import deepcopy
+import sys
 
 
 default_ratios = np.linspace(0, 1, 11)
 default_nonrad_ratios = np.array(
     [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 0.8, 0.85, 0.9, 0.95, 1])
+default_nonrad_qvals = np.linspace(-0.5, 0.5, 11)
 
 
 def parse_command_line():
@@ -30,13 +32,17 @@ def parse_command_line():
         '-g', '--geo', action='store_true', help="treat input file1 and file2 as atomgeo objects (default is qeinp)"
     )
     parser.add_argument(
-        '-n', '--nonrad', action='store_true', help="use default nonrad list of ratios"
+        '-n', '--nonrad', action='store_true', help="use default nonrad list of ratios or qvals"
     )
     parser.add_argument(
         '-k', '--kpt', action='store_true', help="change k-point to 1 1 1 0 0 0"
     )
     parser.add_argument(
         '-o', '--one', action='store_true', help="only create one folder based on file1"
+    )
+    parser.add_argument(
+        '-q', '--qvals', metavar='arg', type=str,
+        help="list of Q values (in amu^1/2*Ang) for mixing, cannot be used with -r", default=None
     )
 
     return parser.parse_args()
@@ -63,20 +69,59 @@ def make_mix_file(mix, ratio, obj1, obj2, lin_dir):
     mix.write_file(path, sort=False)
 
 
-if __name__ == "__main__":
-    args = parse_command_line()
-    # parse ratios
-    if args.nonrad:
-        ratios = default_nonrad_ratios
-    elif isinstance(args.ratios, str):
-        ratios = np.fromstring(args.ratios, sep=' ', dtype=np.float64)
+def convert_qvals_to_ratios(qvals, obj1, obj2, around_min=True):
+    '''
+    convert qvalues to a ratio based on dQ between obj1 and obj2
+
+    if around_min then qvals are around minimum of each obj
+    '''
+    # calculate dQ
+    dQ = obj1.calc_dQ(obj2)
+    print(f'dQ = {dQ}')
+
+    # calculate ratios
+    ratios = qvals / dQ
+
+    if not around_min:
+        return ratios
     else:
-        ratios = args.ratios    # default ratios
+        return np.append(ratios, 1-ratios)
 
-    # comments to user
+
+if __name__ == "__main__":
+    # check if -r or -q were passed but assert not both
+    using_ratios = (('-r' in sys.argv) or ('--ratio' in sys.argv))
+    using_qvals = (('-q' in sys.argv) or ('--qvals' in sys.argv))
+    assert not (
+        using_ratios and using_qvals), "Cannot pass ratios and qvals in the same command"
+
+    # default to -r
+    using_ratios = True if ((not using_ratios) and (
+        not using_qvals)) else using_ratios
+
+    args = parse_command_line()
+
     print('Generating mix structures from: {} and {}'.format(args.file1, args.file2))
-    print('Mixing ratios: ' + ' '.join('{:6.4f}'.format(r) for r in ratios))
 
+    if using_ratios:
+        # parse ratios
+        if args.nonrad:
+            ratios = default_nonrad_ratios
+        elif isinstance(args.ratios, str):
+            ratios = np.fromstring(args.ratios, sep=' ', dtype=np.float64)
+        else:
+            ratios = args.ratios    # default ratios
+        print('Mixing ratios: ' +
+              ' '.join('{:6.4f}'.format(r) for r in ratios))
+    else:
+        # parse ratios
+        if args.nonrad or (args.qvals.lower() in ['n', 'nonrad']):
+            qvals = default_nonrad_qvals
+        else:
+            qvals = np.fromstring(args.qvals, sep=' ', dtype=np.float64)
+        print('Mixing qvals: ' + ' '.join('{:6.4f}'.format(q) for q in qvals))
+
+    # this is not at top to avoid slow load speed
     import pw2py as pw
 
     # determine basename of files to generate
@@ -116,6 +161,12 @@ if __name__ == "__main__":
             # if nonrad calculation, change kpoint grid to 1 1 1  0 0 0
             obj1.kpt = [[1, 1, 1], [0, 0, 0]]
             obj2.kpt = [[1, 1, 1], [0, 0, 0]]
+
+    if using_qvals:
+        # convert qvals to ratios
+        ratios = convert_qvals_to_ratios(qvals, obj1, obj2)
+        print('Converted mixing ratios: ' +
+              ' '.join('{:6.4f}'.format(r) for r in ratios))
 
     mix1 = deepcopy(obj1)
     mix2 = deepcopy(obj2)
