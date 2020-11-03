@@ -233,7 +233,7 @@ def calc_dR(self, geo, units='angstrom', suppress_warnings=False):
     '''
     units = units.lower()
     # wrong usage checks
-    assert str(type(geo)) == "<class 'pw2py.atomgeo.atomgeo'>", 'geo is not of an instance of pw2py.atomgeo!'
+    # assert str(type(geo)) == "<class 'pw2py.atomgeo.atomgeo'>", 'geo is not of an instance of pw2py.atomgeo!'
     assert self.nat == geo.nat, 'number of atoms from self and geo do not match: {} != {}'.format(self.nat, geo.nat)
     assert units in ['angstrom', 'bohr'], 'Only angstrom and bohr are supported'
 
