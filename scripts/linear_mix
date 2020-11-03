@@ -85,7 +85,9 @@ def convert_qvals_to_ratios(qvals, obj1, obj2, around_min=True):
     if not around_min:
         return ratios
     else:
-        return np.append(ratios, 1-ratios)
+        ratios2 = 1-ratios
+        ratios2.sort()
+        return ratios, ratios2
 
 
 if __name__ == "__main__":
@@ -112,14 +114,14 @@ if __name__ == "__main__":
         else:
             ratios = args.ratios    # default ratios
         print('Mixing ratios: ' +
-              ' '.join('{:6.4f}'.format(r) for r in ratios))
+              ' '.join(f'{r:6.4f}' for r in ratios))
     else:
         # parse ratios
         if args.nonrad or (args.qvals.lower() in ['n', 'nonrad']):
             qvals = default_nonrad_qvals
         else:
             qvals = np.fromstring(args.qvals, sep=' ', dtype=np.float64)
-        print('Mixing qvals: ' + ' '.join('{:6.4f}'.format(q) for q in qvals))
+        print('Mixing qvals: ' + ' '.join(f'{q:6.4f}' for q in qvals))
 
     # this is not at top to avoid slow load speed
     import pw2py as pw
@@ -162,21 +164,28 @@ if __name__ == "__main__":
             obj1.kpt = [[1, 1, 1], [0, 0, 0]]
             obj2.kpt = [[1, 1, 1], [0, 0, 0]]
 
-    if using_qvals:
-        # convert qvals to ratios
-        ratios = convert_qvals_to_ratios(qvals, obj1, obj2)
-        print('Converted mixing ratios: ' +
-              ' '.join('{:6.4f}'.format(r) for r in ratios))
-
     mix1 = deepcopy(obj1)
     mix2 = deepcopy(obj2)
 
-    for ratio in ratios:
-        print('.', end='')
-        # make first mix file
-        make_mix_file(mix1, ratio, obj1, obj2, lin_dir1)
+    if using_qvals:
+        # convert qvals to ratios for obj1 and obj2
+        ratios1, ratios2 = convert_qvals_to_ratios(qvals, obj1, obj2)
+        print('Converted mixing ratios: ')
+        print('    for file1: ' + ' '.join(f'{r:6.4f}' for r in ratios1))
+        for ratio in ratios1:
+            # make first mix file
+            make_mix_file(mix1, ratio, obj1, obj2, lin_dir1)
         if not args.one:
-            # make second mix file
-            make_mix_file(mix2, ratio, obj1, obj2, lin_dir2)
+            print('    for file2: ' + ' '.join(f'{r:6.4f}' for r in ratios2))
+            for ratio in ratios2:
+                # make second mix file
+                make_mix_file(mix2, ratio, obj1, obj2, lin_dir2)
+    else:
+        for ratio in ratios:
+            # make first mix file
+            make_mix_file(mix1, ratio, obj1, obj2, lin_dir1)
+            if not args.one:
+                # make second mix file
+                make_mix_file(mix2, ratio, obj1, obj2, lin_dir2)
 
     print('\nDone! :)')
