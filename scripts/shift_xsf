@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+
+import argparse
+import numpy as np
+import pw2py as pw
+
+
+def parse_command_line():
+    ''' parse command line options '''
+    parser = argparse.ArgumentParser(
+        description="Read xsf file and shift both the geometry and grid by given amount"
+    )
+    parser.add_argument(
+        'shift', metavar='shift', type=str, help="space separated string specifying shift in crystal coordinates"
+    )
+    parser.add_argument(
+        'infile', metavar='infile', type=str, help="input xsf file to be read"
+    )
+    parser.add_argument(
+        '-i', '--inplace', action='store_true', help="overwrite infile"
+    )
+
+    return parser.parse_args()
+
+
+def _skip_lines(f, i):
+    [f.readline() for _ in range(i)]
+
+
+def read_xsf_grid(filename: str) -> np.ndarray:
+    '''
+    read grid from xsf file
+    '''
+    with open(filename, 'r') as f:
+        for line in f:
+            if line.strip().startswith('BEGIN_BLOCK_DATAGRID_3D'):
+                _skip_lines(f, 2)
+                shape = np.fromstring(f.readline(), sep=' ', dtype=int)
+                _skip_lines(f, 4)
+                data = []
+                while True:
+                    line = f.readline().strip()
+                    if line.startswith('END'):
+                        break
+                    data += line.split()
+    data = np.array(data, np.float64).reshape(shape, order='F')
+    return np.array(data, order='C')
+
+
+def shift_xsf(geo: pw.atomgeo, grid: np.ndarray, shift: np.ndarray):
+    '''
+    shift geometry and grid by vector 'shift'
+
+    note since grid finite, shift is first recomputed on the grid and
+    therefore the accuracy of the shift is dependent on the accuracy of the grid
+    '''
+    # determine true shift amount on grid
+    roll = np.array(np.rint(grid.shape * shift), dtype=int)
+    true_shift = roll / grid.shape
+    # shift atomic positions
+    geo.pos += true_shift.dot(geo.par)
+    # roll values of grid
+    grid = np.roll(grid, roll)
+    return grid
+
+
+if __name__ == '__main__':
+    args = parse_command_line()
+
+    shift = np.array(args.shift.split(), dtype=np.float64)
+    assert shift.shape == (
+        3, ), f"Shape of shift must be (3, ), not {shift.shape}"
+
+    # read geometry and grid
+    geo = pw.atomgeo.from_file(args.infile)
+    grid = read_xsf_grid(args.infile)
+
+    # shift geometry and grid
+    grid = shift_xsf(geo, grid, shift)
+
+    # write output file
+    outfile = 'shifted-' + args.infile if not args.inplace else args.infile
+    pw.functions.write_xsf(outfile, geo, grid=grid, grid_order='C')
