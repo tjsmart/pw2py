@@ -19,6 +19,9 @@ def parse_command_line():
     parser.add_argument(
         '-i', '--inplace', action='store_true', help="overwrite infile"
     )
+    parser.add_argument(
+        '-s', '--silent', action='store_true', help="silent mode (nothing printed to stdout)"
+    )
 
     return parser.parse_args()
 
@@ -47,7 +50,7 @@ def read_xsf_grid(filename: str) -> np.ndarray:
     return np.array(data, order='C')
 
 
-def shift_xsf(geo: pw.atomgeo, grid: np.ndarray, shift: np.ndarray):
+def shift_xsf(geo: pw.atomgeo, grid: np.ndarray, shift: np.ndarray, silent: bool = False):
     '''
     shift geometry and grid by vector 'shift'
 
@@ -57,10 +60,15 @@ def shift_xsf(geo: pw.atomgeo, grid: np.ndarray, shift: np.ndarray):
     # determine true shift amount on grid
     roll = np.array(np.rint(grid.shape * shift), dtype=int)
     true_shift = roll / grid.shape
+
+    if not silent:
+        print(f"Grid will be rolled by: {roll}")
+        print(f"True atomic position shift in crystal: {true_shift}")
+
     # shift atomic positions
     geo.pos += true_shift.dot(geo.par)
     # roll values of grid
-    grid = np.roll(grid, roll)
+    grid = np.roll(grid, roll, axis=(0, 1, 2))
     return grid
 
 
@@ -74,10 +82,14 @@ if __name__ == '__main__':
     # read geometry and grid
     geo = pw.atomgeo.from_file(args.infile)
     grid = read_xsf_grid(args.infile)
+    if not args.silent:
+        print(f"Shape of xsf grid: {np.array(grid.shape)}")
 
     # shift geometry and grid
-    grid = shift_xsf(geo, grid, shift)
+    grid = shift_xsf(geo, grid, shift, silent=args.silent)
 
     # write output file
     outfile = 'shifted-' + args.infile if not args.inplace else args.infile
+    if not args.silent:
+        print(f"Saving shifted xsf file: {outfile}")
     pw.functions.write_xsf(outfile, geo, grid=grid, grid_order='C')
