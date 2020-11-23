@@ -170,6 +170,8 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
     ----
         see return_type above
     '''
+    if not isinstance(site_id, int):
+        raise TypeError('site_id should be an int, not type: {}'.format(type(site_id)))
     if not isinstance(N, int):
         raise TypeError('N should be an int, not type: {}'.format(type(N)))
     if self.pos_units != 'angstrom':
