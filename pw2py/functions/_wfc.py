@@ -27,6 +27,7 @@ def reshape_wfc3D(wfc, gvec, scaling=2, shape=None):
     '''
     if shape is None:
         shape = (np.amax(gvec, axis=0) * 2 + 1) * scaling
+        shape = tuple([int(s) for s in shape])
     else:
         shape = tuple(shape)
     # initialzie wfc3D with zeros (note indices not covered will default to zero if they are outside of grid gvec)
