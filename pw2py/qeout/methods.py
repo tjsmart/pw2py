@@ -37,8 +37,8 @@ def final_energy(filename, conv_level='automatic', units='ev'):
         lines = f.readlines()
     # iterate backwards through file
     for line in reversed(lines):
-        # skip lines without 'energy' in them
-        if 'energy' not in line:
+        # skip lines without 'energy' in them, or line related to sum of terms
+        if ('energy' not in line) or ('sum of the following terms' in line):
             continue
         # otherwise iterate through possible instances and extract energy when found
         for instance in instances:
