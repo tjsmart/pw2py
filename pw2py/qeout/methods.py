@@ -24,7 +24,8 @@ def final_energy(filename, conv_level='automatic', units='ev'):
             - energy(float) = energy in Ry
             - conv_level(str) = level of convergence achieved
     '''
-    assert units.lower() in ['ev', 'ry', 'ha'], "Only eV, Ry, and Ha are supported units"
+    assert units.lower() in ['ev', 'ry',
+                             'ha'], "Only eV, Ry, and Ha are supported units"
     # build dictionary of energy instances
     energy_instances = {}
     instances = ['Final', '!!', '!', 'total energy']
@@ -44,7 +45,8 @@ def final_energy(filename, conv_level='automatic', units='ev'):
         for instance in instances:
             if instance in line and instance not in energy_instances:
                 try:
-                    energy_instances[instance] = float(line.split('=')[1].split('R')[0])
+                    energy_instances[instance] = float(
+                        line.split('=')[1].split('R')[0])
                 except IndexError:
                     # false line, i.e. no total energy was given
                     pass
@@ -99,10 +101,116 @@ def calcEigs(self):
         fermi = self.conv['Fermi'][-1]
     except KeyError:
         # TODO -- implement no smearing case
-        raise ValueError('calcEigs not implemented for systems without smearing')
+        raise ValueError(
+            'calcEigs not implemented for systems without smearing')
 
     eigs = self.list_eigs[-1]
     vbm = max(np.where(eigs < fermi, eigs, -1E10))
     cbm = min(np.where(eigs > fermi, eigs, 1E10))
 
     return vbm, cbm, cbm - vbm
+
+
+# def _read_qeout_data(f, prec=9, dtype=np.float64):
+def _read_qeout_data(f, prec=9):
+    data = []
+    while True:
+        fline = f.readline()
+        if len(fline.strip()) == 0:
+            break
+        # remove two spaces at beginning, new line character at end
+        fline = fline[2:-1]
+        # manually split fline
+        fline_split = []
+        for i in range(len(fline) // prec):
+            # grab next prec characters in fline
+            value = fline[prec*i:prec*(i+1)]
+            try:
+                float(value)
+                fline_split.append(value)
+            except ValueError:
+                fline_split.append(np.nan)
+        data += fline_split
+    # return np.ndarray(data, dtype=dtype)
+    return data
+
+
+@staticmethod
+def read_eigs(filename: str):
+    '''
+    read and return final eigenvalues from file
+    returns a dict(see below) including kpt but also occ and fermi if given
+
+    params
+    ---
+        filename (str)
+
+    returns
+    ---
+        collection (dict):
+            keys: kpt (np.ndarray), fermi (float), eig (np.ndarray), occ (np.ndarray)
+
+    Note
+    ---
+        if ispin = 2, eig/occ are indexed by (spin, kpt, band)
+        else, eig/occ are indexed by (kpt, band)
+
+        likewise, kpt are indexed by spin then kpt if ispin = 2
+
+        eig will contain np.nan if eigenvalue overflowed, i.e. exceeded
+        9 characters (less than -999.9999) or (greater than 9999.9999)
+
+        not all keys written above may be present depending on output file
+    '''
+    nspin = False
+    occ_given = False
+    fermi_given = False
+    with open(filename) as f:
+        for line in f:
+            if 'End of self-consistent calculation' in line:
+                kpt = []
+                read_eig = []
+                read_occ = []
+            elif 'SPIN UP' in line:
+                nspin = True
+                eig_up = []
+                read_eig = eig_up
+                occ_up = []
+                read_occ = occ_up
+            elif 'SPIN DOWN' in line:
+                eig_dn = []
+                read_eig = eig_dn
+                occ_dn = []
+                read_occ = occ_dn
+            elif line.startswith('          k ='):
+                # read the kpt
+                kptstr = line.split('=')[-1].split('(')[0][:-1]
+                k = np.array(
+                    [kptstr[7*i:7*(i+1)] for i in range(3)], dtype=float
+                )
+                kpt.append(k)
+                # skip a line
+                f.readline()
+                # read the eigenvalues
+                read_eig.append(_read_qeout_data(f))
+            elif line.startswith('     occupation numbers'):
+                occ_given = True
+                read_occ.append(_read_qeout_data(f))
+            elif 'Fermi' in line:
+                fermi_given = True
+                fermi = float(line.split()[4])
+
+    # collect values read into dictionary 'collection'
+    collection = {'kpt': kpt}
+    if fermi_given:
+        collection['fermi'] = fermi
+    if nspin:
+        collection['eig'] = np.array([eig_up, eig_dn], dtype=float)
+        if occ_given:
+            collection['occ'] = np.array([occ_up, occ_dn], dtype=float)
+    else:
+        collection['eig'] = np.array(read_eig, dtype=float)
+        if occ_given:
+            collection['occ'] = np.array(read_occ, dtype=float)
+
+    return collection
