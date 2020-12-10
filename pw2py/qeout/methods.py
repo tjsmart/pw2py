@@ -136,7 +136,7 @@ def _read_qeout_data(f, prec=9):
 
 
 @staticmethod
-def read_eigs(filename: str):
+def read_bands(filename: str):
     '''
     read and return final eigenvalues from file
     returns a dict(see below) including kpt but also occ and fermi if given
@@ -165,6 +165,8 @@ def read_eigs(filename: str):
     nspin = False
     occ_given = False
     fermi_given = False
+    vbm_given = False
+    cbm_given = False
     with open(filename) as f:
         for line in f:
             if 'End of self-consistent calculation' in line:
@@ -199,18 +201,34 @@ def read_eigs(filename: str):
             elif 'Fermi' in line:
                 fermi_given = True
                 fermi = float(line.split()[4])
+            elif line.startswith('     highest occupied, lowest unoccupied level (ev):'):
+                vbm_given = True
+                vbm = float(line.split()[-2])
+                cbm_given = True
+                cbm = float(line.split()[-1])
+            elif line.startswith('     highest occupied level (ev):'):
+                vbm_given = True
+                vbm = float(line.split()[-1])
 
     # collect values read into dictionary 'collection'
-    collection = {'kpt': kpt}
+    collection = {}
+    collection['nspin'] = 2 if nspin else 1
+    collection['kpt'] = np.array(kpt, dtype=float).reshape(
+        collection['nspin'], len(kpt) // collection['nspin'], 3
+    )
     if fermi_given:
         collection['fermi'] = fermi
+    if vbm_given:
+        collection['vbm'] = vbm
+    if cbm_given:
+        collection['cbm'] = cbm
     if nspin:
         collection['eig'] = np.array([eig_up, eig_dn], dtype=float)
         if occ_given:
             collection['occ'] = np.array([occ_up, occ_dn], dtype=float)
     else:
-        collection['eig'] = np.array(read_eig, dtype=float)
+        collection['eig'] = np.array([read_eig], dtype=float)
         if occ_given:
-            collection['occ'] = np.array(read_occ, dtype=float)
+            collection['occ'] = np.array([read_occ], dtype=float)
 
     return collection
