@@ -80,6 +80,8 @@ def _read_qeout_bands(filename: str):
                 fermi = np.array(
                     [float(data[10*i:10*(i+1)]) for i in range(2)]
                 )
+                if np.isclose(fermi[0], fermi[1], atol=1e-4):
+                    fermi = fermi[0]
 
     # collect values read into dictionary 'collection'
     collection = {}
