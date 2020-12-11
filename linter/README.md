@@ -21,7 +21,7 @@ Vim usage (with ale)
 ```
 ~/.vim/plugged/ale/autoload/ale/fixers
 ```
-3. Use the `install.sh` to install add the qelint script to ale fixers.
+3. Use the `install.sh` script in this folder to add the qelint script to ale fixers.
 ```
 ./install.sh -l ~/.vim/plugged/ale/autoload/ale/fixers  # using symlinks
 # OR
