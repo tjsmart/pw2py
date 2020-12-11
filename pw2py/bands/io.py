@@ -37,20 +37,25 @@ def _read_bands(filename: str):
                 f.readline()
                 # read the eigenvalues
                 read_eig.append(_read_qeout_data(f))
-            elif line.startswith('     occupation numbers'):
+            elif line.startswith('     occupation numbers '):
                 occ_given = True
                 read_occ.append(_read_qeout_data(f))
-            elif 'Fermi' in line:
-                fermi_given = True
-                fermi = float(line.split()[4])
-            elif line.startswith('     highest occupied, lowest unoccupied level (ev):'):
-                vbm_given = True
-                vbm = float(line.split()[-2])
-                cbm_given = True
-                cbm = float(line.split()[-1])
-            elif line.startswith('     highest occupied level (ev):'):
+            elif line.startswith('     highest occupied level (ev): '):
                 vbm_given = True
                 vbm = float(line.split()[-1])
+            elif line.startswith('     highest occupied, lowest unoccupied level (ev): '):
+                vbm_given, cbm_given = True, True
+                data = line[53:]
+                vbm, cbm = [float(data[10*i:10*(i+1)]) for i in range(2)]
+            elif line.startswith('     the Fermi energy is '):
+                fermi_given = True
+                fermi = float(line.split()[4])
+            elif line.startswith('     the spin up/dw Fermi energies are '):
+                fermi_given = True
+                data = line[39:]
+                fermi = np.array(
+                    [float(data[10*i:10*(i+1)]) for i in range(2)]
+                )
 
     # collect values read into dictionary 'collection'
     collection = {}
