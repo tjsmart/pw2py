@@ -44,4 +44,4 @@ class qeout():
 
     from .io import from_file
 
-    from .methods import calcEigs, final_energy, read_bands
+    from .methods import calcEigs, final_energy
