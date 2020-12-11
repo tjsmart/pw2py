@@ -1,9 +1,33 @@
 import numpy as np
 
-from ..qeout.methods import _read_qeout_data
+
+def _read_qeout_data(f, prec: float = 9):
+    '''
+    designed read block of data in qe output file e.g. bands and occupations
+    '''
+    data = []
+    while True:
+        fline = f.readline()
+        if len(fline.strip()) == 0:
+            break
+        # remove two spaces at beginning, new line character at end
+        fline = fline[2:-1]
+        # manually split fline
+        fline_split = []
+        for i in range(len(fline) // prec):
+            # grab next prec characters in fline
+            value = fline[prec*i:prec*(i+1)]
+            try:
+                float(value)
+                fline_split.append(value)
+            except ValueError:
+                fline_split.append(np.nan)
+        data += fline_split
+    # return np.ndarray(data, dtype=dtype)
+    return data
 
 
-def _read_bands(filename: str):
+def _read_qeout_bands(filename: str):
     nspin = False
     occ_given = False
     fermi_given = False
@@ -98,4 +122,4 @@ def from_file(cls, filename: str):
         eig will contain np.nan if eigenvalue overflowed, i.e. exceeded
         9 characters (less than -999.9999) or (greater than 9999.9999)
     '''
-    return cls(**_read_bands(filename))  # pylint: disable=E1102
+    return cls(**_read_qeout_bands(filename))  # pylint: disable=E1102
