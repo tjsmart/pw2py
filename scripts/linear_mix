@@ -120,7 +120,17 @@ if __name__ == "__main__":
         if args.nonrad or (args.qvals.lower() in ['n', 'nonrad']):
             qvals = default_nonrad_qvals
         else:
-            qvals = np.fromstring(args.qvals, sep=' ', dtype=np.float64)
+            if ',' in args.qvals:
+                # user passed a limit of q and number of points
+                split_arg = args.qvals.split(',')
+                print(split_arg)
+                assert len(split_arg) == 2, "Only two values were expected"
+                qlim = float(split_arg[0])
+                num = int(split_arg[1])
+                qvals = np.linspace(-qlim, qlim, num=num, dtype=np.float64)
+            else:
+                # user passed explicit q values
+                qvals = np.fromstring(args.qvals, sep=' ', dtype=np.float64)
         print('Mixing qvals: ' + ' '.join(f'{q:6.4f}' for q in qvals))
 
     # this is not at top to avoid slow load speed
