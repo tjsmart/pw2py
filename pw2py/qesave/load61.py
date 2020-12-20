@@ -247,6 +247,8 @@ def read_wavefunction(path):
     '''
     read evc from qe save folder
 
+    WARNING!!! kp /= Gamma, gamma_only, and npol != 1 are not tested
+
     input
     ----
         path - path to .save folder from qe calculation (str)

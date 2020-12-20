@@ -9,11 +9,7 @@ def read_wfc_file(filename: str, isreal: bool = False):
     '''
     read wfc filename (dat format, not hdf5)
 
-    WARNING!!! This should only be used for reading kp=(0, 0, 0), others are not tested
-
-    WARNING!!! gamma_only is not implemented (should read real wfc instead of complex)
-
-    WARNING!!! npol != 1 is not implemented (e.g. noncollinear case)
+    WARNING!!! kp /= Gamma, gamma_only, and npol != 1 are not tested
     '''
     if isreal:
         dtype = np.float64
@@ -64,6 +60,8 @@ def read_wfc_file(filename: str, isreal: bool = False):
 def read_wavefunction(path: str):
     '''
     read evc from qe save folder (also returns gk)
+
+    WARNING!!! kp /= Gamma, gamma_only, and npol != 1 are not tested
 
     in qe6.6 evc and gk are stored togehter so this returns gk as well
 
