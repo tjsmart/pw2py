@@ -269,7 +269,7 @@ def read_wavefunction(path):
         return nbnd
 
     evc = []
-    for ikpt, kdir in enumerate(glob.glob(os.path.join(path, 'K*'))):
+    for ikpt, kdir in enumerate(sorted(glob.glob(os.path.join(path, 'K*')))):
         # loop through kpts in folders such as 'K00001'
         evc.append([])
         for ispin in range(2):
@@ -291,7 +291,7 @@ def read_wavefunction(path):
                             buffer.read(size), dtype=dtype)
                         evc[ikpt][ispin].append(evc_band)
 
-    return np.array(evc)
+    return evc
 
 
 def read_gkvectors(path):
@@ -308,7 +308,7 @@ def read_gkvectors(path):
             indexed by [kpt, gvec_index, (0, 1, 2)], where x=0, y=1, z=2 (array)
     '''
     gkvectors = []
-    for kdir in glob.glob(os.path.join(path, 'K*')):
+    for kdir in sorted(glob.glob(os.path.join(path, 'K*'))):
         with open(os.path.join(kdir, 'gkvectors.dat'), 'rb') as f:
             # buffer file since it is large
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:

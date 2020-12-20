@@ -76,10 +76,8 @@ def read_wavefunction(path: str):
     file2 = os.path.join(path, 'wfcup1.dat')
     if os.path.exists(file1):
         nspin = 1
-        sstr = ''
     elif os.path.exists(file2):
         nspin = 2
-        sstr = 'up'
     else:
         raise FileNotFoundError(
             f"Unable to locate wfc*.dat file under: {path}")
@@ -87,25 +85,27 @@ def read_wavefunction(path: str):
     # check for number of k-points
     nk = 0
     pre_length = 3 if nspin == 1 else 5
-    for f in glob.glob('wfc*.dat'):
+    for filename in glob.glob(os.path.join(path, 'wfc*.dat')):
+        f = filename.split('/')[-1]
         ik = int(f[pre_length:-4])
         if ik > nk:
             nk = ik
     # ------------------------------------------------------------
     # loop over ispin and ik reading each dat file
-    evc, gk = []
-    for ispin in range(nspin):
-        if ispin == 2:
-            sstr = 'dw'
-        evc_s = []
-        for ik in range(nk):
-            filename = f'wfc{sstr}{ik}.dat'
+    evc, gk = [], []
+    for ik in range(nk):
+        evc.append([])
+        for ispin in range(nspin):
+            if ispin == 0:
+                sstr = 'up' if nspin == 2 else ''
+            elif ispin == 1:
+                sstr = 'dw'
+            filename = os.path.join(path, f'wfc{sstr}{ik+1}.dat')
             gk_k, evc_k = read_wfc_file(filename)
-            evc_s.append(evc_k)
+            evc[ik].append(evc_k)
             if ispin == 1:
                 gk.append(gk_k)
-        evc.append(evc_s)
-    return np.array(gk), np.array(evc)
+    return gk, evc
 
 
 # def determine_nspin(self):
