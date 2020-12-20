@@ -2,7 +2,7 @@ import numpy as np
 import mmap
 
 
-def read_wfc_file(filename: str):
+def read_wfc_66(filename: str):
     '''
     read wfc filename (dat format, not hdf5)
 
@@ -54,3 +54,22 @@ def read_wfc_file(filename: str):
             wfc = np.array(wfc, dtype=np.complex128)
 
     return gk, wfc
+
+# def determine_nspin(self):
+# 
+# 
+# def read_eigenvalues_66(self, dtype=np.float64):
+#     root = etree.parse(os.path.join(self.xmlfile)).getroot()
+#     spin_child = root.find('spin')
+# 
+#     band_child = root.find('band_structure')
+#     nbnd = band_child.find('nbnd').text
+# 
+# 
+# def xml_root(self):
+#     return = etree.parse(self.xmlfile).getroot()
+# 
+# 
+#     with qesave.xml_root() as root:
+#         ....
+#     
