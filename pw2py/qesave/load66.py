@@ -2,9 +2,10 @@ import numpy as np
 import mmap
 import os.path
 import glob
+from lxml import etree
 
 
-def read_wfc_file(filename: str):
+def read_wfc_file(filename: str, isreal: bool = False):
     '''
     read wfc filename (dat format, not hdf5)
 
@@ -14,6 +15,13 @@ def read_wfc_file(filename: str):
 
     WARNING!!! npol != 1 is not implemented (e.g. noncollinear case)
     '''
+    if isreal:
+        dtype = np.float64
+        dsize = 8  # float64 = 8 bytes
+    else:
+        dtype = np.complex128
+        dsize = 16  # complex128 = 16 bytes
+
     with open(filename, 'rb') as f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
             # ik_ = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
@@ -44,12 +52,11 @@ def read_wfc_file(filename: str):
             # ------------------------------------------------------------
             # read wfc
             wfc = []
-            wtmpsize = 16 * igwx_  # complex128 = 16 bytes
+            wtmpsize = dsize * igwx_  # complex128 = 16 bytes
             for i in range(nbnd_):
-                wtmp = np.frombuffer(buffer.read(wtmpsize), dtype=np.complex128)  # noqa
+                wtmp = np.frombuffer(buffer.read(wtmpsize), dtype=dtype)  # noqa
                 wfc.append(wtmp)
                 buffer.read(8)  # newline
-            wfc = np.array(wfc, dtype=np.complex128)
 
     return gk, wfc
 
@@ -70,6 +77,9 @@ def read_wavefunction(path: str):
             gk - g-vectors for each k-point, ndim = 3, indexed by [kpt, pw, (x, y, z)] (array)
             evc - all wavefunctions psi(G), ndim = 4, indexed by [kpt, spin, band, pw] (array)
     '''
+    # ------------------------------------------------------------
+    # check if calculation is gamma only
+    isreal = _check_gamma_only(path)
     # ------------------------------------------------------------
     # check for file and determine nspin
     file1 = os.path.join(path, 'wfc1.dat')
@@ -101,11 +111,17 @@ def read_wavefunction(path: str):
             elif ispin == 1:
                 sstr = 'dw'
             filename = os.path.join(path, f'wfc{sstr}{ik+1}.dat')
-            gk_k, evc_k = read_wfc_file(filename)
+            gk_k, evc_k = read_wfc_file(filename, isreal=isreal)
             evc[ik].append(evc_k)
             if ispin == 1:
                 gk.append(gk_k)
     return gk, evc
+
+
+def _check_gamma_only(path: str) -> bool:
+    xmlfile = os.path.join(path, 'data-file-schema.xml')
+    root = etree.parse(xmlfile).getroot()
+    return root.find('input').find('basis').find('gamma_only').text == 'true'
 
 
 # def determine_nspin(self):
