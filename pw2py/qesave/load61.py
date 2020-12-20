@@ -32,7 +32,8 @@ def _determine_dtype(attrib):
             dtype = np.int8
     # if dtype wasn't set raise error
     if dtype is None:
-        raise ValueError('Unexpected kind: {}, for type {}'.format(attrib['kind'], attrib['type']))
+        raise ValueError('Unexpected kind: {}, for type {}'.format(
+            attrib['kind'], attrib['type']))
     # otherwise return dtype
     return dtype
 
@@ -102,13 +103,15 @@ def read_data_xml(path, filename='data-file.xml'):
     # read cell parameters
     par = np.empty((3, 3), dtype=np.float64)
     for i in range(3):
-        text = cell_child.find('DIRECT_LATTICE_VECTORS').find('a{}'.format(i + 1)).text
+        text = cell_child.find('DIRECT_LATTICE_VECTORS').find(
+            'a{}'.format(i + 1)).text
         par[i] = np.fromstring(text, sep=' ', dtype=np.float64)
 
     # read reciprocal lattice vectors
     rec = np.empty((3, 3), dtype=np.float64)
     for i in range(3):
-        text = cell_child.find('RECIPROCAL_LATTICE_VECTORS').find('b{}'.format(i + 1)).text
+        text = cell_child.find('RECIPROCAL_LATTICE_VECTORS').find(
+            'b{}'.format(i + 1)).text
         rec[i] = np.fromstring(text, sep=' ', dtype=np.float64)
 
     '''
@@ -134,7 +137,8 @@ def read_data_xml(path, filename='data-file.xml'):
     # read ngkvec
     ngkvec = []
     for i in range(nkpt):
-        ngkvec.append(int(root.find('EIGENVECTORS').find('K-POINT.{}'.format(i+1)).find('NUMBER_OF_GK-VECTORS').text))
+        ngkvec.append(int(root.find('EIGENVECTORS').find(
+            'K-POINT.{}'.format(i+1)).find('NUMBER_OF_GK-VECTORS').text))
 
     # return parsed data
     return par, rec, fft_grid, nspin, nkpt, nbnd, ngkvec
@@ -160,7 +164,8 @@ def read_eigenvalues(path, dtype=np.float64):
             xml_file = os.path.join(kdir, 'eigenval{}.xml'.format(ispin + 1))
             root = etree.parse(xml_file).getroot()
             eig_child = root.find('EIGENVALUES')
-            eig[ikpt].append(np.fromstring(eig_child.text, sep=' ', dtype=dtype))
+            eig[ikpt].append(np.fromstring(
+                eig_child.text, sep=' ', dtype=dtype))
 
     return np.array(eig)
 
@@ -207,7 +212,8 @@ def read_charge_density(path, filename='charge-density.dat'):
             fft_grid = _read_info_fft_grid(buffer)
             rho = []
             for iz in range(fft_grid[2]):
-                dtype, size = _parse_dtype_and_size(buffer, '<z.{} '.format(iz + 1))
+                dtype, size = _parse_dtype_and_size(
+                    buffer, '<z.{} '.format(iz + 1))
                 rho_part = np.frombuffer(buffer.read(size), dtype=dtype)
                 rho.append(rho_part)
     # convert rho to array
@@ -281,7 +287,8 @@ def read_wavefunction(path):
                         # parse dtype and size (in bytes)
                         dtype, size = _parse_dtype_and_size(buffer, pattern)
                         # read evc data for this band
-                        evc_band = np.frombuffer(buffer.read(size), dtype=dtype)
+                        evc_band = np.frombuffer(
+                            buffer.read(size), dtype=dtype)
                         evc[ikpt][ispin].append(evc_band)
 
     return np.array(evc)
@@ -310,98 +317,7 @@ def read_gkvectors(path):
                 # read g-vectors at this kpt
                 gvecs_kpt = np.frombuffer(buffer.read(size), dtype=dtype)
                 # reshape and append to full list of gkvectors
-                gkvectors.append(gvecs_kpt.reshape((int(gvecs_kpt.size / 3), 3)))
+                gkvectors.append(gvecs_kpt.reshape(
+                    (int(gvecs_kpt.size / 3), 3)))
 
     return np.array(gkvectors)
-
-
-if __name__ == "__main__":
-
-    import time
-    import sys
-
-    try:
-        path = sys.argv[1]
-    except IndexError:
-        path = '.'
-
-    absolute_begin = time.time()
-
-    begin = time.time()
-    print('reading par, rec, fft_grid, nspin, nkpt, nbnd, ngkvec')
-    par, rec, fft_grid, nspin, nkpt, nbnd, ngkvec = read_data_xml(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(par)
-    print(rec)
-    print(fft_grid)
-    print(nspin)
-    print(nkpt)
-    print(nbnd)
-    print(ngkvec)
-
-    begin = time.time()
-    print('\nreading eig')
-    eig = read_eigenvalues(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(eig.size)
-    print(eig.shape)
-    print(eig.dtype)
-    print(eig[0, 0, 0])
-
-    begin = time.time()
-    print('\nreading gvecs')
-    gvecs = read_gvectors(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(gvecs.size)
-    print(gvecs.shape)
-    print(gvecs.dtype)
-    print(gvecs[0])
-
-    begin = time.time()
-    print('\nreading charge density')
-    rho = read_charge_density(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(rho.size)
-    print(rho.shape)
-    print(rho.dtype)
-    print(rho[0, 0, 0])
-
-    begin = time.time()
-    print('\nreading spin polarization')
-    sigma = read_spin_polarization(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(sigma.size)
-    print(sigma.shape)
-    print(sigma.dtype)
-    print(sigma[0, 0, 0])
-
-    begin = time.time()
-    print('\nreading wavefunction')
-    evc = read_wavefunction(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(evc.ndim)
-    print(evc.shape)
-    print(evc.size)
-    print(evc.dtype)
-    print(evc[0, 0, 0, 0])
-
-    begin = time.time()
-    print('\nreading kpt gvectors')
-    gkvectors = read_gkvectors(path)
-    end = time.time()
-    print('... done in {}'.format(end - begin))
-    print(gkvectors.ndim)
-    print(gkvectors.shape)
-    print(gkvectors.size)
-    print(gkvectors.dtype)
-    print(gkvectors[0, 0])
-
-    absolute_end = time.time()
-
-    print('\nDone reading everything in {}'.format(absolute_end - absolute_begin))
