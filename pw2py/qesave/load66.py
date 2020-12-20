@@ -3,6 +3,9 @@ import mmap
 import os.path
 import glob
 from lxml import etree
+from scipy.constants import physical_constants
+
+Ha2eV = physical_constants['Hartree energy in eV'][0]
 
 
 def read_wfc_file(filename: str, isreal: bool = False):
@@ -122,21 +125,36 @@ def _check_gamma_only(path: str) -> bool:
     return root.find('input').find('basis').find('gamma_only').text == 'true'
 
 
-# def determine_nspin(self):
-#
-#
-# def read_eigenvalues_66(self, dtype=np.float64):
-#     root = etree.parse(os.path.join(self.xmlfile)).getroot()
-#     spin_child = root.find('spin')
-#
-#     band_child = root.find('band_structure')
-#     nbnd = band_child.find('nbnd').text
-#
-#
-# def xml_root(self):
-#     return = etree.parse(self.xmlfile).getroot()
-#
-#
-#     with qesave.xml_root() as root:
-#         ....
-#
+def read_eigenvalues(path: str, units='Ha'):
+    '''
+    Read eigenvalues from save folder in qe-6.6
+
+    default units is Ha (Hartree)
+
+    return
+    ---
+        tuple (eigenvalues, occupations)
+            each array are indexed over: ik, ispin, ib
+    '''
+    assert units.lower() in ['ha', 'ev', 'ry']
+    xmlfile = os.path.join(path, 'data-file-schema.xml')
+    root = etree.parse(xmlfile).getroot()
+    band_child = root.find('output').find('band_structure')
+    lsda = band_child.find('lsda').text == 'true'
+    nspin = 2 if lsda else 1
+    bnd_str = 'nbnd_up' if lsda else 'nbnd'
+    nbnd = int(band_child.find(bnd_str).text)
+    # nk = int(band_child.find('nks').text)
+    eig, occ = [], []
+    for ks_child in band_child.findall('ks_energies'):
+        keig = np.fromstring(ks_child.find('eigenvalues').text, sep=' ')
+        kocc = np.fromstring(ks_child.find('occupations').text, sep=' ')
+        eig.append(keig.reshape(nspin, nbnd))
+        occ.append(kocc.reshape(nspin, nbnd))
+    eig = np.array(eig, dtype=np.float64)
+    if units.lower() == 'ev':
+        eig *= Ha2eV
+    elif units.lower() == 'ry':
+        eig *= 2
+    occ = np.array(occ, dtype=np.float64)
+    return eig, occ
