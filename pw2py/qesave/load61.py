@@ -267,15 +267,29 @@ def read_wavefunction(path):
         info_tree = etree.fromstring(buffer.readline())
         nbnd = int(info_tree.attrib['nbnd'])
         return nbnd
-
+    # ------------------------------------------------------------
+    # check for file and determine nspin
+    file1 = os.path.join(path, 'K00001', 'evc.dat')
+    file2 = os.path.join(path, 'K00001', 'evc1.dat')
+    if os.path.exists(file1):
+        nspin = 1
+    elif os.path.exists(file2):
+        nspin = 2
+    else:
+        raise FileNotFoundError(
+            f"Unable to locate K00001/evc*.dat file under: {path}")
+    # ------------------------------------------------------------
     evc = []
     for ikpt, kdir in enumerate(sorted(glob.glob(os.path.join(path, 'K*')))):
         # loop through kpts in folders such as 'K00001'
         evc.append([])
-        for ispin in range(2):
+        for ispin in range(nspin):
             # loop through spin, opening files evc1.dat and evc2.dat
             evc[ikpt].append([])
-            evc_file = os.path.join(kdir, 'evc{}.dat'.format(ispin + 1))
+            if nspin == 2:
+                evc_file = os.path.join(kdir, 'evc{}.dat'.format(ispin + 1))
+            else:
+                evc_file = os.path.join(kdir, 'evc.dat')
             # open evc_file
             with open(evc_file, 'rb') as f:
                 # buffer file since it is large
