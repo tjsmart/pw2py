@@ -336,4 +336,4 @@ def read_gkvectors(path):
                 gkvectors.append(gvecs_kpt.reshape(
                     (int(gvecs_kpt.size / 3), 3)))
 
-    return np.array(gkvectors)
+    return gkvectors
