@@ -158,3 +158,20 @@ def read_eigenvalues(path: str, units='Ha'):
         eig *= 2
     occ = np.array(occ, dtype=np.float64)
     return eig, occ
+
+
+def read_kvecs(path: str):
+    '''
+    Read k vectors from save folder in qe-6.6
+
+    return
+    ---
+        list of k-vectors. Each k-vector is an ndarray of shape (3,)
+    '''
+    xmlfile = os.path.join(path, 'data-file-schema.xml')
+    root = etree.parse(xmlfile).getroot()
+    band_child = root.find('output').find('band_structure')
+    return [
+        np.fromstring(ks_child.find('k_point').text, sep=' ', dtype=np.float64)
+        for ks_child in band_child.findall('ks_energies')
+    ]
