@@ -51,7 +51,7 @@ def read_wfc_file(filename: str, isreal: bool = False):
             # ------------------------------------------------------------
             # read wfc
             wfc = []
-            wtmpsize = dsize * igwx_  # complex128 = 16 bytes
+            wtmpsize = dsize * igwx_ * npol  # complex128 = 16 bytes
             for i in range(nbnd_):
                 wtmp = np.frombuffer(buffer.read(wtmpsize), dtype=dtype)  # noqa
                 wfc.append(wtmp)
