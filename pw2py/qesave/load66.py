@@ -114,7 +114,7 @@ def read_wavefunction(path: str):
             filename = os.path.join(path, f'wfc{sstr}{ik+1}.dat')
             gk_k, evc_k = read_wfc_file(filename, isreal=isreal)
             evc[ik].append(evc_k)
-            if ispin == 1:
+            if ispin == 0:
                 gk.append(gk_k)
     return gk, evc
 
