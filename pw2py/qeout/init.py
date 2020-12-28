@@ -1,13 +1,21 @@
-def __init__(self, nat, ntyp, conv, par, ion, list_pos, if_pos, pos_units, list_eigs):
+def __init__(self, **kw):
     '''
-    initialize qeout object
+    initialize qeout from keyword arguments
+
+    input
+    ---
+        kw: dict, with keys:
+            bands           : pw2py.bands, kohn-sham bands
+            geo             : pw2py.atomgo, atomic geometry
+            final_energy    : tuple(float, str), final total energy (in eV) and then convergence level
+
+    returns
+    ---
+        qeout object
     '''
-    self.nat = nat
-    self.ntyp = ntyp
-    self.conv = conv
-    self.par = par
-    self.ion = ion
-    self.list_pos = list_pos
-    self.if_pos = if_pos
-    self.pos_units = pos_units
-    self.list_eigs = list_eigs
+    if 'bands' in kw:
+        self.bands = kw['bands']
+    if 'geo' in kw:
+        self.geo = kw['geo']
+    if 'final_energy' in kw:
+        self.final_energy = kw['final_energy']
