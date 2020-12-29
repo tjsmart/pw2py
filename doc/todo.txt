@@ -1,26 +1,17 @@
-Several todos written in-line of the code
+Updated: 12/29/20
 
-Add typing to methods/attributes
+[X] geo needs to read or calculate reciprocal lattice vectors
+[X] geo from qesave
+[X] everything is indexed by spin, kpt, bands
 
-./scripts/reorder_atoms.py needs better implementation for checking (cases where distances alone cannot determine if two atoms are the same)
 
-
-Add more unit tests (may help with debugging)
-    --> test for jdftx and xyz
-    --> test for scripts
-    --> tests for file with labels (like the co3o4 file)
-    --> tests for qesave
+------------------------------ Other ------------------------------
 
 Medium priority
-    --> qeout could use some love
-    --> class for qedir (bundles classes and methods for reading qeinp, qeout, and qesave!)
-    --> clean/finish examples (rename to tutorials -- make videos?)
-    --> update documentation elsewhere e.g. README
-    --> write wavefunction to cube file
-        --> also need to fix xsf after figuring out how flatten with order='F'
-    --> read wavefunction/eigenvalues from vasp
+    [X] class for qedir (bundles classes and methods for reading qeinp, qeout, and qesave!)
+    [X] clean/finish examples
 
 Low priority
-    --> download cells from materials project (using selenium and chrome driver and envrionment variable for api key)
-    --> generalized supercell implementation
-    --> ibrav to/from 0 method in atomgeo
+    [X] generalized supercell implementation
+    [X] ibrav to/from 0 method in atomgeo
+    [X] convert to/from ase and pymatgen

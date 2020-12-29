@@ -236,7 +236,7 @@ def _read_qesave_bands_66(save: qesave):
     return coll
 
 
-@ classmethod
+@classmethod
 def from_save(cls, prefix: str, path: str = '.', version: str = None):
     '''
     read bands from qe savefolder
@@ -249,7 +249,7 @@ def from_save(cls, prefix: str, path: str = '.', version: str = None):
         return cls(**_read_qesave_bands_66(save))
 
 
-@ classmethod
+@classmethod
 def from_file(cls, filename: str):
     '''
     read bands from file, creating Bands object
