@@ -4,6 +4,7 @@ import numpy as np
 def __init__(self, shift: float = None, **kw):
     self._kpt = kw['kpt']
     self._eig = kw['eig']
+    self._weight = kw['weight']
     if 'fermi' in kw:
         self._fermi = kw['fermi']
     if 'occ' in kw:
@@ -33,13 +34,13 @@ def _check_is_metallic(self):
     elif hasattr(self, '_occ'):
         self._is_metallic = np.any(((self.occ != 0) & (self.occ != 1)))
     elif hasattr(self, '_fermi'):
-        if (len(self.kpt) // self.nspin == 1):
+        if (self.nk == 1):
             self._is_metallic = False
         else:
             self._is_metallic = False
             is_occupied = (self.eig < self.fermi)
             for ispin in range(self.nspin):
-                for ik in range(1, self.nkpt):
+                for ik in range(1, self.nk):
                     self._is_metallic = np.any(np.logical_xor(
                         is_occupied[ispin, 0], is_occupied[ispin, ik]))
                     if self._is_metallic:
@@ -52,5 +53,6 @@ def _calc_bandedge(self):
     elif hasattr(self, '_occ'):
         is_vb = np.isclose(1, self.occ, atol=1e-3)
     self._vbm = self.eig[is_vb].max()
-    self._cbm = self.eig[~is_vb].min()
-    self._gap = self.cbm - self.vbm
+    if not np.all(is_vb):
+        self._cbm = self.eig[~is_vb].min()
+        self._gap = self.cbm - self.vbm

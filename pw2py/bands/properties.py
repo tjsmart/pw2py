@@ -11,6 +11,12 @@ def kpt(self):
 
 
 @property
+def weight(self):
+    ''' return self._weight '''
+    return self._weight
+
+
+@property
 def fermi(self):
     ''' return self._fermi or None '''
     return self._fermi if hasattr(self, '_fermi') else None
@@ -53,7 +59,7 @@ def nspin(self):
 
 
 @property
-def nkpt(self):
+def nk(self):
     ''' return self.eig.shape[1] '''
     return self.eig.shape[1]
 
