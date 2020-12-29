@@ -33,7 +33,7 @@ def __init__(self,
         prefix = savefolder[:-len('.save')]
     else:
         savefolder = os.path.join(path, f'{prefix}.save')
-        if not os.path.exists(self.savefolder):
+        if not os.path.exists(savefolder):
             raise FileNotFoundError(
                 f"Unable to locate save folder: {savefolder}")
     self.savefolder = savefolder
