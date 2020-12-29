@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from math import pi
 
 from .constants import bohr_to_angstrom
 
@@ -209,3 +210,13 @@ def savetxt_with_maxcol(f, X, columns=6, fmt='%13.6e'):
     np.savetxt(f, X[:rows*columns].reshape((rows, columns)), fmt=fmt)
     if remainder != 0:
         np.savetxt(f, X[-remainder:].reshape((1, remainder)), fmt=fmt)
+
+
+def _calc_rec(par: np.ndarray) -> np.ndarray:
+    '''
+    Calculate reciprocal lattice vectors from par
+    (units of 2pi / alat)
+    '''
+    alat = np.linalg.norm(par[0])
+    V = par[0].dot(np.cross(par[1], par[2]))
+    return np.cross(par[[1, 2, 0]], par[[2, 0, 1]]) / V * alat

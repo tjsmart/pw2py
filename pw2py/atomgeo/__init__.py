@@ -32,7 +32,7 @@ class atomgeo:
     from .init import __init__
     from .str import __str__, __repr__, to_string
     # properties
-    from .properties import ion, nat, par, par_units, pos, pos_units, vol, atoms
+    from .properties import ion, nat, par, par_units, pos, pos_units, vol, atoms, rec
     # io methods
     from .io import from_file, write_file
     # other methods
