@@ -1,9 +1,6 @@
-Updated: 12/29/20
+Updated: 12/30/20
 
-[X] geo needs to read or calculate reciprocal lattice vectors
-[X] geo from qesave
-[X] everything is indexed by spin, kpt, bands
-
+[X] finish/clean up wfc
 
 ------------------------------ Other ------------------------------
 
