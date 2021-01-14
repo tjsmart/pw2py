@@ -54,7 +54,7 @@ def _read_qeout_bands(filename: str):
                         int(float(csplit[-1].split(')')[0]))
                     ]
             elif line.startswith('     number of k points='):
-                nk = int(line.split('=')[-1])
+                nk = int(line.split()[4])
                 # skip a line
                 f.readline()
                 # read weights
