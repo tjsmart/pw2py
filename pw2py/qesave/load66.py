@@ -8,63 +8,59 @@ from scipy.constants import physical_constants
 Ha2eV = physical_constants['Hartree energy in eV'][0]
 
 
-def read_wfc_file(filename: str, isreal: bool = False):
+def read_wfc_file(filename: str):
     '''
     read wfc filename (dat format, not hdf5)
-
-    WARNING!!! kp /= Gamma, gamma_only, and npol != 1 are not tested
     '''
-    if isreal:
-        dtype = np.float64
-        dsize = 8  # float64 = 8 bytes
-    else:
-        dtype = np.complex128
-        dsize = 16  # complex128 = 16 bytes
-
+    # see Modules/io_base.f90 from QE src for more details
     with open(filename, 'rb') as f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
-            # ik_ = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
-            # xk = np.frombuffer(buffer.read(24), dtype=np.float64)
-            # ispin = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
-            # gamma_only = np.frombuffer(buffer.read(8), dtype=np.int64)[0]
-            # scalef = np.frombuffer(buffer.read(8), dtype=np.float64)[0]
-            # buffer.read(8)  # newline
-            # ---- uncomment above to read them but it may be wrong,
-            # ---- currently they are skipped
-            buffer.read(56)
             # ------------------------------------------------------------
-            ngw, igwx_, npol, nbnd_ = \
-                np.frombuffer(buffer.read(16), dtype=np.int32)
-            # assert npol == 1, "npol != 1, not implemented"
+            # read general information
+            buffer.read(4)
+            ik = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
+            kvec = np.frombuffer(buffer.read(24), dtype=np.float64)
+            ispin = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
+            gamma_only = np.frombuffer(buffer.read(4), dtype=np.bool)[0]
+            scalef = np.frombuffer(buffer.read(8), dtype=np.float64)[0]
+            info = {'ik': ik, 'kvec': kvec, 'ispin': ispin,  # noqa
+                    'gamma_only': gamma_only, 'scalef': scalef}
             buffer.read(8)  # newline
             # ------------------------------------------------------------
-            # b = np.frombuffer(buffer.read(72), dtype=np.float64).reshape(3, 3)
-            # buffer.read(8)  # newline
-            # ---- uncomment above to read bvecs
-            buffer.read(80)
+            # read npw, npol, nbnd
+            ngw, igwx, npol, nbnd = np.frombuffer(buffer.read(16), dtype=np.int32)  # noqa
+            buffer.read(8)  # newline
+            # ------------------------------------------------------------
+            # read reciprocal lattice vectors
+            b = np.frombuffer(buffer.read(72), dtype=np.float64).reshape(3, 3)  # noqa
+            buffer.read(8)  # newline
             # ------------------------------------------------------------
             # read gvecs
-            gksize = 12 * igwx_  # 3 * int32 = 12 bytes
+            gksize = 12 * igwx  # 3 * int32 = 12 bytes
             gk = np.frombuffer(buffer.read(gksize), dtype=np.int32)
             gk = gk.reshape(gk.size//3, 3)
             buffer.read(8)  # newline
             # ------------------------------------------------------------
             # read wfc
+            if gamma_only:
+                dtype = np.float64
+                dsize = 8  # float64 = 8 bytes
+            else:
+                dtype = np.complex128
+                dsize = 16  # complex128 = 16 bytes
             wfc = []
-            wtmpsize = dsize * igwx_ * npol  # complex128 = 16 bytes
-            for i in range(nbnd_):
-                wtmp = np.frombuffer(buffer.read(wtmpsize), dtype=dtype)  # noqa
+            wtmpsize = dsize * igwx * npol
+            for i in range(nbnd):
+                wtmp = np.frombuffer(buffer.read(wtmpsize), dtype=dtype)
                 wfc.append(wtmp)
                 buffer.read(8)  # newline
-
+    #
     return gk, wfc
 
 
 def read_wavefunction(path: str):
     '''
     read evc from qe save folder (also returns gk)
-
-    WARNING!!! kp /= Gamma, gamma_only, and npol != 1 are not tested
 
     in qe6.6 evc and gk are stored togehter so this returns gk as well
 
@@ -78,9 +74,6 @@ def read_wavefunction(path: str):
             gk - g-vectors for each k-point, ndim = 3, indexed by [kpt, pw, (x, y, z)] (array)
             evc - all wavefunctions psi(G), ndim = 4, indexed by [kpt, spin, band, pw] (array)
     '''
-    # ------------------------------------------------------------
-    # check if calculation is gamma only
-    isreal = _check_gamma_only(path)
     # ------------------------------------------------------------
     # check for file and determine nspin
     file1 = os.path.join(path, 'wfc1.dat')
@@ -112,7 +105,7 @@ def read_wavefunction(path: str):
             elif ispin == 1:
                 sstr = 'dw'
             filename = os.path.join(path, f'wfc{sstr}{ik+1}.dat')
-            gk_k, evc_k = read_wfc_file(filename, isreal=isreal)
+            gk_k, evc_k = read_wfc_file(filename)
             evc[ik].append(evc_k)
             if ispin == 0:
                 gk.append(gk_k)
