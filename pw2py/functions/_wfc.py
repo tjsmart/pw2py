@@ -63,7 +63,8 @@ def plot_wfc_xsf(filename, geo, wfc, gvec, scaling=2, shape=None, lsign=False):
     preform fft of wfc(G) to real space and plot 3D wfc(R) in xsf file
     '''
     # calculate fft
-    wfc3D = calc_wfc3D_squared_real(wfc, gvec, scaling=scaling, shape=shape, lsign=lsign)
+    wfc3D = calc_wfc3D_squared_real(
+        wfc, gvec, scaling=scaling, shape=shape, lsign=lsign)
     # write xsf file
     write_xsf(filename, geo, grid=wfc3D)
 
@@ -82,10 +83,23 @@ def plot_wfc_averaged(filename, wfc, gvec, scaling=2, shape=None, lsign=False, f
     # check free_axis
     assert free_axis in [0, 1, 2], "free_axis must be 0, 1, or 2"
     # calculate fft
-    wfc3D = calc_wfc3D_squared_real(wfc, gvec, scaling=scaling, shape=shape, lsign=lsign)
+    wfc3D = calc_wfc3D_squared_real(
+        wfc, gvec, scaling=scaling, shape=shape, lsign=lsign)
     # axis to average over
     avg_axis = tuple([i for i in range(3) if i != free_axis])
     # calculate average
     wfc3D = np.average(wfc3D, axis=avg_axis)
     # dump to file
     np.savetxt(filename, wfc3D)
+
+
+def plot_rho_xsf(filename, geo, rhog, gvec, scaling=2, shape=None):
+    '''
+    preform fft of rho(G) to real space and plot 3D rho(R) in xsf file
+    '''
+    # reshape wfc to be 3-dim array defined over gvec
+    rho = reshape_wfc3D(rhog, gvec, scaling=scaling, shape=shape)
+    # fourier transform wfc to real space
+    rho = np.real(scipy.fftpack.fftn(rho, overwrite_x=True))
+    # write xsf file
+    write_xsf(filename, geo, grid=rho)
