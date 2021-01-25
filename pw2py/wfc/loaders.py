@@ -11,9 +11,9 @@ def wfc_filename_66(ik: int, ispin: Union[int, None]) -> str:
     '''
     if ispin is None:
         sspin = ''
-    elif ispin == 1:
+    elif ispin == 0:
         sspin = 'up'
-    elif ispin == 2:
+    elif ispin == 1:
         sspin = 'dw'
     return f'wfc{sspin}{ik+1}.dat'
 
