@@ -10,7 +10,7 @@ Ha2eV = physical_constants['Hartree energy in eV'][0]
 
 def read_wfc_file(filename: str):
     '''
-    read wfc filename (dat format, not hdf5)
+    read wfc file (dat format, not hdf5)
     '''
     # see Modules/io_base.f90 from QE src for more details
     with open(filename, 'rb') as f:
@@ -168,3 +168,48 @@ def read_kvecs(path: str):
         np.fromstring(ks_child.find('k_point').text, sep=' ', dtype=np.float64)
         for ks_child in band_child.findall('ks_energies')
     ]
+
+
+def read_rhog(path: str):
+    '''
+    read rhog from save folder in qe-6.6 (dat format, not hdf5)
+
+    charge density in G-space
+
+    if nspin == 2, spin density is also read
+    '''
+    # see Modules/io_base.f90 from QE src for more details
+    rhofile = os.path.join(path, 'charge-density.dat')
+    with open(rhofile, 'rb') as f:
+        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as buffer:
+            # ------------------------------------------------------------
+            # read various info
+            buffer.read(4)
+            gamma_only = np.frombuffer(buffer.read(4), dtype=np.bool)[0]
+            ngm_g = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
+            nspin = np.frombuffer(buffer.read(4), dtype=np.int32)[0]
+            # ------------------------------------------------------------
+            # read reciprocal lattice vectors
+            buffer.read(8)
+            b = np.frombuffer(buffer.read(72), dtype=np.float64).reshape(3, 3)  # noqa
+            # ------------------------------------------------------------
+            # read g vectors
+            buffer.read(8)
+            gsize = 12 * ngm_g  # 3 int32's = 12 bytes
+            g = np.frombuffer(buffer.read(gsize), dtype=np.int32)
+            g = g.reshape(g.size//3, 3)
+            # ------------------------------------------------------------
+            # read wfc
+            buffer.read(8)
+            rho = []
+            if gamma_only:
+                rtmpsize = 8 * ngm_g
+                dtype = np.float64
+            else:
+                rtmpsize = 16 * ngm_g
+                dtype = np.complex128
+            for ispin in range(nspin):
+                rtmp = np.frombuffer(buffer.read(rtmpsize), dtype)
+                rho.append(rtmp)
+                buffer.read(8)
+    return g, rho
