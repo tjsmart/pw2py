@@ -38,4 +38,4 @@ class atomgeo:
     # other methods
     from .methods import add_atom, remove_indices, replace_ion, sort_ions, build_supercell, shift_pos_to_unit, \
         nearest_neighbor, elements, mass, calc_dR, calc_dR2, calc_dQ2, calc_dQ, dQ_field_2_xsf, calc_distance, \
-        _cell_translations
+        _cell_translations, composition

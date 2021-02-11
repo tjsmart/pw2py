@@ -171,7 +171,8 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
         see return_type above
     '''
     if not isinstance(site_id, (int, np.integer)):
-        raise TypeError('site_id should be an int, not type: {}'.format(type(site_id)))
+        raise TypeError(
+            'site_id should be an int, not type: {}'.format(type(site_id)))
     if not isinstance(N, (int, np.integer)):
         raise TypeError('N should be an int, not type: {}'.format(type(N)))
     if self.pos_units != 'angstrom':
@@ -187,7 +188,8 @@ def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index'
     # create column for distances to site_id
     site_pos = atoms_df.loc[site_id, 'pos']
     if not with_boundaries:
-        atoms_df['dist'] = atoms_df['pos'].apply(lambda x: np.linalg.norm(x - site_pos))
+        atoms_df['dist'] = atoms_df['pos'].apply(
+            lambda x: np.linalg.norm(x - site_pos))
     else:
         # calculate translations by +/-1 of cell parameters
         translations = self._cell_translations()
@@ -236,8 +238,10 @@ def calc_dR(self, geo, units='angstrom', suppress_warnings=False):
     units = units.lower()
     # wrong usage checks
     # assert str(type(geo)) == "<class 'pw2py.atomgeo.atomgeo'>", 'geo is not of an instance of pw2py.atomgeo!'
-    assert self.nat == geo.nat, 'number of atoms from self and geo do not match: {} != {}'.format(self.nat, geo.nat)
-    assert units in ['angstrom', 'bohr'], 'Only angstrom and bohr are supported'
+    assert self.nat == geo.nat, 'number of atoms from self and geo do not match: {} != {}'.format(
+        self.nat, geo.nat)
+    assert units in ['angstrom',
+                     'bohr'], 'Only angstrom and bohr are supported'
 
     # warning checks
     if not suppress_warnings:
@@ -280,7 +284,8 @@ def calc_dQ2(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings
     (deltaR_i)**2 = calc_dR2(self, geo)
     '''
     # calculate deltaR_i
-    dR2 = calc_dR2(self, geo, suppress_warnings=suppress_warnings, units=pos_units)
+    dR2 = calc_dR2(
+        self, geo, suppress_warnings=suppress_warnings, units=pos_units)
 
     # check that self and geo are comprised of the same elements
     assert np.array_equal(self.elements(), geo.elements()), \
@@ -296,7 +301,8 @@ def calc_dQ(self, geo, pos_units='angstrom', mass_units='au', suppress_warnings=
     returns np.sqrt(np.sum(self.calc_dQ2(geo)))
     '''
     return np.sqrt(np.sum(
-        self.calc_dQ2(geo, pos_units=pos_units, mass_units=mass_units, suppress_warnings=suppress_warnings)
+        self.calc_dQ2(geo, pos_units=pos_units, mass_units=mass_units,
+                      suppress_warnings=suppress_warnings)
     ))
 
 
@@ -337,3 +343,10 @@ def calc_distance(self, x: np.ndarray) -> float:
         np.linalg.norm(pos - X_images, axis=1).min() for pos in geo.pos
     ])
     return distances
+
+
+def composition(self) -> dict:
+    '''
+    Return the composition of ions
+    '''
+    return {k: v for k, v in zip(*np.unique(self.ion, return_counts=True))}
