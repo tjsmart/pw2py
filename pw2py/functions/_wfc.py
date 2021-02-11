@@ -93,7 +93,7 @@ def plot_wfc_averaged(filename, wfc, gvec, scaling=2, shape=None, lsign=False, f
     np.savetxt(filename, wfc3D)
 
 
-def plot_rho_xsf(filename, geo, rhog, gvec, scaling=2, shape=None):
+def plot_rho_xsf(filename, geo, rhog, gvec, scaling=1, shape=None):
     '''
     preform fft of rho(G) to real space and plot 3D rho(R) in xsf file
     '''
