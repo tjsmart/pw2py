@@ -26,6 +26,10 @@ def parse_command_line():
         '-o', '--overlap', action='store_true',
         help="disable checking for overlapping atoms at boundary"
     )
+    parser.add_argument(
+        '-i', '--inplace', action='store_true',
+        help="if enabled, input file is overwritten"
+    )
 
     return parser.parse_args()
 
@@ -68,7 +72,6 @@ if __name__ == "__main__":
     if not args.shrink:
         inp.build_supercell(expand)
         fix_ibrav(inp)
-        print(inp)
     else:
         inp.shift_pos_to_unit()
         inp.pos_units = 'angstrom'
@@ -92,4 +95,8 @@ if __name__ == "__main__":
             remove_overlapping_atoms(inp)
         # fix ibrav
         fix_ibrav(inp)
+    # output
+    if args.inplace:
+        inp.write_file(args.filein)
+    else:
         print(inp)
