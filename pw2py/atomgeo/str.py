@@ -56,10 +56,10 @@ def to_string(self, ftype='qeinp', sort=True):
     elif ftype == 'jdftx':
         _if_pos = 1
         geo = deepcopy(self)
+        # change pos to crystal
+        geo.pos_units = 'crystal'
         # change par to bohr
         geo.par_units = 'bohr'
-        # change pos angstrom to crystal
-        geo.pos_units == 'crystal'
         # write header
         out = "# Generated from the PW2PY python module\n"
         # write lattice
