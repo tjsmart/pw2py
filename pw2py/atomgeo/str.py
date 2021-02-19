@@ -58,9 +58,8 @@ def to_string(self, ftype='qeinp', sort=True):
         geo = deepcopy(self)
         # change par to bohr
         geo.par_units = 'bohr'
-        # change pos angstrom to bohr
-        if geo.pos_units == 'angstrom':
-            geo.pos_units = 'bohr'
+        # change pos angstrom to crystal
+        geo.pos_units == 'crystal'
         # write header
         out = "# Generated from the PW2PY python module\n"
         # write lattice
