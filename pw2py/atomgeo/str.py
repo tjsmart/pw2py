@@ -28,6 +28,7 @@ def to_string(self, ftype='qeinp', sort=True):
 
     elif ftype == 'vasp':
         geo = self.sort_ions(inplace=False) if sort else self
+        geo.par_units = 'angstrom'
         # header
         out = "Generated from the PW2PY python module\n"
         # alat
