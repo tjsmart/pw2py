@@ -121,12 +121,12 @@ class ag_methods(unittest.TestCase):
         # check nat
         self.assertEqual(geo.nat, 8)
 
-    def test_remove_indices(self):
-        ''' test atomgeo.remove_indices method '''
+    def test_drop_indices(self):
+        ''' test atomgeo.drop_indices method '''
         geo = deepcopy(ag_methods.starting_geo)
         indices = [0, 4]
         not_indices = [i for i in range(geo.nat) if i not in indices]
-        geo.remove_indices(indices)
+        geo.drop_indices(indices)
         self.assertEqual(geo.nat, ag_methods.starting_geo.nat - len(indices))
         self.assertIsNone(np.testing.assert_array_equal(
             geo.ion, ag_methods.starting_geo.ion[not_indices]

@@ -209,13 +209,13 @@ def add_atom(self, atoms, if_pos=[1, 1, 1]):
     _fix_species(self)
 
 
-def remove_indices(self, indices):
+def drop_indices(self, indices):
     '''
     remove list of indices from self.ion and self.pos
 
-    calls atomgeo.remove_indices(self, indices)
+    calls atomgeo.drop_indices(self, indices)
     '''
-    atomgeo.remove_indices(self, indices)
+    atomgeo.drop_indices(self, indices)
 
     # resync nat and ntyp in nml
     self.nml['system']['nat'] = self.nat

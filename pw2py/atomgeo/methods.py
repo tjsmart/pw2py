@@ -56,13 +56,16 @@ def add_atom(self, atoms):
     self._pos = np.append(self._pos, pos).reshape((self.nat, 3))
 
 
-def remove_indices(self, indices):
+def drop_indices(self, indices, inplace=True):
     '''
     remove list of indices from self.ion and self.pos
     '''
+    out = self if inplace else deepcopy(self)
     filt = [index not in indices for index in range(self.nat)]
-    self._ion = self._ion[filt]
-    self._pos = self._pos[filt]
+    out._ion = self._ion[filt]
+    out._pos = self._pos[filt]
+    if not inplace:
+        return out
 
 
 def sort_ions(self, inplace=False):
@@ -75,7 +78,6 @@ def sort_ions(self, inplace=False):
     # update ion and pos
     out.ion = self.ion[sorted_index]
     out.pos = self.pos[sorted_index]
-
     if not inplace:
         return out
 
