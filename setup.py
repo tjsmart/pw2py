@@ -28,6 +28,7 @@ setup(
         'scripts/conv_geo',
         'scripts/cp_geo',
         'scripts/create_defect',
+        'scripts/deform_cell',
         'scripts/jdftx_conv',
         'scripts/linear_mix',
         'scripts/reorder_atoms',
