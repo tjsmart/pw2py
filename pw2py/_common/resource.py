@@ -77,6 +77,9 @@ def _ibrav_to_par(system_nml, units="angstrom"):
     elif int(system_nml['ibrav']) == 8:
         # v1 = (a,0,0),  v2 = (0,b,0), v3 = (0,0,c)
         par = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float64)
+    elif int(system_nml['ibrav']) == -12:
+        # v1 = (a,0,0),  v2 = (0,b,0), v3 = (c*cos(beta),0,c*sin(beta))
+        par = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 1]], dtype=np.float64)
     else:
         raise ValueError(
             "Unsupported value for ibrav '{}'".format(system_nml['ibrav']))
@@ -84,16 +87,24 @@ def _ibrav_to_par(system_nml, units="angstrom"):
     # rescale lattice parameters
     if 'a' in system_nml.keys():
         par *= np.float64(system_nml['a'])
-        if int(system_nml['ibrav']) in [8]:
+        if int(system_nml['ibrav']) in [8, -12]:
             par[1, 1] = np.float64(system_nml['b'])
         if int(system_nml['ibrav']) in [4, 6, 8]:
             par[2, 2] = np.float64(system_nml['c'])
+        if int(system_nml['ibrav']) in [-12]:
+            sinac = 1 - (system_nml['cosac'])**2
+            par[2] = np.float64(system_nml['c']) * np.array([system_nml['cosac'], 0, sinac])
     elif 'celldm' in system_nml.keys():
         par *= np.float64(system_nml['celldm'][0]) * bohr_to_angstrom
-        if int(system_nml['ibrav']) in [8]:
+        if int(system_nml['ibrav']) in [8, -12]:
             par[1, 1] *= np.float64(system_nml['celldm'][1])
         if int(system_nml['ibrav']) in [4, 6, 8]:
             par[2, 2] *= np.float64(system_nml['celldm'][2])
+        if int(system_nml['ibrav']) in [-12]:
+            par[2] *= np.float64(system_nml['celldm'][2])
+            par[2, 0] *= system_nml['celldm'][4]
+            sinac = 1 - (system_nml['celldm'][4])**2
+            par[2, 2] *= sinac
 
     # check units
     if units == "bohr":
