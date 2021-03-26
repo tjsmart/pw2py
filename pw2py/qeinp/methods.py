@@ -160,6 +160,37 @@ def load_geo(self, geo, load='default', keep_if_pos=False):
             else:
                 self.ibrav = 0
 
+        elif self.ibrav == -12:
+            # check if par[i] = old par[i] for i in range(3)
+            if all([np.allclose(geo.par[i]/geo.par[i, i], self.par[i]/self.par[i, i]) for i in range(3)]):
+                if 'a' in self.nml['system']:
+                    self.nml['system']['a'] = geo.par[0, 0]
+                    if geo.par_units == 'bohr':
+                        self.nml['system']['a'] *= bohr_to_angstrom
+                    self.nml['system']['b'] = geo.par[1, 1]
+                    if geo.par_units == 'bohr':
+                        self.nml['system']['b'] *= bohr_to_angstrom
+                    self.nml['system']['c'] = np.linalg.norm(geo.par[2])
+                    if geo.par_units == 'bohr':
+                        self.nml['system']['c'] *= bohr_to_angstrom
+                    self.nml['system']['cosac'] = geo.par[0].dot(geo.par[2]) / \
+                        geo.par[0, 0] / np.linalg.norm(geo.par[2])
+                elif 'celldm' in self.nml['system']:
+                    self.nml['system']['celldm'][0] = geo.par[0, 0]
+                    if geo.par_units == 'angstrom':
+                        self.nml['system']['celldm'][0] /= bohr_to_angstrom
+                    self.nml['system']['celldm'][1] = geo.par[1, 1] / \
+                        geo.par[0, 0]
+                    self.nml['system']['celldm'][2] = np.linalg.norm(geo.par[2]) / \
+                        geo.par[0, 0]
+                    self.nml['system']['celldm'][4] = geo.par[0].dot(geo.par[2]) / \
+                        geo.par[0, 0] / np.linalg.norm(geo.par[2])
+                else:
+                    warn('Unable to preserve ibrav due to missing nml items')
+                    self.ibrav = 0
+            else:
+                self.ibrav = 0
+
         elif self.ibrav != 0:
             warn('Value of ibrav not preserved because it is not implemented in load_pos: {}'.format(
                 self.ibrav))
