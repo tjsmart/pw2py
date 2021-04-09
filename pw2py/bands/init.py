@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 
 def __init__(self, shift: float = None, **kw):
@@ -20,6 +21,9 @@ def __init__(self, shift: float = None, **kw):
     assert ass, "No vbm, occupation or fermi level found in filename"
     # check if metallic, otherwise calc band edges
     self._check_is_metallic()
+    # check if occupations exist
+    if not self.is_metallic and not hasattr(self, '_occ'):
+        _calc_occ(self)
     # calc bandedges, if not provided and system is not metallic
     if not self.is_metallic and not hasattr(self, '_vbm'):
         self._calc_bandedge()
@@ -38,20 +42,34 @@ def _check_is_metallic(self):
             self._is_metallic = False
         else:
             self._is_metallic = False
-            is_occupied = (self.eig < self.fermi)
             for ispin in range(self.nspin):
+                if len(self.fermi) == 2:
+                    is_occupied = (self.eig[ispin] < self.fermi[ispin])
+                else:
+                    is_occupied = (self.eig[ispin] < self.fermi)
                 for ik in range(1, self.nk):
                     self._is_metallic = np.any(np.logical_xor(
-                        is_occupied[ispin, 0], is_occupied[ispin, ik]))
+                        is_occupied[0], is_occupied[ik]))
                     if self._is_metallic:
                         break
 
 
+def _calc_occ(self):
+    assert hasattr(self, '_fermi'), "Cannot compute occ without fermi"
+    self._occ = np.ones(self.eig.shape)
+    for ispin in range(self.nspin):
+        if len(self.fermi) == 2:
+            is_occupied = (self.eig[ispin] < self.fermi[ispin])
+        else:
+            is_occupied = (self.eig[ispin] < self.fermi)
+        self._occ[ispin, ~is_occupied] = 0
+
+
 def _calc_bandedge(self):
-    if hasattr(self, '_fermi'):
-        is_vb = self.eig < self.fermi
-    elif hasattr(self, '_occ'):
+    if hasattr(self, '_occ'):
         is_vb = np.isclose(1, self.occ, atol=1e-3)
+    # elif hasattr(self, '_fermi'):
+    #     is_vb = self.eig < self.fermi
     self._vbm = self.eig[is_vb].max()
     if not np.all(is_vb):
         self._cbm = self.eig[~is_vb].min()

@@ -72,7 +72,7 @@ def cut_geo(geo: pw.atomgeo, radius: float, center: np.ndarray, center_is_crysta
     diff_pos = geo.pos - center
     diff_length = np.linalg.norm(diff_pos, axis=1)
     indices_outside_radius = np.argwhere(diff_length > radius).flatten()
-    geo.remove_indices(indices_outside_radius)
+    geo.drop_indices(indices_outside_radius)
 
 
 if __name__ == "__main__":
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # remove indices
     if args.verbose:
         print(f"removing {len(index_to_remove)} atoms from lgeo")
-    lgeo.remove_indices(index_to_remove)
+    lgeo.drop_indices(index_to_remove)
 
     # double check large geo atoms are all self-connected (for cases where small geo has vacancies)
     index_inconsistent = []
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     # remove incosistent indices
     if args.verbose:
         print(f"removing another {len(index_inconsistent)} atoms from lgeo")
-    lgeo.remove_indices(index_inconsistent)
+    lgeo.drop_indices(index_inconsistent)
 
     # store length of lgeo (used if fixpos enabled)
     len_wo_small = lgeo.nat
