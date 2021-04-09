@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+from pw2py.qesave.load66 import read_wfc_file
+from pw2py import atomgeo
+from pw2py.functions import plot_wfc_xsf
+import argparse
+
+INDENT = '    '
+
+def parse_command_line():
+    ''' parse command line options '''
+    parser = argparse.ArgumentParser(
+        description="Plot qe wavefunction to xsf files"
+    )
+    parser.add_argument(
+        'prefix', metavar='prefix', type=str, help="prefix of the qe calculation"
+    )
+    parser.add_argument(
+        'path', metavar='path', type=str, help="path to the save folder"
+    )
+    parser.add_argument(
+        'which_evc', metavar='which_evc', type=str, help="specify which spin/bands to plot for example: '1 7 8, 2 5 6 7' will plot spin 1 bands 7 8 and spin 2 bands 5 6 7"
+    )
+    return parser.parse_args()
+
+
+def get_wfc_filename(savefolder, ispin, ik):
+    if ispin == 0:
+        return f'{savefolder}/wfcup{ik+1}.dat'
+    elif ispin == 1:
+        return f'{savefolder}/wfcdw{ik+1}.dat'
+
+def parse_evc_2_read(which_evc):
+    coll = {}
+    for spin_evcs in which_evc.split(','):
+        band_evc = spin_evcs.split()
+        print(f"Will read spin {band_evc[0]}, bands: {band_evc[1:]}")
+        coll[int(band_evc[0])-1] = [int(ib)-1 for ib in band_evc[1:]]
+    return coll
+
+
+if __name__ == '__main__':
+    # example:
+    # path = '../temp'
+    # prefix = 'BN'
+    # evc_2_read = {0: [142, 143, 144], 1: [142, 143, 144]}
+    ik = 0
+    args = parse_command_line()
+    evc_2_read = parse_evc_2_read(args.which_evc)
+
+    geo = atomgeo.from_save(args.prefix, args.path)
+
+    savefolder = f'{args.path}/{args.prefix}.save'
+    for ispin, blist in evc_2_read.items():
+        wfc_filename = get_wfc_filename(savefolder, ispin, ik)
+        print(f"Reading wfc file: {wfc_filename}")
+        gk, evc = read_wfc_file(wfc_filename)
+        for ib in blist:
+            xsf_filename = f'wfc{ispin+1}_{ib+1}.xsf'
+            print(f"{INDENT}Writing xsf file: {xsf_filename}")
+            plot_wfc_xsf(xsf_filename, geo, evc[ib], gk, lsign=True)
