@@ -320,7 +320,7 @@ def dQ_field_2_xsf(self, geo, filename, suppress_warnings=False):
         self.calc_dR(geo, suppress_warnings=suppress_warnings)
     )
     # write to xsf file
-    write_xsf(self, filename, force=deltaQ_field)
+    write_xsf(filename, self, force=deltaQ_field)
 
 
 def calc_distance(self, x: np.ndarray) -> float:

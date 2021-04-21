@@ -49,8 +49,13 @@ def read_vasp(filename):
             ion += [s] * c
         ion = np.array(ion)
         nat = len(ion)
+        # scan for beginning of pos type
+        for line in f:
+            line = line.strip().lower()
+            if line in ["direct", "cartesian"]:
+                break
         # read pos type
-        pos_units = "crystal" if f.readline().strip().lower() == "direct" else "angstrom"
+        pos_units = "crystal" if line == "direct" else "angstrom"
         pos = np.array([f.readline().split()[0:3] for _ in range(nat)], dtype=np.float64)
 
     return ion, par, par_units, pos, pos_units
