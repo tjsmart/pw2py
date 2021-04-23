@@ -32,7 +32,7 @@ def parse_command_line():
     parser.add_argument(
         '-c', '--cut', metavar='cut', type=str, help=(
             "central position to cut smaller atoms about for spherical embedding"
-            "e.g. '6.7 0.5 0.4 0' will cut 6.7 Ang about the point 0.5 0.4 0 (in crystal)"
+            "e.g. '6.7, 0.5 0.4 0' will cut 6.7 Ang about the point 0.5 0.4 0 (in crystal)"
         ),
         default=None
     )

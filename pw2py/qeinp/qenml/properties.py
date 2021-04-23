@@ -613,7 +613,7 @@ def occupations(self):
 @occupations.setter
 def occupations(self, occupations):
     if str(occupations).lower() not in \
-            ['smearing', 'tetrahedra', 'tetrahedra_lin', 'tetrahedra_opt', 'fixed', 'vc-from_input']:
+            ['smearing', 'tetrahedra', 'tetrahedra_lin', 'tetrahedra_opt', 'fixed', 'from_input']:
         raise ValueError('Invalid value for occupations')
     self['system']['occupations'] = str(occupations).lower()
 
