@@ -36,6 +36,9 @@ def parse_command_line():
         ),
         default=None
     )
+    parser.add_argument(
+        '-d', '--disable_check', action='store_true', help="Disable checking detached larger supercell atoms"
+    )
 
     return parser.parse_args()
 
@@ -138,19 +141,20 @@ if __name__ == "__main__":
         print(f"removing {len(index_to_remove)} atoms from lgeo")
     lgeo.drop_indices(index_to_remove)
 
-    # double check large geo atoms are all self-connected (for cases where small geo has vacancies)
-    index_inconsistent = []
-    for i, ion in enumerate(lgeo.ion):
-        idist = lgeo.nearest_neighbor(i, 1, return_type='dist')
-        if idist > lbonds[ion][-1] * (1 + args.thresh):
-            if args.verbose:
-                print(f"large atom {i} found to be detached: {idist}")
-            index_inconsistent.append(i)
+    if (not args.disable_check):
+        # double check large geo atoms are all self-connected (for cases where small geo has vacancies)
+        index_inconsistent = []
+        for i, ion in enumerate(lgeo.ion):
+            idist = lgeo.nearest_neighbor(i, 1, return_type='dist')
+            if idist > lbonds[ion][-1] * (1 + args.thresh):
+                if args.verbose:
+                    print(f"large atom {i} found to be detached: {idist}")
+                index_inconsistent.append(i)
 
-    # remove incosistent indices
-    if args.verbose:
-        print(f"removing another {len(index_inconsistent)} atoms from lgeo")
-    lgeo.drop_indices(index_inconsistent)
+        # remove incosistent indices
+        if args.verbose:
+            print(f"removing another {len(index_inconsistent)} atoms from lgeo")
+        lgeo.drop_indices(index_inconsistent)
 
     # store length of lgeo (used if fixpos enabled)
     len_wo_small = lgeo.nat
