@@ -29,6 +29,7 @@ def write_reshaped_grid(f, grid, grid_order='C', fmt='%13.6e', columns=6):
                     icol = 0
                 else:
                     f.write(' ')
+    f.write('\n')
 
 
 def write_xsf(filename, geo, force=None, grid=None, grid_order='C'):
