@@ -146,7 +146,7 @@ def build_supercell(self, P, inplace=True):
         return out
 
 
-def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='index', with_boundaries=True):
+def nearest_neighbor(self, site_id, N=1, include_site=False, return_type='df', with_boundaries=True):
     '''
     Calculate nearest neighbors of site_id
 
