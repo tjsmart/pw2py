@@ -13,7 +13,7 @@ def _read_qe_atomic_positions(f, nat, read_if_pos=False):
     for _ in range(nat):
         nl = f.readline().split('!')[0].split('#')[0].split()
         ion.append(nl[0])
-        pos.append(nl[1:4])
+        pos.append([eval(_nl) for _nl in nl[1:4]])  # eval is in case expressions are written in-line
         if read_if_pos:
             try:
                 # cannot use [4:7], because IndexError will not be thrown
@@ -252,6 +252,7 @@ def read_qeinp(filename, read_if_pos=False):
     # now iterate through file
     with open(filename) as f:
         for line in f:
+            line = line.split('!')[0].split('#')[0]
             if 'CELL_PARAMETERS' in line:
                 par_units = _read_qe_card_option(line, 'CELL_PARAMETERS')
                 par = np.array([f.readline().split()[0:3] for _ in range(3)], dtype=np.float64)

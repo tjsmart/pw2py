@@ -50,6 +50,7 @@ def from_file(cls, filename, is_prefix=None):
         # need to get: ['CELL_PARAMETERS', 'ATOMIC_SPECIES', 'ATOMIC_POSITIONS', 'K_POINTS']
         # also get if_pos and kpt
         for line in f:
+            line = line.split('!')[0].split('#')[0]
             if 'CELL_PARAMETERS' in line:
                 # TODO why not just use par_units from above?
                 card['CELL_PARAMETERS'] = _read_qe_card_option(line, 'CELL_PARAMETERS')
