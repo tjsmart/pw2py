@@ -352,3 +352,10 @@ def composition(self) -> dict:
     Return the composition of ions
     '''
     return {k: v for k, v in zip(*np.unique(self.ion, return_counts=True))}
+
+
+def copy(self):
+    '''
+    Returns a deepcopy
+    '''
+    return deepcopy(self)
