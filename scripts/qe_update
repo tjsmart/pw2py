@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+import argparse
+import pw2py as pw
+import os
+import shutil
+
+
+def parse_command_line():
+    ''' parse command line options '''
+    parser = argparse.ArgumentParser(
+        description="Update continued quantum espresso relaxation calculation with suffix"
+    )
+    parser.add_argument(
+        'prefix', metavar='prefix', type=str, help="quantum espresso prefix or file"
+    )
+
+    return parser.parse_args()
+
+
+def parse_prefix(given_prefix):
+    for possible_suffix in ['.in', '.out', '.']:
+        if given_prefix.endswith(possible_suffix):
+            return given_prefix[:-len(possible_suffix)]
+    return given_prefix
+
+
+def create_backups(fname):
+    i = 1
+    while os.path.exists(fname + f'.{i}'):
+        i += 1
+    shutil.copy(fname, fname + f'.{i}')
+
+
+if __name__ == "__main__":
+    args = parse_command_line()
+    prefix = parse_prefix(args.prefix)
+    inpfile = prefix + '.in'
+    outfile = prefix + '.out'
+    assert os.path.exists(inpfile), 'Input file does not exist'
+    assert os.path.exists(outfile), 'Output file does not exist'
+
+    # check a valid set of atomic positions is present in the output
+    validout = True
+    try:
+        fromout = pw.qeinp.from_file(prefix)
+        fromin = pw.qeinp.from_file(inpfile)
+    except:  # noqa
+        validout = False
+
+    if (not validout) or (fromout.nat != fromin.nat):
+        raise ValueError("Output file cannot be read from")
+
+    for fname in (inpfile, outfile):
+        create_backups(fname)
+
+    # overwrite input file with update geometry from output
+    fromout.write_file(inpfile)
