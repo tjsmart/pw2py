@@ -15,7 +15,7 @@ def parse_command_line():
     )
     parser.add_argument(
         'option', metavar='option', type=str, help=(
-            "if vac: indices of atoms to remove e.g. '1 2 3'"
+            "if vac: indices of atoms to drop e.g. '1 2 3'"
             " | if sub: indices and species of atoms to subsitute (comma seperated) e.g. '1 N, 2 H, 3 O'"
             " | if int: position and species of atoms to add (comma seperated) e.g. '1.9 7.2 3.0 B, 2.1 5.3 8.0 O'"
             " | if replace: replace all species X with species Y e.g. 'Sn Ti'"
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     elif defect == 'v':
         sep = ',' if ',' in args.option else ' '
         indices = np.fromstring(args.option, sep=sep, dtype=int) - 1
-        inp.remove_indices(indices)
+        inp.drop_indices(indices)
     elif defect == 's':
         indices, ions = [], []
         for substr in args.option.split(','):
