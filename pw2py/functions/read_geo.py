@@ -92,7 +92,7 @@ def read_xyz(filename, a=20.0, par_units='angstrom'):
     return ion, par, par_units, pos, pos_units
 
 
-def read_xsf(filename):
+def read_xsf(filename, read_if_pos=False):
     '''
     read geometry from xsf file
 
@@ -109,7 +109,7 @@ def read_xsf(filename):
             elif 'PRIMCOORD' in line:
                 # read ions and pos
                 nat = int(f.readline().split()[0])
-                ion, pos = [], []
+                ion, pos, if_pos = [], [], []
                 for _ in range(nat):
                     nl = f.readline().split()
                     try:
@@ -119,11 +119,18 @@ def read_xsf(filename):
                     except ValueError:
                         ion.append(nl[0])
                     pos.append(nl[1:4])
+                    if read_if_pos:
+                        if_pos.append(nl[4:7])
                 ion = np.array(ion)
                 pos = np.array(pos, dtype=np.float64)
+                if read_if_pos:
+                    if_pos = np.array(if_pos, dtype=np.float64)
                 break
 
-    return ion, par, par_units, pos, pos_units
+    if read_if_pos:
+        return ion, par, par_units, pos, pos_units, if_pos
+    else:
+        return ion, par, par_units, pos, pos_units
 
 
 def read_jdftx(filename):
@@ -314,6 +321,6 @@ def read_geo(filename, ftype='auto', read_if_pos=False):
     elif ftype == 'xyz':
         return read_xyz(filename)
     elif ftype == 'xsf':
-        return read_xsf(filename)
+        return read_xsf(filename, read_if_pos=read_if_pos)
     elif ftype == 'vasp':
         return read_vasp(filename)
