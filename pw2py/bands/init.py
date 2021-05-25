@@ -6,8 +6,6 @@ def __init__(self, shift: float = None, **kw):
     self._kpt = kw['kpt']
     self._eig = kw['eig']
     self._weight = kw['weight']
-    if 'fermi' in kw:
-        self._fermi = kw['fermi']
     if 'occ' in kw:
         self._occ = kw['occ']
     if 'vbm' in kw:
@@ -15,6 +13,10 @@ def __init__(self, shift: float = None, **kw):
     if 'cbm' in kw:
         self._cbm = kw['cbm']
         self._gap = self._cbm - self._vbm
+    if 'fermi' in kw:
+        self._fermi = kw['fermi']
+    elif 'vbm' in kw:
+        self._fermi = kw['vbm']
     # -------- more setup ----------
     # this class assumes, occ, fermi, or vbm must be given
     ass = any([hasattr(self, p) for p in ['_occ', '_fermi', '_vbm']])
@@ -43,7 +45,7 @@ def _check_is_metallic(self):
         else:
             self._is_metallic = False
             for ispin in range(self.nspin):
-                if len(self.fermi) == 2:
+                if self.nspin == 2:
                     is_occupied = (self.eig[ispin] < self.fermi[ispin])
                 else:
                     is_occupied = (self.eig[ispin] < self.fermi)
@@ -58,7 +60,7 @@ def _calc_occ(self):
     assert hasattr(self, '_fermi'), "Cannot compute occ without fermi"
     self._occ = np.ones(self.eig.shape)
     for ispin in range(self.nspin):
-        if len(self.fermi) == 2:
+        if self.nspin == 2:
             is_occupied = (self.eig[ispin] < self.fermi[ispin])
         else:
             is_occupied = (self.eig[ispin] < self.fermi)
