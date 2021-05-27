@@ -1372,10 +1372,10 @@ def mixing_mode(self):
 @mixing_mode.setter
 def mixing_mode(self, mixing_mode):
     if str(mixing_mode).lower() == 'plain':
-        self['system']['mixing_mode'] = str(mixing_mode).lower()
+        self['electrons']['mixing_mode'] = str(mixing_mode).lower()
     elif str(mixing_mode) in ['local-TF', 'TF']:
         # don't lower, these are not lower-cased
-        self['system']['mixing_mode'] = str(mixing_mode)
+        self['electrons']['mixing_mode'] = str(mixing_mode)
     else:
         raise ValueError('Invalid value for mixing_mode')
 
@@ -1419,7 +1419,7 @@ def diagonalization(self):
 def diagonalization(self, diagonalization):
     if str(diagonalization).lower() not in ['david', 'cg', 'david-serial', 'cg-serial']:
         raise ValueError('Invalid value for diagonalization')
-    self['system']['diagonalization'] = str(diagonalization).lower()
+    self['electrons']['diagonalization'] = str(diagonalization).lower()
 
 
 # Obsolete
@@ -1502,7 +1502,7 @@ def efield_phase(self):
 def efield_phase(self, efield_phase):
     if str(efield_phase).lower() not in ['read', 'write', 'none']:
         raise ValueError('Invalid value for efield_phase')
-    self['system']['efield_phase'] = str(efield_phase).lower()
+    self['electrons']['efield_phase'] = str(efield_phase).lower()
 
 
 @property
@@ -1514,7 +1514,7 @@ def startingpot(self):
 def startingpot(self, startingpot):
     if str(startingpot).lower() not in ['atomic', 'file']:
         raise ValueError('Invalid value for startingpot')
-    self['system']['startingpot'] = str(startingpot).lower()
+    self['electrons']['startingpot'] = str(startingpot).lower()
 
 
 @property
@@ -1526,7 +1526,7 @@ def startingwfc(self):
 def startingwfc(self, startingwfc):
     if str(startingwfc).lower() not in ['atomic', 'atomic+random', 'random', 'file']:
         raise ValueError('Invalid value for startingwfc')
-    self['system']['startingwfc'] = str(startingwfc).lower()
+    self['electrons']['startingwfc'] = str(startingwfc).lower()
 
 
 @property
@@ -1556,7 +1556,7 @@ def ion_dynamics(self, ion_dynamics):
     if str(ion_dynamics).lower() not in ['bfgs', 'damp', 'verlet', 'langevin',
                                          'langevin-smc', 'beeman']:
         raise ValueError('Invalid value for ion_dynamics')
-    self['system']['ion_dynamics'] = str(ion_dynamics).lower()
+    self['ions']['ion_dynamics'] = str(ion_dynamics).lower()
 
 
 @property
@@ -1568,7 +1568,7 @@ def ion_positions(self):
 def ion_positions(self, ion_positions):
     if str(ion_positions).lower() not in ['default', 'from_input']:
         raise ValueError('Invalid value for ion_positions')
-    self['system']['ion_positions'] = str(ion_positions).lower()
+    self['ions']['ion_positions'] = str(ion_positions).lower()
 
 
 @property
@@ -1580,7 +1580,7 @@ def pot_extrapolation(self):
 def pot_extrapolation(self, pot_extrapolation):
     if str(pot_extrapolation).lower() not in ['none', 'atomic', 'first_order', 'second_order']:
         raise ValueError('Invalid value for pot_extrapolation')
-    self['system']['pot_extrapolation'] = str(pot_extrapolation).lower()
+    self['ions']['pot_extrapolation'] = str(pot_extrapolation).lower()
 
 
 @property
@@ -1592,7 +1592,7 @@ def wfc_extrapolation(self):
 def wfc_extrapolation(self, wfc_extrapolation):
     if str(wfc_extrapolation).lower() not in ['none', 'first_order', 'second_order']:
         raise ValueError('Invalid value for wfc_extrapolation')
-    self['system']['wfc_extrapolation'] = str(wfc_extrapolation).lower()
+    self['ions']['wfc_extrapolation'] = str(wfc_extrapolation).lower()
 
 
 @property
@@ -1614,10 +1614,10 @@ def ion_temperature(self):
 def ion_temperature(self, ion_temperature):
     if str(ion_temperature).lower() in ['rescaling', 'rescaling-v', 'berendsen',
                                         'andersen', 'initial', 'not_controlled']:
-        self['system']['ion_temperature'] = str(ion_temperature).lower()
+        self['ions']['ion_temperature'] = str(ion_temperature).lower()
     elif str(ion_temperature) in ['rescaling-T', 'reduce-T']:
         # don't lower, these are not lower-cased
-        self['system']['ion_temperature'] = str(ion_temperature)
+        self['ions']['ion_temperature'] = str(ion_temperature)
     else:
         raise ValueError('Invalid value for ion_temperature')
 
@@ -1758,7 +1758,7 @@ def cell_dynamics(self):
 def cell_dynamics(self, cell_dynamics):
     if str(cell_dynamics).lower() not in ['none', 'sd', 'damp-pr', 'damp-w', 'bfgs', 'pr', 'w']:
         raise ValueError('Invalid value for cell_dynamics')
-    self['system']['cell_dynamics'] = str(cell_dynamics).lower()
+    self['cell']['cell_dynamics'] = str(cell_dynamics).lower()
 
 
 @property
@@ -1811,4 +1811,4 @@ def cell_dofree(self, cell_dofree):
     if str(cell_dofree).lower() not in ['all', 'x', 'y', 'z',
                                         'xy', 'xz', 'yz', 'xyz', 'shape', 'volume', '2Dxy', '2Dshape']:
         raise ValueError('Invalid value for cell_dofree')
-    self['system']['cell_dofree'] = str(cell_dofree).lower()
+    self['cell']['cell_dofree'] = str(cell_dofree).lower()
