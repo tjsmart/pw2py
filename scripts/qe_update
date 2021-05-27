@@ -14,6 +14,9 @@ def parse_command_line():
     parser.add_argument(
         'prefix', metavar='prefix', type=str, help="quantum espresso prefix or file"
     )
+    parser.add_argument(
+        '-d', '--disable', action='store_true', help="if enabled, disables adding startingpot = 'file'"
+    )
 
     return parser.parse_args()
 
@@ -55,4 +58,6 @@ if __name__ == "__main__":
         create_backups(fname)
 
     # overwrite input file with update geometry from output
+    if not args.disable:
+        fromout.nml.startingpot = 'file'
     fromout.write_file(inpfile)
